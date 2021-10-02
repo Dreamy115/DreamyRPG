@@ -1,0 +1,10 @@
+# Directories
+node_modules
+out
+.vscode
+
+# Unneeded files
+package-lock.json
+
+# Configuration
+config.yml

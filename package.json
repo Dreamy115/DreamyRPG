@@ -1,0 +1,17 @@
+{
+  "name": "dreamyrpg",
+  "version": "0.0.0",
+  "description": "",
+  "main": "out/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "type": "module",
+  "author": "Dreamy115",
+  "license": "CC-BY-SA-4.0",
+  "dependencies": {
+    "discord.js": "^13.1.0",
+    "mongoose": "^6.0.8",
+    "yaml": "^1.10.2"
+  }
+}

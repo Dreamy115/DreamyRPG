@@ -3,11 +3,12 @@ import path from "path";
 
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { PassiveEffect } from "./PassiveEffects";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-export default class SpeciesManager {
+export default class CreatureSpeciesManager {
   map = new Map<string, CreatureSpecies>();
   async load(dir: fs.PathLike) {
     this.map.clear();
@@ -46,7 +47,9 @@ export class CreatureSpecies {
       lore: string
       description: string
     }
+    playable: boolean
     parent: string
+    passives?: (string | PassiveEffect)[]
   }
 
   constructor(data: CreatureSpecies["$"]) {

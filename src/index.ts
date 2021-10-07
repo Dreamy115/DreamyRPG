@@ -9,6 +9,8 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import ApplicationCommandManager from "./app/commands.js";
 import ComponentCommandManager from "./app/component_commands.js";
+import CreatureSpeciesManager from "./game/Species.js";
+import PassiveEffectManager from "./game/PassiveEffects.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -38,6 +40,9 @@ export const db = await Mongoose.connect(CONFIG.database.uri).then((v) => {conso
 
 export const AppCmdManager = new ApplicationCommandManager();
 export const CmpCmdManager = new ComponentCommandManager();
+
+export const SpeciesManager = new CreatureSpeciesManager();
+export const PassivesManager = new PassiveEffectManager();
 ///
 
 const Bot = new Client({
@@ -49,6 +54,7 @@ const Bot = new Client({
 Bot.on("ready", async () => {
   console.log("Bot Ready;", Bot.user?.tag);
 
+  // Loading Bot Stuff
   await AppCmdManager.load(path.join(__dirname, "app/commands"));
   await CmpCmdManager.load(path.join(__dirname, "app/commands"));
 
@@ -62,6 +68,11 @@ Bot.on("ready", async () => {
   const guild = await Bot.guilds.fetch(CONFIG.guild?.id ?? "");
   guild.commands.set(commandData).then(() => console.log(`Commands uploaded to ${guild.id}`)).catch(() => console.error("Failed uploading commands"));
 
+  // Loading Game Stuff
+  PassivesManager.load(path.join(__dirname, "game/passives"));
+  SpeciesManager.load(path.join(__dirname, "game/species"));
+
+  // Listeners
   Bot.on("interactionCreate", async (interaction) => {
     if (interaction.isCommand()) {
       const command = AppCmdManager.map.get(interaction.commandName);

@@ -4,6 +4,7 @@ import path from "path";
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { CreatureData } from "./Creature";
+import { Modifier } from "./Stats";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -58,9 +59,14 @@ export class PassiveEffect {
     preload: (data: CreatureData) => void
     // postload is called while parsing, AFTER vitals are loaded.
     postload: (data: CreatureData) => void
+    modifiers?: PassiveModifier[]
   }
 
   constructor(data: PassiveEffect["$"]) {
     this.$ = data;
   }
+}
+
+export interface PassiveModifier extends Modifier {
+  stat: string
 }

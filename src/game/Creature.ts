@@ -1,8 +1,17 @@
+import { PassiveModifier } from "./PassiveEffects";
+import { TrackableStat } from "./Stats";
+
 export default class Creature {
   $: CreatureData
 
   constructor(data: CreatureDump) {
     this.$ = Creature.parse(data);
+  }
+
+
+  applyNamedModifier(mod: PassiveModifier) {
+    // @ts-ignore
+    this.$.stats[mod.stat].modifiers.push({type: mod.type, value: mod.value})
   }
 
   /**
@@ -21,8 +30,30 @@ export default class Creature {
         },
         species: data.info?.species ?? "default",
         class: data.info?.class ?? "default"
+      },
+      stats: {
+        armor: new TrackableStat(0),
+        filter: new TrackableStat(0),
+        melee: new TrackableStat(0),
+        ranged: new TrackableStat(0),
+        health: new TrackableStat(100),
+        mana: new TrackableStat(12),
+        mana_regen: new TrackableStat(7),
+        shield: new TrackableStat(0),
+        shield_regen: new TrackableStat(0),
+        parry: new TrackableStat(0),
+        deflect: new TrackableStat(0),
+        tech: new TrackableStat(0)
+      },
+      vitals: {
+        health: (data.vitals?.health ?? 1),
+        injuries: (data.vitals?.injuries ?? 0),
+        mana: (data.vitals?.mana ?? 0),
+        shield: (data.vitals?.shield ?? 1)
       }
     }
+
+
 
     return live;
   }
@@ -35,7 +66,13 @@ export default class Creature {
   static dump(data: CreatureData): CreatureDump {
     let dump: CreatureDump = {
       _id: data._id,
-      info: data.info
+      info: data.info,
+      vitals: {
+        health: data.vitals.health / data.stats.health.value,
+        injuries: data.vitals.health / data.stats.health.value,
+        mana: data.vitals.mana / data.vitals.mana,
+        shield: data.vitals.shield / data.stats.shield.value
+      }
     }
 
     return dump;
@@ -55,6 +92,26 @@ export interface CreatureData {
     species: string
     class: string
   }
+  stats: {
+    armor: TrackableStat
+    filter: TrackableStat
+    melee: TrackableStat
+    ranged: TrackableStat
+    health: TrackableStat
+    mana: TrackableStat
+    mana_regen: TrackableStat
+    shield: TrackableStat
+    shield_regen: TrackableStat
+    parry: TrackableStat
+    deflect: TrackableStat
+    tech: TrackableStat
+  }
+  vitals: {
+    health: number
+    mana: number
+    shield: number
+    injuries: number
+  }
 }
 /**
  * Data kept in database
@@ -68,5 +125,14 @@ export interface CreatureDump {
     }
     species?: string
     class?: string
+  }
+  vitals?: {
+    health?: number
+    mana?: number
+    shield?: number
+    injuries?: number
+  }
+  items?: {
+
   }
 }

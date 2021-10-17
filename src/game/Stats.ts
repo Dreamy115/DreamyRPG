@@ -43,3 +43,8 @@ export interface Modifier {
 export enum ModifierType {
   "ADD", "ADD_PERCENT", "MULTIPLY", "CAP_MAX"
 }
+
+
+export function textStat(val: number, max: number) {
+  return `**${val}**/**${max}** (**${Math.round(100 * val / max)}%**)`;
+} 

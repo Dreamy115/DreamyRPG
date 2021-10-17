@@ -18,11 +18,12 @@ export interface DamageGroup {
   victim?: Creature
   medium: DamageMedium
   penetration: {
-    armor: number
-    filter: number
+    lethality: number
+    defiltering: number
   }
   chance: number
   useDodge: boolean
+  shieldReaction: ShieldReaction
 }
 
 export interface DamageLog {
@@ -40,4 +41,13 @@ export interface DamageLog {
 
   total_damage_mitigated: number
   total_damage_taken: number
+}
+
+export enum ShieldReaction {
+  "Normal", "Ignore", "Only"
+}
+
+export const DAMAGE_TO_INJURY_RATIO = 0.5;
+export function reductionMultiplier(protection: number): number {
+  return 100 / (100 + Math.max(0, protection));
 }

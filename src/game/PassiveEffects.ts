@@ -3,7 +3,7 @@ import path from "path";
 
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import { CreatureData } from "./Creature";
+import Creature, { CreatureData } from "./Creature";
 import { Modifier } from "./Stats";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -56,10 +56,15 @@ export class PassiveEffect {
     }
     unique?: string[]
     // preload is called while parsing, BEFORE vitals are loaded.
-    preload: (data: CreatureData) => void
+    preload?: (creature: Creature) => void
     // postload is called while parsing, AFTER vitals are loaded.
-    postload: (data: CreatureData) => void
+    postload?: (creature: Creature) => void
     modifiers?: PassiveModifier[]
+
+    beforeDamageTaken?: (creature: Creature) => void
+    afterDamageTaken?: (creature: Creature) => void
+    beforeDamageGiven?: (creature: Creature) => void
+    afterDamageGiven?: (creature: Creature) => void
   }
 
   constructor(data: PassiveEffect["$"]) {

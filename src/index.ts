@@ -11,10 +11,16 @@ import ApplicationCommandManager from "./app/commands.js";
 import ComponentCommandManager from "./app/component_commands.js";
 import CreatureSpeciesManager from "./game/Species.js";
 import PassiveEffectManager from "./game/PassiveEffects.js";
+import { DAMAGE_TO_INJURY_RATIO, reductionMultiplier } from "./game/Damage.js";
+import ItemsManager from "./game/Items.js";
+import CreatureClassManager from "./game/Classes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+process.on("uncaughtException", (e) => {
+  console.error(e);
+})
 
 /// Global Variables
 export const CONFIG: {
@@ -41,6 +47,8 @@ export const db = await Mongoose.connect(CONFIG.database.uri).then((v) => {conso
 export const AppCmdManager = new ApplicationCommandManager();
 export const CmpCmdManager = new ComponentCommandManager();
 
+export const ItemManager = new ItemsManager();
+export const ClassManager = new CreatureClassManager();
 export const SpeciesManager = new CreatureSpeciesManager();
 export const PassivesManager = new PassiveEffectManager();
 ///
@@ -69,6 +77,8 @@ Bot.on("ready", async () => {
   guild.commands.set(commandData).then(() => console.log(`Commands uploaded to ${guild.id}`)).catch(() => console.error("Failed uploading commands"));
 
   // Loading Game Stuff
+  ItemManager.load(path.join(__dirname, "game/items"));
+  ClassManager.load(path.join(__dirname, "game/classes"));
   PassivesManager.load(path.join(__dirname, "game/passives"));
   SpeciesManager.load(path.join(__dirname, "game/species"));
 
@@ -83,7 +93,7 @@ Bot.on("ready", async () => {
 
       const executionId = SnowflakeUtil.generate();
 
-      console.log(`/${interaction.commandName} @${interaction.user.id}`)
+      console.log(`/${interaction.commandName} @${interaction.user.id}`);
 
       console.time(`cmd-${executionId}`);
       await command.run(interaction, Bot, db);
@@ -103,7 +113,7 @@ Bot.on("ready", async () => {
       const executionId = SnowflakeUtil.generate();
 
       try {
-        console.log(`>${interaction.customId} @${interaction.user.id}`)
+        console.log(`>${interaction.customId} @${interaction.user.id}`);
 
         console.time(`cmp-${executionId}`);
         await command.run(interaction, Bot, db, args);

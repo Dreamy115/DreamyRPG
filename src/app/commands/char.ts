@@ -14,11 +14,6 @@ export default new ApplicationCommand(
         type: "SUB_COMMAND"
       },
       {
-        name: "delete",
-        description: "Delete your character permanently",
-        type: "SUB_COMMAND"
-      },
-      {
         name: "stats",
         description: "Show character make-up",
         type: "SUB_COMMAND",
@@ -70,23 +65,6 @@ export default new ApplicationCommand(
             interaction.editReply({ content: "Something went wrong..." });
           })
       } break;
-      case "delete": {
-        await interaction.deferReply({ephemeral: true});
-
-        const char = await Creature.fetch(interaction.user.id, db, false).catch(() => null);
-        if (!char) {
-          interaction.editReply({
-            content: "Not found!"
-          });
-          return;
-        }
-
-        await char.delete(db);
-
-        interaction.editReply({
-          content: "Deleted!"
-        })
-      } break;
       case "stats": {
         await interaction.deferReply({});
 
@@ -103,9 +81,18 @@ export default new ApplicationCommand(
         })
       } break;
       case "edit": {
-        interaction.reply({
-          ephemeral: true,
-          content: "Editing menu",
+        await interaction.deferReply({});
+
+        const char = await Creature.fetch(interaction.user.id, db, false).catch(() => null);
+        if (!char) {
+          interaction.editReply({
+            content: "Not found!"
+          });
+          return;
+        }
+
+        interaction.editReply({
+          content: `Editing menu for **${char.$.info.display.name}**`,
           components: ceditMenu(interaction.user.id)
         })
       } break;

@@ -5,9 +5,6 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { PassiveEffect, PassiveModifier } from "./PassiveEffects";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
 export default class GlobalAbilityManager {
   map = new Map<string, Ability>();
   async load(dir: fs.PathLike) {

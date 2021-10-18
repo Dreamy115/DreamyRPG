@@ -15,9 +15,6 @@ import { DAMAGE_TO_INJURY_RATIO, reductionMultiplier } from "./game/Damage.js";
 import ItemsManager from "./game/Items.js";
 import CreatureClassManager from "./game/Classes.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
 process.on("uncaughtException", (e) => {
   console.error(e);
 })
@@ -42,7 +39,7 @@ if (!CONFIG.guild?.id) throw new Error("guild/id not defined in configuration fi
 if (!CONFIG.guild?.gm_role) throw new Error("guild/gm_role not defined in configuration file");
 
 //
-export const db = await Mongoose.connect(CONFIG.database.uri).then((v) => {console.log(v.connection); return v});
+export const db = Mongoose.connect(CONFIG.database.uri).then((v) => {console.log(v.connection); return v});
 
 export const AppCmdManager = new ApplicationCommandManager();
 export const CmpCmdManager = new ComponentCommandManager();
@@ -60,7 +57,7 @@ const Bot = new Client({
 });
 
 Bot.on("ready", async () => {
-  console.log("Bot Ready;", Bot.user?.tag);
+  //console.log("Bot Ready;", Bot.user?.tag);
 
   // Loading Bot Stuff
   await AppCmdManager.load(path.join(__dirname, "app/commands"));
@@ -96,7 +93,7 @@ Bot.on("ready", async () => {
       console.log(`/${interaction.commandName} @${interaction.user.id}`);
 
       console.time(`cmd-${executionId}`);
-      await command.run(interaction, Bot, db);
+      await command.run(interaction, Bot, await db);
       console.timeEnd(`cmd-${executionId}`);
 
     } else if (interaction.isMessageComponent()) {
@@ -116,7 +113,7 @@ Bot.on("ready", async () => {
         console.log(`>${interaction.customId} @${interaction.user.id}`);
 
         console.time(`cmp-${executionId}`);
-        await command.run(interaction, Bot, db, args);
+        await command.run(interaction, Bot, await db, args);
       } catch (e) {
         console.error(e);
       } finally {

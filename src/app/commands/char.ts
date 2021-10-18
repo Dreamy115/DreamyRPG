@@ -13,6 +13,11 @@ export default new ApplicationCommand(
         type: "SUB_COMMAND"
       },
       {
+        name: "delete",
+        description: "Delete your character permanently",
+        type: "SUB_COMMAND"
+      },
+      {
         name: "stats",
         description: "Show character make-up",
         type: "SUB_COMMAND",
@@ -58,6 +63,9 @@ export default new ApplicationCommand(
             console.error(e);
             interaction.editReply({ content: "Something went wrong..." });
           })
+      } break;
+      case "create": {
+
       } break;
       case "stats": {
         await interaction.deferReply({});

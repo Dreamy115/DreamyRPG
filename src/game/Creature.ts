@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import NodeCache from "node-cache";
 import { ClassManager, ItemManager, PassivesManager, SpeciesManager } from "../index.js";
 import { DamageGroup, DamageLog, DamageMedium, DamageType, DAMAGE_TO_INJURY_RATIO, reductionMultiplier, ShieldReaction } from "./Damage.js";
+import { Item } from "./Items.js";
 import { PassiveEffect, PassiveModifier } from "./PassiveEffects.js";
 import { ModifierType, textStat, TrackableStat } from "./Stats.js";
 
@@ -105,9 +106,20 @@ export default class Creature {
     let hasInnerClothing = false;
     let hasSkinClothing = false;
 
+    const uniques: string[] = [];
     for (var i = 0; i < this.$.items.equipped.length; i++) {
       const item = ItemManager.map.get(this.$.items.equipped[i]);
       if (!item) continue;
+
+        for (const u of item.$.unique ?? []) {
+          if (uniques.includes(u)) {
+            this.$.items.backpack.push(this.$.items.equipped.splice(i, 1)[0]);
+            i--;
+            break;
+          } else {
+            uniques.push(u);
+          }
+        }
 
       switch (item.$.type) {
         case "utility": {
@@ -175,6 +187,20 @@ export default class Creature {
       if (!item) continue;
 
       globalOrLocalPusher(passives, item.$.passives ?? []);
+    }
+
+    const uniques: string[] = [];
+    for (var i = 0; i < passives.length; i++) {
+      const passive = passives[i];
+      for (const u of passive.$.unique ?? []) {
+        if (uniques.includes(u)) {
+          passives.splice(i, 1);
+          i--;
+          break;
+        } else {
+          uniques.push(u);
+        }
+      }
     }
 
     return passives;

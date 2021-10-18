@@ -6,9 +6,6 @@ import { dirname } from 'path';
 import Creature, { CreatureData } from "./Creature";
 import { Modifier } from "./Stats";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
 export default class PassiveEffectManager {
   map = new Map<string, PassiveEffect>();
   async load(dir: fs.PathLike) {

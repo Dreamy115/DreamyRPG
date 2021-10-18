@@ -6,7 +6,6 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "type": "module",
   "author": "Dreamy115",
   "license": "CC-BY-SA-4.0",
   "dependencies": {

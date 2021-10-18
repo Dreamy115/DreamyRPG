@@ -383,7 +383,7 @@ export default class Creature {
             `**${this.$.stats.armor.value}** Armor (**${Math.round(100 * (1 - reductionMultiplier(this.$.stats.armor.value)))}%** Reduced Physical Damage)\n` +
             `**${this.$.stats.filter.value}** Filter (**${Math.round(100 * (1 - reductionMultiplier(this.$.stats.filter.value)))}%** Reduced Energy Damage)\n` +
             "\n" +
-            `**${this.$.stats.tenacity.value}** Tenacity\n (Taking **${Math.round(100 * reductionMultiplier(this.$.stats.tenacity.value) * DAMAGE_TO_INJURY_RATIO)}** health damage as **Injuries**)` +
+            `**${this.$.stats.tenacity.value}** Tenacity\n (Taking **${Math.round(100 * reductionMultiplier(this.$.stats.tenacity.value) * DAMAGE_TO_INJURY_RATIO)}%** health damage as **Injuries**)` +
             "\n" +
             `Parry **${this.$.stats.parry.value}** | **${this.$.stats.deflect.value}** Deflect\n(Reduces hit chance from Melee and Ranged)\n` +
             "\n" +

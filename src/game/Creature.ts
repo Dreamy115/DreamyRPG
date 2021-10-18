@@ -375,6 +375,19 @@ export default class Creature {
           `**Health** **${this.$.vitals.health}**/**${this.$.stats.health.value - this.$.vitals.injuries}** (**${Math.round(100 * this.$.vitals.health / this.$.stats.health.value)}%**)  *(**${this.$.stats.health.value}** Health - **${this.$.vitals.injuries}** Injuries)*\n` +
           (this.$.stats.shield.value > 0 ? `**Shield** ${textStat(this.$.vitals.shield, this.$.stats.shield.value)} **${this.$.stats.shield_regen.value}**/t` : "No **Shield**") + "\n" +
           `**Mana** ${textStat(this.$.vitals.mana, this.$.stats.mana.value)} **${this.$.stats.mana_regen.value}**/t\n`
+        },
+        {
+          name: "Stats",
+          value: 
+            `Melee **${this.$.stats.melee.value}** | **${this.$.stats.ranged.value}** Ranged\n\n` +
+            `**${this.$.stats.armor.value}** Armor (**${Math.round(100 * (1 - reductionMultiplier(this.$.stats.armor.value)))}%** Reduced Physical Damage)\n` +
+            `**${this.$.stats.filter.value}** Filter (**${Math.round(100 * (1 - reductionMultiplier(this.$.stats.filter.value)))}%** Reduced Energy Damage)\n` +
+            "\n" +
+            `**${this.$.stats.tenacity.value}** Tenacity\n (Taking **${Math.round(100 * reductionMultiplier(this.$.stats.tenacity.value) * DAMAGE_TO_INJURY_RATIO)}** health damage as **Injuries**)` +
+            "\n" +
+            `Parry **${this.$.stats.parry.value}** | **${this.$.stats.deflect.value}** Deflect\n(Reduces hit chance from Melee and Ranged)\n` +
+            "\n" +
+            `**${this.$.stats.tech.value}** Tech (Ability Power)` 
         }
       ])
 

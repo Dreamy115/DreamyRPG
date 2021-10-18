@@ -1,5 +1,6 @@
 import Creature from "../../game/Creature.js";
 import { ApplicationCommand } from "../commands.js";
+import { ceditMenu } from "../component_commands/cedit.js";
 
 export default new ApplicationCommand(
   {
@@ -33,6 +34,11 @@ export default new ApplicationCommand(
             type: "STRING"
           }
         ]
+      },
+      {
+        name: "edit",
+        description: "Editing",
+        type: "SUB_COMMAND"
       }
     ]
   },
@@ -64,8 +70,22 @@ export default new ApplicationCommand(
             interaction.editReply({ content: "Something went wrong..." });
           })
       } break;
-      case "create": {
+      case "delete": {
+        await interaction.deferReply({ephemeral: true});
 
+        const char = await Creature.fetch(interaction.user.id, db, false).catch(() => null);
+        if (!char) {
+          interaction.editReply({
+            content: "Not found!"
+          });
+          return;
+        }
+
+        await char.delete(db);
+
+        interaction.editReply({
+          content: "Deleted!"
+        })
       } break;
       case "stats": {
         await interaction.deferReply({});
@@ -80,6 +100,13 @@ export default new ApplicationCommand(
 
         interaction.editReply({
           embeds: [await char.infoEmbed(Bot)]
+        })
+      } break;
+      case "edit": {
+        interaction.reply({
+          ephemeral: true,
+          content: "Editing menu",
+          components: ceditMenu(interaction.user.id)
         })
       } break;
     }

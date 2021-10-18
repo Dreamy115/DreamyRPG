@@ -1,4 +1,4 @@
-import { ApplicationCommandData, Client, Intents, SnowflakeUtil } from "discord.js";
+import { ApplicationCommandData, Client, Intents, Snowflake, SnowflakeUtil, TextBasedChannels, TextChannel, User } from "discord.js";
 import Mongoose from "mongoose";
 import YAML from "yaml";
 
@@ -57,11 +57,11 @@ const Bot = new Client({
 });
 
 Bot.on("ready", async () => {
-  //console.log("Bot Ready;", Bot.user?.tag);
+  console.log("Bot Ready;", Bot.user?.tag);
 
   // Loading Bot Stuff
   await AppCmdManager.load(path.join(__dirname, "app/commands"));
-  await CmpCmdManager.load(path.join(__dirname, "app/commands"));
+  await CmpCmdManager.load(path.join(__dirname, "app/component_commands"));
 
   console.log(`/${Array.from(AppCmdManager.map.keys()).length} >${Array.from(CmpCmdManager.map.keys()).length} Commands loaded`);
 
@@ -124,3 +124,20 @@ Bot.on("ready", async () => {
 })
 
 Bot.login(CONFIG.client.token);
+
+
+export async function messageInput(channel: TextBasedChannels, userid: Snowflake, time = 10000) {
+  const input = await channel.awaitMessages({
+    errors: ["time"],
+    max: 1,
+    time,
+    filter: (msg) => msg.author.id === userid
+  }).then((collection) => {
+    return collection.first() ?? null;
+  }).catch(() => null);
+
+  if (!input) throw new Error("No input");
+
+  input.delete();
+  return input.content;
+}

@@ -360,12 +360,14 @@ export default class Creature {
         log.total_damage_taken += source.value;
       }
     }
-
     
     for (const passive of this.findPassives()) {
       passive.$.afterDamageTaken?.(this);
     }
     if (group.attacker instanceof Creature) {
+      group.attacker.heal(Math.round(log.total_physical_damage * group.attacker.$.stats.vamp.value / 100), "health");
+      group.attacker.heal(Math.round(log.total_energy_damage * group.attacker.$.stats.siphon.value / 100), "shield");
+
       for (const passive of group.attacker.findPassives()) {
         passive.$.afterDamageGiven?.(group.attacker);
       }
@@ -376,6 +378,28 @@ export default class Creature {
     return log;
   }
 
+  heal(amount: number, type: "health" | "shield" | "overheal" | "mana" | "injuries" = "overheal") {
+    switch (type) {
+      case "health": {
+        this.$.vitals.health += amount;
+      } break;
+      case "shield": {
+        this.$.vitals.shield += amount;
+      } break;
+      case "overheal": {
+        this.$.vitals.health += amount;
+        this.$.vitals.shield += Math.max(this.$.vitals.health - this.$.stats.health.value, 0);
+      } break;
+      case "mana": {
+        this.$.vitals.mana += amount;
+      } break;
+      case "injuries": {
+        this.$.vitals.injuries -= amount;
+      } break;
+    }
+
+    this.vitalsIntegrity();
+  }
 
   async infoEmbed(Bot: Client): Promise<MessageEmbed> {
     const embed = new MessageEmbed();

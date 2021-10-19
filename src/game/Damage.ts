@@ -86,6 +86,13 @@ export function damageLogEmbed(log: DamageLog) {
       true
     )
   }
+
+  embed.addField(
+    "Total",
+    `**${log.total_damage_taken}** Damage Taken\n**${log.total_damage_mitigated}** Damage Mitigated\n\n` +
+    `**${log.total_shield_damage}** Shield Damage\n**${log.total_health_damage}** Health Damage\n**${log.total_injuries}** Injuries\n\n` +
+    `**${log.total_physical_damage}**/**${log.total_energy_damage}**/**${log.total_true_damage}** Physical/Energy/True`
+  )
  
   return embed;
 }

@@ -280,13 +280,14 @@ export default class Creature {
         switch (source.type) {
           case DamageType.Physical: {
             log.total_damage_mitigated += Math.round(source.value * (1 - reductionMultiplier(this.$.stats.armor.value - group.penetration.lethality)));
-            source.value *= Math.round(reductionMultiplier(this.$.stats.armor.value - group.penetration.lethality));
+            source.value *= reductionMultiplier(this.$.stats.armor.value - group.penetration.lethality);
           } break;
           case DamageType.Energy: {
             log.total_damage_mitigated += Math.round(source.value * (1 - reductionMultiplier(this.$.stats.filter.value - group.penetration.defiltering)));
-            source.value *= Math.round(reductionMultiplier(this.$.stats.filter.value - group.penetration.defiltering));
+            source.value *= reductionMultiplier(this.$.stats.filter.value - group.penetration.defiltering);
           } break;
         }
+        source.value = Math.round(source.value);
 
         switch (group.shieldReaction) {
           case ShieldReaction.Normal:

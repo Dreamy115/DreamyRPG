@@ -1,5 +1,5 @@
 import { ApplicationCommandData, Client, CommandInteraction } from "discord.js";
-import Mongoose from "mongoose";
+import mongoose from "mongoose";
 
 import fs from "fs";
 import path from "path";
@@ -34,7 +34,7 @@ export default class ApplicationCommandManager {
 
 export class ApplicationCommand {
   data: ApplicationCommandData
-  run: (interaction: CommandInteraction, Bot: Client, db: typeof Mongoose) => Promise<void>
+  run: (interaction: CommandInteraction, Bot: Client, db: typeof mongoose) => Promise<void>
 
   constructor(data: ApplicationCommand["data"], executor: ApplicationCommand["run"]) {
     this.data = data;

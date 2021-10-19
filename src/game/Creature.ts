@@ -457,7 +457,7 @@ export default class Creature {
           const passive = passives[i];
 
           embed.addField(
-            `Passive - **${passive.$.info.name}**`,
+            `${passive.$.info.name}`,
             function() {
               var str = `*${passive.$.info.lore}*`;
               if ((passive.$.modifiers ?? []).length > 0) {

@@ -1,6 +1,6 @@
 import { MessageActionRow, MessageButton } from "discord.js";
 import { CONFIG, messageInput } from "../..";
-import Creature from "../../game/Creature";
+import Creature, { HealType } from "../../game/Creature";
 import { DamageCause, DamageGroup, damageLogEmbed, DamageMedium, DamageType, ShieldReaction } from "../../game/Damage";
 import { ComponentCommand } from "../component_commands";
 
@@ -36,7 +36,7 @@ export default new ComponentCommand(
 
     // @ts-expect-error
     const channel = await interaction.guild?.channels.fetch(interaction.message.channel_id).catch(() => null);
-    if (!channel?.isText()) throw new Error("Invalid channel");
+    if (!channel?.isText?.()) throw new Error("Invalid channel");
 
     switch(args.shift()) {
       case "delete": {
@@ -167,6 +167,38 @@ export default new ComponentCommand(
                 }
 
               } break;
+              case "heal": {
+                await interaction.followUp({
+                  ephemeral: true,
+                  content: 
+                    "Please input heal string using this syntax: `<amount>,<type>` without spaces, whole numbers, and without %.\n" +
+                    "ex. `25,Health`"
+                });
+
+                var inputmsg = await messageInput(channel, interaction.user.id).catch(() => "#");
+                if (inputmsg === "#") {
+                  interaction.followUp({
+                    ephemeral: true,
+                    content: "Cancelled"
+                  });
+                  return;
+                }
+
+                const input = inputmsg.split(",");
+
+                try {
+                  // @ts-expect-error
+                  creature.heal(Number(input[0]), HealType[input[1]]);
+                } catch (e) {
+                  console.error(e);
+                  interaction.followUp({
+                    ephemeral: true,
+                    content: "Error!"
+                  });
+                  return;
+                }
+
+              } break;
             }
           } break;
         }
@@ -208,7 +240,11 @@ export function gm_ceditMenu(creature_id: string): MessageActionRow[] {
       new MessageButton()
         .setCustomId(`cedit/${creature_id}/edit/gm/damage`)
         .setStyle("DANGER")
-        .setLabel("Deal Damage")
+        .setLabel("Deal Damage"),
+      new MessageButton()
+        .setCustomId(`cedit/${creature_id}/edit/gm/heal`)
+        .setStyle("SUCCESS")
+        .setLabel("Heal")
     ])
   ]
 }

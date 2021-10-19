@@ -14,10 +14,26 @@ export default new ApplicationCommand(
         type: "SUB_COMMAND"
       },
       {
-        name: "stats",
+        name: "info",
         description: "Show character make-up",
         type: "SUB_COMMAND",
         options: [
+          {
+            name: "page",
+            description: "Which kind of information?",
+            type: "STRING",
+            required: true,
+            choices: [
+              {
+                name: "Stats",
+                value: "stats"
+              },
+              {
+                name: "Passives",
+                value: "passives"
+              }
+            ]
+          },
           {
             name: "user",
             description: "Find character by user",
@@ -65,7 +81,7 @@ export default new ApplicationCommand(
             interaction.editReply({ content: "Something went wrong..." });
           })
       } break;
-      case "stats": {
+      case "info": {
         await interaction.deferReply({});
 
         const char = await Creature.fetch(interaction.user.id, db, false).catch(() => null);
@@ -77,7 +93,7 @@ export default new ApplicationCommand(
         }
 
         interaction.editReply({
-          embeds: [await char.infoEmbed(Bot)]
+          embeds: [await char.infoEmbed(Bot, interaction.options.getString("page", true))]
         })
       } break;
       case "edit": {

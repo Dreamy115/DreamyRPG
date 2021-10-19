@@ -401,7 +401,7 @@ export default class Creature {
     this.vitalsIntegrity();
   }
 
-  async infoEmbed(Bot: Client): Promise<MessageEmbed> {
+  async infoEmbed(Bot: Client, page: string): Promise<MessageEmbed> {
     const embed = new MessageEmbed();
 
     const owner = await Bot.users.fetch(this.$._id).catch(() => null);
@@ -411,36 +411,74 @@ export default class Creature {
       .setAuthor(this.$.info.npc ? "NPC" : (owner?.tag ?? "Unknown"))
       .setColor("BLUE")
       .setThumbnail(this.$.info.display.avatar ?? "")
-      .addFields([
-        {
-          name: "Vitals",
-          inline: false,
-          value: 
-          `**Health** **${this.$.vitals.health}**/**${this.$.stats.health.value - this.$.vitals.injuries}** (**${Math.round(100 * this.$.vitals.health / this.$.stats.health.value)}%**)  *(**${this.$.stats.health.value}** Health - **${this.$.vitals.injuries}** Injuries)*\n` +
-          (this.$.stats.shield.value > 0 ? `**Shield** ${textStat(this.$.vitals.shield, this.$.stats.shield.value)} **${this.$.stats.shield_regen.value}**/t` : "No **Shield**") + "\n" +
-          `**Mana** ${textStat(this.$.vitals.mana, this.$.stats.mana.value)} **${this.$.stats.mana_regen.value}**/t\n`
-        },
-        {
-          name: "Offense",
-          value: 
-            `**${this.$.stats.accuracy.value}%** Accuracy *(Hit Chance)*\n` +
-            `Melee **${this.$.stats.melee.value}** | **${this.$.stats.ranged.value}** Ranged *(Attack Power)*\n` +
+
+    switch (page) {
+      default:
+      case "stats": {
+        embed.addField(
+          "Basic",
+          `Race - **${SpeciesManager.map.get(this.$.info.species ?? "")?.$.info.name ?? "Unknown"}**\n` +  
+          `Class - **${ClassManager.map.get(this.$.info.class ?? "")?.$.info.name ?? "Unknown"}**`  
+        ).addFields([
+          {
+            name: "Vitals",
+            inline: false,
+            value: 
+            `**Health** **${this.$.vitals.health}**/**${this.$.stats.health.value - this.$.vitals.injuries}** (**${Math.round(100 * this.$.vitals.health / this.$.stats.health.value)}%**)  *(**${this.$.stats.health.value}** Health - **${this.$.vitals.injuries}** Injuries)*\n` +
+            (this.$.stats.shield.value > 0 ? `**Shield** ${textStat(this.$.vitals.shield, this.$.stats.shield.value)} **${this.$.stats.shield_regen.value}**/t` : "No **Shield**") + "\n" +
+            `**Mana** ${textStat(this.$.vitals.mana, this.$.stats.mana.value)} **${this.$.stats.mana_regen.value}**/t\n`
+          },
+          {
+            name: "Offense",
+            value: 
+              `**${this.$.stats.accuracy.value}%** Accuracy *(Hit Chance)*\n` +
+              `Melee **${this.$.stats.melee.value}** | **${this.$.stats.ranged.value}** Ranged *(Attack Power)*\n` +
+              "\n" +
+              `Vamp **${this.$.stats.vamp.value}%** | **${this.$.stats.siphon.value}%** Siphon *(Regenerates **health** | **shields** by **%** of damage dealt when dealing **physical** | **energy** damage)*\n` +
+              "\n" +
+              `**${this.$.stats.tech.value}** Tech *(Ability Power)*` 
+          },
+          {
+            name: "Defense",
+            value:
+            `**${this.$.stats.armor.value}** Armor *(**${Math.round(100 * (1 - reductionMultiplier(this.$.stats.armor.value)))}%** Reduced Physical Damage)*\n` +
+            `**${this.$.stats.filter.value}** Filter *(**${Math.round(100 * (1 - reductionMultiplier(this.$.stats.filter.value)))}%** Reduced Energy Damage)*\n` +
             "\n" +
-            `Vamp **${this.$.stats.vamp.value}%** | **${this.$.stats.siphon.value}%** Siphon *(Regenerates **health** | **shields** by **%** of damage dealt when dealing **physical** | **energy** damage)*\n` +
+            `**${this.$.stats.tenacity.value}** Tenacity *(Taking **${Math.round(100 * reductionMultiplier(this.$.stats.tenacity.value) * DAMAGE_TO_INJURY_RATIO)}%** health damage as **Injuries**)*` +
             "\n" +
-            `**${this.$.stats.tech.value}** Tech *(Ability Power)*` 
-        },
-        {
-          name: "Defense",
-          value:
-          `**${this.$.stats.armor.value}** Armor *(**${Math.round(100 * (1 - reductionMultiplier(this.$.stats.armor.value)))}%** Reduced Physical Damage)*\n` +
-          `**${this.$.stats.filter.value}** Filter *(**${Math.round(100 * (1 - reductionMultiplier(this.$.stats.filter.value)))}%** Reduced Energy Damage)*\n` +
-          "\n" +
-          `**${this.$.stats.tenacity.value}** Tenacity *(Taking **${Math.round(100 * reductionMultiplier(this.$.stats.tenacity.value) * DAMAGE_TO_INJURY_RATIO)}%** health damage as **Injuries**)*` +
-          "\n" +
-          `Parry **${this.$.stats.parry.value}%** | **${this.$.stats.deflect.value}%** Deflect *(Reduces hit chance from **Melee** | **Ranged**)*\n`
-        }
-      ])
+            `Parry **${this.$.stats.parry.value}%** | **${this.$.stats.deflect.value}%** Deflect *(Reduces hit chance from **Melee** | **Ranged**)*\n`
+          }
+        ])
+      } break;
+      case "passives": {
+        const passives = this.findPassives();
+
+        for (var i = 0; i < passives.length && i < 20; i++) {
+          const passive = passives[i];
+
+          embed.addField(
+            `Passive - **${passive.$.info.name}**`,
+            function() {
+              var str = `*${passive.$.info.lore}*`;
+              if ((passive.$.modifiers ?? []).length > 0) {
+                str += `\n- **Modifiers**\n`;
+                for (const mod of passive.$.modifiers ?? []) {
+                  str += `**`;
+                  switch (mod.type) {
+                    case ModifierType.MULTIPLY: str += `${mod.value}x`; break;
+                    case ModifierType.ADD_PERCENT: str += `${Math.round(mod.value * 1000) / 10}%`; break;
+                    case ModifierType.CAP_MAX: str += `${mod.value}^`; break;
+                    case ModifierType.ADD_PERCENT: str += `${mod.value >= 0 ? "+" : "-"}${Math.abs(mod.value)}`; break;
+                  }
+                  str += `** ${mod.stat.substr(0, 1).toUpperCase().concat(mod.stat.substr(1).toLowerCase())}\n`;
+                }
+              }
+              return str;
+            }()
+          )  
+        }    
+      } break;
+    }
 
     return embed;
   }

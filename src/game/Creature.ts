@@ -365,8 +365,8 @@ export default class Creature {
       passive.$.afterDamageTaken?.(this);
     }
     if (group.attacker instanceof Creature) {
-      group.attacker.heal(Math.round(log.total_physical_damage * group.attacker.$.stats.vamp.value / 100), "health");
-      group.attacker.heal(Math.round(log.total_energy_damage * group.attacker.$.stats.siphon.value / 100), "shield");
+      group.attacker.heal(Math.round(log.total_physical_damage * group.attacker.$.stats.vamp.value / 100), HealType.Health);
+      group.attacker.heal(Math.round(log.total_energy_damage * group.attacker.$.stats.siphon.value / 100), HealType.Shield);
 
       for (const passive of group.attacker.findPassives()) {
         passive.$.afterDamageGiven?.(group.attacker);
@@ -378,22 +378,22 @@ export default class Creature {
     return log;
   }
 
-  heal(amount: number, type: "health" | "shield" | "overheal" | "mana" | "injuries" = "overheal") {
+  heal(amount: number, type: HealType) {
     switch (type) {
-      case "health": {
+      case HealType.Health: {
         this.$.vitals.health += amount;
       } break;
-      case "shield": {
+      case HealType.Shield: {
         this.$.vitals.shield += amount;
       } break;
-      case "overheal": {
+      case HealType.Overheal: {
         this.$.vitals.health += amount;
         this.$.vitals.shield += Math.max(this.$.vitals.health - this.$.stats.health.value, 0);
       } break;
-      case "mana": {
+      case HealType.Mana: {
         this.$.vitals.mana += amount;
       } break;
-      case "injuries": {
+      case HealType.Injuries: {
         this.$.vitals.injuries -= amount;
       } break;
     }
@@ -562,4 +562,8 @@ export interface CreatureDump {
     backpack?: string[]
     equipped?: string[]
   }
+}
+
+export enum HealType {
+  "Health", "Shield", "Overheal", "Mana", "Injuries"
 }

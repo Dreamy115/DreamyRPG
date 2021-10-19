@@ -27,19 +27,22 @@ export default class Creature {
         npc: data.info?.npc ?? false,
       },
       stats: {
-        armor: new TrackableStat(0),
-        filter: new TrackableStat(0),
-        melee: new TrackableStat(0),
-        ranged: new TrackableStat(0),
+        accuracy: new TrackableStat(80),
+        armor: new TrackableStat(24),
+        filter: new TrackableStat(16),
+        melee: new TrackableStat(12),
+        ranged: new TrackableStat(12),
         health: new TrackableStat(100),
         mana: new TrackableStat(12),
         mana_regen: new TrackableStat(7),
         shield: new TrackableStat(0),
         shield_regen: new TrackableStat(0),
-        parry: new TrackableStat(0),
-        deflect: new TrackableStat(0),
+        parry: new TrackableStat(5),
+        deflect: new TrackableStat(2),
         tenacity: new TrackableStat(42),
-        tech: new TrackableStat(0)
+        tech: new TrackableStat(0),
+        vamp: new TrackableStat(0),
+        siphon: new TrackableStat(0)
       },
       vitals: {
         health: (data.vitals?.health ?? 1),
@@ -53,6 +56,17 @@ export default class Creature {
         primary_weapon: data.items?.primary_weapon ?? null
       }
     }
+
+    // CAPPING
+    this.$.stats.vamp.modifiers.push({
+      type: ModifierType.CAP_MAX,
+      value: 80
+    });
+    this.$.stats.siphon.modifiers.push({
+      type: ModifierType.CAP_MAX,
+      value: 80
+    });
+    //
 
     this.checkItemConflicts();
 
@@ -92,10 +106,10 @@ export default class Creature {
   }
 
   vitalsIntegrity() {
-    this.$.vitals.injuries = Math.min(Math.max(0, this.$.vitals.injuries), this.$.stats.health.value);
-    this.$.vitals.health = Math.min(Math.max(0, this.$.vitals.health), this.$.stats.health.value - this.$.vitals.injuries);
-    this.$.vitals.mana = Math.min(Math.max(0, this.$.vitals.mana), this.$.stats.mana.value);
-    this.$.vitals.shield = Math.min(Math.max(0, this.$.vitals.shield), this.$.stats.shield.value);
+    this.$.vitals.injuries = Math.round(Math.min(Math.max(0, this.$.vitals.injuries), this.$.stats.health.value));
+    this.$.vitals.health = Math.round(Math.min(Math.max(0, this.$.vitals.health), this.$.stats.health.value - this.$.vitals.injuries));
+    this.$.vitals.mana = Math.round(Math.min(Math.max(0, this.$.vitals.mana), this.$.stats.mana.value));
+    this.$.vitals.shield = Math.round(Math.min(Math.max(0, this.$.vitals.shield), this.$.stats.shield.value));
   }
 
   checkItemConflicts() {
@@ -353,6 +367,8 @@ export default class Creature {
       }
     }
 
+    this.vitalsIntegrity();
+
     return log;
   }
 
@@ -377,17 +393,24 @@ export default class Creature {
           `**Mana** ${textStat(this.$.vitals.mana, this.$.stats.mana.value)} **${this.$.stats.mana_regen.value}**/t\n`
         },
         {
-          name: "Stats",
+          name: "Offense",
           value: 
-            `Melee **${this.$.stats.melee.value}** | **${this.$.stats.ranged.value}** Ranged\n\n` +
-            `**${this.$.stats.armor.value}** Armor (**${Math.round(100 * (1 - reductionMultiplier(this.$.stats.armor.value)))}%** Reduced Physical Damage)\n` +
-            `**${this.$.stats.filter.value}** Filter (**${Math.round(100 * (1 - reductionMultiplier(this.$.stats.filter.value)))}%** Reduced Energy Damage)\n` +
+            `**${this.$.stats.accuracy.value}%** Accuracy\n` +
+            `Melee **${this.$.stats.melee.value}** | **${this.$.stats.ranged.value}** Ranged\n` +
             "\n" +
-            `**${this.$.stats.tenacity.value}** Tenacity\n (Taking **${Math.round(100 * reductionMultiplier(this.$.stats.tenacity.value) * DAMAGE_TO_INJURY_RATIO)}%** health damage as **Injuries**)` +
+            `Vamp **${this.$.stats.vamp.value}%** | **${this.$.stats.siphon.value}%** Siphon *(Regenerates **health** | **shields** by **%** of damage dealt when dealing **physical** | **energy** damage)*\n` +
             "\n" +
-            `Parry **${this.$.stats.parry.value}** | **${this.$.stats.deflect.value}** Deflect\n(Reduces hit chance from Melee and Ranged)\n` +
-            "\n" +
-            `**${this.$.stats.tech.value}** Tech (Ability Power)` 
+            `**${this.$.stats.tech.value}** Tech *(Ability Power)*` 
+        },
+        {
+          name: "Defense",
+          value:
+          `**${this.$.stats.armor.value}** Armor *(**${Math.round(100 * (1 - reductionMultiplier(this.$.stats.armor.value)))}%** Reduced Physical Damage)*\n` +
+          `**${this.$.stats.filter.value}** Filter *(**${Math.round(100 * (1 - reductionMultiplier(this.$.stats.filter.value)))}%** Reduced Energy Damage)*\n` +
+          "\n" +
+          `**${this.$.stats.tenacity.value}** Tenacity *(Taking **${Math.round(100 * reductionMultiplier(this.$.stats.tenacity.value) * DAMAGE_TO_INJURY_RATIO)}%** health damage as **Injuries**)*` +
+          "\n" +
+          `Parry **${this.$.stats.parry.value}%** | **${this.$.stats.deflect.value}%** Deflect *(Reduces hit chance from Melee and Ranged)*\n`
         }
       ])
 
@@ -457,6 +480,7 @@ export interface CreatureData {
     npc: boolean
   }
   stats: {
+    accuracy: TrackableStat
     armor: TrackableStat
     filter: TrackableStat
     melee: TrackableStat
@@ -470,6 +494,8 @@ export interface CreatureData {
     deflect: TrackableStat
     tenacity: TrackableStat
     tech: TrackableStat
+    vamp: TrackableStat
+    siphon: TrackableStat
   }
   vitals: {
     health: number

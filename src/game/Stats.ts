@@ -26,7 +26,7 @@ export class TrackableStat {
       }
     }
 
-    return value;
+    return Math.round(value);
   }
 
   constructor(base: TrackableStat["base"], modifiers: TrackableStat["modifiers"] = []) {

@@ -1,3 +1,4 @@
+import { MessageEmbed } from "discord.js";
 import Creature from "./Creature";
 
 export enum DamageType {
@@ -24,6 +25,7 @@ export interface DamageGroup {
   chance: number
   useDodge: boolean
   shieldReaction: ShieldReaction
+  cause: DamageCause
 }
 
 export interface DamageLog {
@@ -43,6 +45,12 @@ export interface DamageLog {
   total_damage_taken: number
 }
 
+export enum DamageCause {
+  "Other" = -1,
+  "Light_Attack", "Normal_Attack", "Critical_Attack",
+  "Ability", "DoT"
+}
+
 export enum ShieldReaction {
   "Normal", "Ignore", "Only"
 }
@@ -50,4 +58,49 @@ export enum ShieldReaction {
 export const DAMAGE_TO_INJURY_RATIO = 0.5;
 export function reductionMultiplier(protection: number): number {
   return 100 / (100 + Math.max(0, protection));
+}
+
+export function damageLogEmbed(log: DamageLog) {
+  const embed = new MessageEmbed();
+
+  embed
+    .setTitle("Damage Log")
+    .setAuthor(`${log.final.attacker instanceof Creature ? log.final.attacker.$.info.display.name : (log.final.attacker ?? "Unknown")} >>> ${(log.final.victim?.$.info.display.name ?? "Unknown")}`)
+    .setColor("RED")
+    .addField(
+      "Before",
+      damageGroupString(log.original),
+      true
+    );
+  
+  if (log.successful) {
+    embed.addField(
+      "After",
+      damageGroupString(log.final),
+      true
+    )
+  } else {
+    embed.addField(
+      "Failed",
+      "-",
+      true
+    )
+  }
+ 
+  return embed;
+}
+
+function damageGroupString(group: DamageGroup) {
+  return `**${group.chance}%** Chance\n**${DamageMedium[group.medium]} ${DamageCause[group.cause]}**, Shield reaction: **${ShieldReaction[group.shieldReaction]}**\n` +
+  `*${!group.useDodge ? "Not " : ""}Dodgeable*\n` +
+  `Lethality **${group.penetration.lethality}** | **${group.penetration.defiltering}** Defiltering\n\n` +
+  `**Sources**\n` +
+  `${function() {
+    var str = "";
+    for (const source of group.sources) {
+      str += `[**${source.value} ${DamageType[source.type]}**]\n`
+    }
+
+    return str.trim();;
+  }()}`
 }

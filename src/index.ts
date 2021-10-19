@@ -52,7 +52,8 @@ export const PassivesManager = new PassiveEffectManager();
 
 const Bot = new Client({
   intents: [
-    Intents.FLAGS.GUILD_MESSAGES
+    Intents.FLAGS.GUILD_MESSAGES,
+    Intents.FLAGS.GUILD_MEMBERS
   ]
 });
 
@@ -71,6 +72,7 @@ Bot.on("ready", async () => {
   }
 
   const guild = await Bot.guilds.fetch(CONFIG.guild?.id ?? "");
+await guild.roles.fetch();
   guild.commands.set(commandData).then(() => console.log(`Commands uploaded to ${guild.id}`)).catch(() => console.error("Failed uploading commands"));
 
   // Loading Game Stuff

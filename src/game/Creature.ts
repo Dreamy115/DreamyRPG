@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import NodeCache from "node-cache";
 import { ClassManager, ItemManager, PassivesManager, SpeciesManager } from "../index.js";
 import { DamageGroup, DamageLog, DamageMedium, DamageType, DAMAGE_TO_INJURY_RATIO, reductionMultiplier, ShieldReaction } from "./Damage.js";
-import { Item } from "./Items.js";
+import { AttackData, AttackSet, Item } from "./Items.js";
 import { PassiveEffect, PassiveModifier } from "./PassiveEffects.js";
 import { ModifierType, textStat, TrackableStat } from "./Stats.js";
 
@@ -105,6 +105,60 @@ export default class Creature {
     }
   }
 
+  get defaultAttackSet(): AttackSet {
+    return {
+      normal: {
+        modifiers: {
+          accuracy: 0,
+          defiltering: 0,
+          lethality: 0
+        },
+        sources: [{
+          type: DamageType.Physical,
+          flat_bonus: 1,
+          from_skill: 1
+        }],
+        type: DamageMedium.Melee
+      },
+      crit: {
+        modifiers: {
+          accuracy: 0,
+          defiltering: 0,
+          lethality: 0
+        },
+        sources: [{
+          type: DamageType.Physical,
+          flat_bonus: 2,
+          from_skill: 1.4
+        }],
+        type: DamageMedium.Melee
+      },
+      weak: {
+        modifiers: {
+          accuracy: 0,
+          defiltering: 0,
+          lethality: 0
+        },
+        sources: [{
+          type: DamageType.Physical,
+          flat_bonus: 0,
+          from_skill: 0.6
+        }],
+        type: DamageMedium.Melee
+      }
+    }
+  }
+  get attackSet(): AttackSet {
+    if (!this.$.items.primary_weapon)
+      return this.defaultAttackSet;
+    
+    const weapon = ItemManager.map.get(this.$.items.primary_weapon);
+    if (weapon?.$.type !== "weapon")
+      return this.defaultAttackSet;
+    
+    return weapon.$.attack ?? this.defaultAttackSet;
+  }
+
   vitalsIntegrity() {
     this.$.vitals.injuries = Math.round(Math.min(Math.max(0, this.$.vitals.injuries), this.$.stats.health.value));
     this.$.vitals.health = Math.round(Math.min(Math.max(0, this.$.vitals.health), this.$.stats.health.value - this.$.vitals.injuries));
@@ -121,6 +175,11 @@ export default class Creature {
     let hasSkinClothing = false;
 
     const uniques: string[] = [];
+    if (this.$.items.primary_weapon && ItemManager.map.get(this.$.items.primary_weapon)?.$.type !== "weapon") {
+      this.$.items.backpack.push(this.$.items.primary_weapon);
+      this.$.items.primary_weapon = null;
+    }
+
     for (var i = 0; i < this.$.items.equipped.length; i++) {
       const item = ItemManager.map.get(this.$.items.equipped[i]);
       if (!item) continue;
@@ -478,6 +537,43 @@ export default class Creature {
           )  
         }    
       } break;
+      case "attack": {
+        function attackInfo(creature: Creature, attackdata: AttackData) {
+          return `${attackdata.type === DamageMedium.Melee ? "Melee" : "Ranged"}
+          Sources:
+          ${function () {
+            var str = "";
+
+            for (const source of attackdata.sources) {
+              str += `[**${Math.round(source.flat_bonus + (source.from_skill * (attackdata.type === DamageMedium.Melee ? creature.$.stats.melee.value : creature.$.stats.ranged.value)))} *(${source.flat_bonus} + ${Math.round(100 * source.from_skill) / 100}x)* ${DamageType[source.type]}**]\n`
+            }
+
+            return str;
+          }()}
+          **${attackdata.modifiers.accuracy + creature.$.stats.accuracy.value} *(${creature.$.stats.accuracy.value} ${attackdata.modifiers.accuracy >= 0 ? "+" : "-"}${Math.abs(attackdata.modifiers.accuracy)})*** Accuracy
+          **${attackdata.modifiers.lethality}** Lethality
+          **${attackdata.modifiers.defiltering}** Defiltering`;
+        }
+
+        const attack = this.attackSet;
+        embed.addFields([
+          {
+            name: "Crit",
+            value: attackInfo(this, attack.crit),
+            inline: true
+          },
+          {
+            name: "Normal",
+            value: attackInfo(this, attack.normal),
+            inline: true
+          },
+          {
+            name: "Weak",
+            value: attackInfo(this, attack.weak),
+            inline: true
+          }
+        ])
+      }
     }
 
     return embed;

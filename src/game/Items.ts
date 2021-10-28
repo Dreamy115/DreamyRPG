@@ -4,6 +4,7 @@ import path from "path";
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { PassiveEffect, PassiveModifier } from "./PassiveEffects";
+import { DamageGroup, DamageMedium, DamageSource, DamageType } from "./Damage";
 
 export default class ItemsManager {
   map = new Map<string, Item>();
@@ -44,9 +45,29 @@ export class Item {
 
     passives?: (PassiveEffect | string)[]
     abilities?: string[]
+    attack?: AttackSet
   }
 
   constructor(data: Item["$"]) {
     this.$ = data;
   }
+}
+
+export interface AttackSet {
+  crit: AttackData
+  normal: AttackData
+  weak: AttackData
+}
+export interface AttackData {
+  modifiers: {
+    lethality: number
+    defiltering: number
+    accuracy: number
+  }
+  type: DamageMedium
+  sources: {
+    type: DamageType
+    from_skill: number
+    flat_bonus: number
+  }[]
 }

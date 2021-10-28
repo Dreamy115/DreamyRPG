@@ -31,6 +31,10 @@ export default new ApplicationCommand(
               {
                 name: "Passives",
                 value: "passives"
+              },
+              {
+                name: "Attack",
+                value: "attack"
               }
             ]
           },

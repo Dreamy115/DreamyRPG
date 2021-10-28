@@ -1,5 +1,5 @@
-import { MessageActionRow, MessageButton } from "discord.js";
-import { CONFIG, messageInput } from "../..";
+import { MessageActionRow, MessageButton, MessageSelectMenu, MessageSelectOptionData } from "discord.js";
+import { ClassManager, CONFIG, messageInput, SpeciesManager } from "../..";
 import Creature, { HealType } from "../../game/Creature";
 import { DamageCause, DamageGroup, damageLogEmbed, DamageMedium, DamageType, ShieldReaction } from "../../game/Damage";
 import { ComponentCommand } from "../component_commands";
@@ -58,7 +58,7 @@ export default new ComponentCommand(
       case "edit": {
         await interaction.deferReply({ ephemeral: true });
 
-        const creature = await Creature.fetch(creature_id, db).catch(() => null);
+        let creature = await Creature.fetch(creature_id, db).catch(() => null);
         if (!creature) {
           interaction.editReply({
             content: "Invalid character"
@@ -104,6 +104,22 @@ export default new ComponentCommand(
             }
 
             creature.$.info.display.avatar = input; 
+          } break;
+          case "species": {
+            if (!interaction.isSelectMenu()) return;
+
+            let dump = creature.dump();
+            // @ts-expect-error
+            dump.info.species = interaction.values[0];
+            creature = new Creature(dump);
+          } break;
+          case "class": {
+            if (!interaction.isSelectMenu()) return;
+
+            let dump = creature.dump();
+            // @ts-expect-error
+            dump.info.class = interaction.values[0];
+            creature = new Creature(dump);
           } break;
           case "gm": {
             if (!IS_GM) {
@@ -224,6 +240,42 @@ export function ceditMenu(creature_id: string): MessageActionRow[] {
         .setCustomId(`cedit/${creature_id}/edit/avatar`)
         .setStyle("SECONDARY")
         .setLabel("Change Avatar")
+    ]),
+    new MessageActionRow().addComponents([
+      new MessageSelectMenu()
+        .setCustomId(`cedit/${creature_id}/edit/species`)
+        .setPlaceholder("Change Species")
+        .addOptions(function() {
+        const array: MessageSelectOptionData[] = [];
+
+        for (const species of SpeciesManager.map.values()) {
+          array.push({
+            label: species.$.info.name,
+            value: species.$.id,
+            description: species.$.info.lore
+          })
+        }
+
+        return array;
+      }())
+    ]),
+    new MessageActionRow().addComponents([
+      new MessageSelectMenu()
+        .setCustomId(`cedit/${creature_id}/edit/class`)
+        .setPlaceholder("Change Class")
+        .addOptions(function() {
+        const array: MessageSelectOptionData[] = [];
+
+        for (const itemclass of ClassManager.map.values()) {
+          array.push({
+            label: itemclass.$.info.name,
+            value: itemclass.$.id,
+            description: itemclass.$.info.lore
+          })
+        }
+
+        return array;
+      }())
     ]),
     new MessageActionRow().addComponents([
       new MessageButton()

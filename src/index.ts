@@ -92,7 +92,13 @@ await guild.roles.fetch();
 
       const executionId = SnowflakeUtil.generate();
 
-      console.log(`/${interaction.commandName} @${interaction.user.id}`);
+      console.log(`/${interaction.commandName} ${function() {
+        var str = "";
+        for (const v of Array.from(interaction.options.data.values())) {
+          str += `${v.name} `
+        }
+        return str.trim();
+      }()} @${interaction.user.id}`);
 
       console.time(`cmd-${executionId}`);
       await command.run(interaction, Bot, await db);
@@ -127,7 +133,6 @@ await guild.roles.fetch();
 
 Bot.login(CONFIG.client.token);
 
-
 export async function messageInput(channel: TextBasedChannels, userid: Snowflake, time = 10000) {
   const input = await channel.awaitMessages({
     errors: ["time"],
@@ -142,4 +147,10 @@ export async function messageInput(channel: TextBasedChannels, userid: Snowflake
 
   input.delete();
   return input.content;
+}
+export function capitalize(str: string): string {
+  const array = str.split(/ +/g);
+  array.forEach((v, i, a) => a[i] = v.substr(0, 1).toUpperCase().concat(v.substr(1)));
+
+  return array.join(" ");
 }

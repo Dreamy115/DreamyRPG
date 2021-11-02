@@ -35,14 +35,14 @@ export default [
         },
         modifiers: [
           {
-            stat: "health",
+            stat: "armor",
             type: ModifierType.MULTIPLY,
             value: 1.2
           },
           {
             stat: "tenacity",
             type: ModifierType.ADD_PERCENT,
-            value: 0.1
+            value: 0.15
           },
           {
             stat: "tech",
@@ -70,11 +70,11 @@ export default [
       new PassiveEffect({
         info: {
           name: "Inherent Base",
-          lore: "**90%** Health base, **20** Armor, **20** Filter, **75%** Melee Base, **135%** Ranged Base, **9** Tech"
+          lore: "**95%** Health base, **18** Armor, **20** Filter, **75%** Melee Base, **135%** Ranged Base, **9** Tech"
         },
         preload: function (creature) {
-          creature.$.stats.health.base *= 0.9;
-          creature.$.stats.armor.base = 20;
+          creature.$.stats.health.base *= 0.95;
+          creature.$.stats.armor.base = 16;
           creature.$.stats.filter.base = 20;
           creature.$.stats.melee.base *= 0.75;
           creature.$.stats.ranged.base *= 1.35;
@@ -90,17 +90,27 @@ export default [
           {
             stat: "health",
             type: ModifierType.MULTIPLY,
-            value: 0.9
+            value: 0.85
+          },
+          {
+            stat: "accuracy",
+            type: ModifierType.MULTIPLY,
+            value: 1.125
           },
           {
             stat: "deflect",
             type: ModifierType.MULTIPLY,
-            value: 1.2
+            value: 1.25
           },
           {
             stat: "parry",
             type: ModifierType.MULTIPLY,
-            value: 1.15
+            value: 1.1
+          },
+          {
+            stat: "shield_regen",
+            type: ModifierType.MULTIPLY,
+            value: 1.2
           }
         ]
       })

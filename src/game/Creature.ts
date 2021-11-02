@@ -1,7 +1,7 @@
 import { Client, MessageEmbed } from "discord.js";
 import mongoose from "mongoose";
 import NodeCache from "node-cache";
-import { ClassManager, ItemManager, PassivesManager, SpeciesManager } from "../index.js";
+import { capitalize, ClassManager, ItemManager, PassivesManager, SpeciesManager } from "../index.js";
 import { DamageGroup, DamageLog, DamageMedium, DamageType, DAMAGE_TO_INJURY_RATIO, reductionMultiplier, ShieldReaction } from "./Damage.js";
 import { AttackData, AttackSet, Item } from "./Items.js";
 import { PassiveEffect, PassiveModifier } from "./PassiveEffects.js";
@@ -27,7 +27,7 @@ export default class Creature {
         npc: data.info?.npc ?? false,
       },
       stats: {
-        accuracy: new TrackableStat(80),
+        accuracy: new TrackableStat(85),
         armor: new TrackableStat(24),
         filter: new TrackableStat(16),
         melee: new TrackableStat(12),
@@ -54,7 +54,8 @@ export default class Creature {
         equipped: data.items?.equipped ?? [],
         backpack: data.items?.backpack ?? [],
         primary_weapon: data.items?.primary_weapon ?? null
-      }
+      },
+      vars: data.vars ?? {}
     }
 
     // CAPPING
@@ -115,8 +116,8 @@ export default class Creature {
         },
         sources: [{
           type: DamageType.Physical,
-          flat_bonus: 1,
-          from_skill: 1
+          flat_bonus: 7,
+          from_skill: 0.5
         }],
         type: DamageMedium.Melee
       },
@@ -128,8 +129,8 @@ export default class Creature {
         },
         sources: [{
           type: DamageType.Physical,
-          flat_bonus: 2,
-          from_skill: 1.4
+          flat_bonus: 8,
+          from_skill: 1
         }],
         type: DamageMedium.Melee
       },
@@ -141,8 +142,8 @@ export default class Creature {
         },
         sources: [{
           type: DamageType.Physical,
-          flat_bonus: 0,
-          from_skill: 0.6
+          flat_bonus: 3,
+          from_skill: 0.3
         }],
         type: DamageMedium.Melee
       }
@@ -525,11 +526,11 @@ export default class Creature {
                   str += `**`;
                   switch (mod.type) {
                     case ModifierType.MULTIPLY: str += `${mod.value}x`; break;
-                    case ModifierType.ADD_PERCENT: str += `${Math.round(mod.value * 1000) / 10}%`; break;
+                    case ModifierType.ADD_PERCENT: str += `${mod.value >= 0 ? "+" : "-"}${Math.round(Math.abs(mod.value) * 1000) / 10}%`; break;
                     case ModifierType.CAP_MAX: str += `${mod.value}^`; break;
                     case ModifierType.ADD_PERCENT: str += `${mod.value >= 0 ? "+" : "-"}${Math.abs(mod.value)}`; break;
                   }
-                  str += `** ${mod.stat.substr(0, 1).toUpperCase().concat(mod.stat.substr(1).toLowerCase())}\n`;
+                  str += `** ${capitalize(mod.stat.replaceAll(/_/g, " "))}\n`;
                 }
               }
               return str;
@@ -590,7 +591,8 @@ export default class Creature {
         mana: this.$.vitals.mana / this.$.stats.mana.value,
         shield: this.$.vitals.shield / this.$.stats.shield.value
       },
-      items: this.$.items
+      items: this.$.items,
+      vars: this.$.vars
     }
 
     return dump;
@@ -670,6 +672,7 @@ export interface CreatureData {
     backpack: string[]
     equipped: string[]
   }
+  vars: {[key: string]: number}
 }
 /**
  * Data kept in database
@@ -696,6 +699,7 @@ export interface CreatureDump {
     backpack?: string[]
     equipped?: string[]
   }
+  vars?: {[key: string]: number}
 }
 
 export enum HealType {

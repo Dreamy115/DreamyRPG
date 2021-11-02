@@ -35,7 +35,7 @@ export default new ComponentCommand(
     } 
 
     // @ts-expect-error
-    const channel = await interaction.guild?.channels.fetch(interaction.message.channel_id).catch(() => null);
+    const channel = interaction.message.channel ?? await interaction.guild?.channels.fetch(interaction.message.channel_id ?? interaction.message.channelId).catch(() => null);
     if (!channel?.isText?.()) throw new Error("Invalid channel");
 
     switch(args.shift()) {
@@ -90,8 +90,6 @@ export default new ComponentCommand(
               content: "Please input the avatar URL in chat. Use `#` to cancel or wait."
             });
 
-            // @ts-expect-error
-            const channel = await interaction.guild?.channels.fetch(interaction.message.channel_id).catch(() => null);
             if (!channel?.isText()) throw new Error("Invalid channel");
 
             const input = await messageInput(channel, interaction.user.id);

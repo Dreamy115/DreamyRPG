@@ -34,24 +34,32 @@ export default class ItemsManager {
 }
 
 export class Item {
-  $: {
-    id?: string
-    info: {
-      name: string
-      lore: string
-    }
-    unique?: string[]
-    type: "weapon" | "utility" | "wearable_outer" | "wearable_inner" | "wearable_skin"
-
-    passives?: (PassiveEffect | string)[]
-    abilities?: string[]
-    attack?: AttackSet
-  }
-
+  $: WearableItemData | WeaponItemData
   constructor(data: Item["$"]) {
     this.$ = data;
   }
 }
+
+export interface BaseItemData {
+  id?: string
+  info: {
+    name: string
+    lore: string
+  }
+  unique?: string[]
+}
+export interface WearableItemData extends BaseItemData {
+  type: "utility" | "wearable_outer" | "wearable_inner" | "wearable_skin"
+  passives?: (PassiveEffect | string)[]
+  abilities?: string[]
+}
+export interface WeaponItemData extends BaseItemData {
+  type: "weapon"
+  passives?: (PassiveEffect | string)[]
+  abilities?: string[]
+  attack?: AttackSet
+}
+
 
 export interface AttackSet {
   crit: AttackData

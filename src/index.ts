@@ -14,6 +14,7 @@ import PassiveEffectManager from "./game/PassiveEffects.js";
 import { DAMAGE_TO_INJURY_RATIO, reductionMultiplier } from "./game/Damage.js";
 import ItemsManager from "./game/Items.js";
 import CreatureClassManager from "./game/Classes.js";
+import CreatureAbilitiesManager from "./game/CreatureAbilities.js";
 
 process.on("uncaughtException", (e) => {
   console.error(e);
@@ -48,6 +49,7 @@ export const ItemManager = new ItemsManager();
 export const ClassManager = new CreatureClassManager();
 export const SpeciesManager = new CreatureSpeciesManager();
 export const PassivesManager = new PassiveEffectManager();
+export const AbilitiesManager = new CreatureAbilitiesManager();
 ///
 
 const Bot = new Client({
@@ -72,7 +74,7 @@ Bot.on("ready", async () => {
   }
 
   const guild = await Bot.guilds.fetch(CONFIG.guild?.id ?? "");
-await guild.roles.fetch();
+  await guild.roles.fetch();
   guild.commands.set(commandData).then(() => console.log(`Commands uploaded to ${guild.id}`)).catch(() => console.error("Failed uploading commands"));
 
   // Loading Game Stuff
@@ -80,6 +82,7 @@ await guild.roles.fetch();
   ClassManager.load(path.join(__dirname, "game/classes"));
   PassivesManager.load(path.join(__dirname, "game/passives"));
   SpeciesManager.load(path.join(__dirname, "game/species"));
+  AbilitiesManager.load(path.join(__dirname, "game/abilities"));
 
   // Listeners
   Bot.on("interactionCreate", async (interaction) => {

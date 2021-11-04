@@ -49,7 +49,8 @@ export interface BaseItemData {
   unique?: string[]
 }
 export interface WearableItemData extends BaseItemData {
-  type: "utility" | "wearable_outer" | "wearable_inner" | "wearable_skin"
+  type: "clothing"
+  subtype: "utility" | "outer_layer" | "inner_layer"
   passives?: (PassiveEffect | string)[]
   abilities?: string[]
 }
@@ -57,14 +58,14 @@ export interface WeaponItemData extends BaseItemData {
   type: "weapon"
   passives?: (PassiveEffect | string)[]
   abilities?: string[]
-  attack?: AttackSet
+  attack: AttackSet
 }
 
 
 export interface AttackSet {
-  crit: AttackData
-  normal: AttackData
-  weak: AttackData
+  crit: AttackData[]
+  normal: AttackData[]
+  weak: AttackData[]
 }
 export interface AttackData {
   modifiers: {

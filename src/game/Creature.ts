@@ -22,6 +22,7 @@ export default class Creature {
           name: data.info?.display?.name ?? "Unnamed",
           avatar: data.info?.display?.avatar ?? null
         },
+        locked: false,
         species: data.info?.species ?? "default",
         class: data.info?.class ?? "default",
         npc: data.info?.npc ?? false,
@@ -108,7 +109,7 @@ export default class Creature {
 
   get defaultAttackSet(): AttackSet {
     return {
-      normal: {
+      normal: [{
         modifiers: {
           accuracy: 0,
           defiltering: 0,
@@ -120,8 +121,8 @@ export default class Creature {
           from_skill: 0.5
         }],
         type: DamageMedium.Melee
-      },
-      crit: {
+      }],
+      crit: [{
         modifiers: {
           accuracy: 0,
           defiltering: 0,
@@ -130,11 +131,11 @@ export default class Creature {
         sources: [{
           type: DamageType.Physical,
           flat_bonus: 8,
-          from_skill: 1
+          from_skill: 0.75
         }],
         type: DamageMedium.Melee
-      },
-      weak: {
+      }],
+      weak: [{
         modifiers: {
           accuracy: 0,
           defiltering: 0,
@@ -146,7 +147,7 @@ export default class Creature {
           from_skill: 0.3
         }],
         type: DamageMedium.Melee
-      }
+      }]
     }
   }
   get attackSet(): AttackSet {
@@ -171,9 +172,8 @@ export default class Creature {
     let utilAmount = 0;
     let weaponAmount = 0;
 
-    let hasOuterClothing = false;
     let hasInnerClothing = false;
-    let hasSkinClothing = false;
+    let hasOuterClothing = false;
 
     const uniques: string[] = [];
     if (this.$.items.primary_weapon && ItemManager.map.get(this.$.items.primary_weapon)?.$.type !== "weapon") {
@@ -196,32 +196,30 @@ export default class Creature {
         }
 
       switch (item.$.type) {
-        case "utility": {
-          if (utilAmount >= Creature.MAX_EQUIPPED_UTILITY) {
-            this.$.items.backpack.push(this.$.items.equipped.splice(i, 1)[0]);
-            i--;
+        case "clothing": {
+          switch (item.$.subtype) {
+            case "inner_layer": {
+              if (hasInnerClothing) {
+                this.$.items.backpack.push(this.$.items.equipped.splice(i, 1)[0]);
+                i--;
+              }
+            } break;
+            case "outer_layer": {
+              if (hasOuterClothing) {
+                this.$.items.backpack.push(this.$.items.equipped.splice(i, 1)[0]);
+                i--;
+              }
+            } break;
+            case "utility": {
+              if (utilAmount >= Creature.MAX_EQUIPPED_UTILITY) {
+                this.$.items.backpack.push(this.$.items.equipped.splice(i, 1)[0]);
+                i--;
+              }
+            }
           }
         } break;
         case "weapon": {
           if (weaponAmount >= Creature.MAX_EQUIPPED_WEAPONS) {
-            this.$.items.backpack.push(this.$.items.equipped.splice(i, 1)[0]);
-            i--;
-          }
-        } break;
-        case "wearable_outer": {
-          if (hasOuterClothing) {
-            this.$.items.backpack.push(this.$.items.equipped.splice(i, 1)[0]);
-            i--;
-          }
-        } break;
-        case "wearable_inner": {
-          if (hasInnerClothing) {
-            this.$.items.backpack.push(this.$.items.equipped.splice(i, 1)[0]);
-            i--;
-          }
-        } break;
-        case "wearable_skin": {
-          if (hasSkinClothing) {
             this.$.items.backpack.push(this.$.items.equipped.splice(i, 1)[0]);
             i--;
           }
@@ -539,21 +537,27 @@ export default class Creature {
         }    
       } break;
       case "attack": {
-        function attackInfo(creature: Creature, attackdata: AttackData) {
-          return `${attackdata.type === DamageMedium.Melee ? "Melee" : "Ranged"}
-          Sources:
-          ${function () {
-            var str = "";
+        function attackInfo(creature: Creature, attacks: AttackData[]) {
+          var str = "";
 
-            for (const source of attackdata.sources) {
-              str += `[**${Math.round(source.flat_bonus + (source.from_skill * (attackdata.type === DamageMedium.Melee ? creature.$.stats.melee.value : creature.$.stats.ranged.value)))} *(${source.flat_bonus} + ${Math.round(100 * source.from_skill) / 100}x)* ${DamageType[source.type]}**]\n`
-            }
+          for (const attackdata of attacks) {
+            str += `- ${attackdata.type === DamageMedium.Melee ? "Melee" : "Ranged"}
+            Sources:
+            ${function () {
+              var str = "";
 
-            return str;
-          }()}
-          **${attackdata.modifiers.accuracy + creature.$.stats.accuracy.value} *(${creature.$.stats.accuracy.value} ${attackdata.modifiers.accuracy >= 0 ? "+" : "-"}${Math.abs(attackdata.modifiers.accuracy)})*** Accuracy
-          **${attackdata.modifiers.lethality}** Lethality
-          **${attackdata.modifiers.defiltering}** Defiltering`;
+              for (const source of attackdata.sources) {
+                str += `[**${Math.round(source.flat_bonus + (source.from_skill * (attackdata.type === DamageMedium.Melee ? creature.$.stats.melee.value : creature.$.stats.ranged.value)))} *(${source.flat_bonus} + ${Math.round(100 * source.from_skill) / 100}x)* ${DamageType[source.type]}**]\n`
+              }
+
+              return str;
+            }()}
+            **${attackdata.modifiers.accuracy + creature.$.stats.accuracy.value} *(${creature.$.stats.accuracy.value} ${attackdata.modifiers.accuracy >= 0 ? "+" : "-"}${Math.abs(attackdata.modifiers.accuracy)})*** Accuracy
+            **${attackdata.modifiers.lethality}** Lethality
+            **${attackdata.modifiers.defiltering}** Defiltering`;
+          }
+
+          return str;
         }
 
         const attack = this.attackSet;
@@ -639,6 +643,7 @@ export interface CreatureData {
       name: string
       avatar: string | null
     }
+    locked: boolean
     species: string
     class?: string
     npc: boolean
@@ -684,6 +689,7 @@ export interface CreatureDump {
       name?: string
       avatar?: string | null
     }
+    locked?: boolean
     species?: string
     class?: string
     npc?: boolean

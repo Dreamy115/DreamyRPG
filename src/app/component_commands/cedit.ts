@@ -106,6 +106,31 @@ export default new ComponentCommand(
           case "species": {
             if (!interaction.isSelectMenu()) return;
 
+            if (creature.$.info.locked && !IS_GM) {
+              interaction.followUp({
+                ephemeral: true,
+                content: "You cannot change that when you've locked in"
+              });
+              return;
+            }
+
+            const species = SpeciesManager.map.get(interaction.values[0]);
+            if (!species) {
+              interaction.followUp({
+                ephemeral: true,
+                content: "Invalid species"
+              });
+              return;
+            }
+
+            if (!species.$.playable && !IS_GM) {
+              interaction.followUp({
+                ephemeral: true,
+                content: "Player characters cannot be of an unplayable race."
+              });
+              return;
+            }
+
             let dump = creature.dump();
             // @ts-expect-error
             dump.info.species = interaction.values[0];
@@ -113,6 +138,14 @@ export default new ComponentCommand(
           } break;
           case "class": {
             if (!interaction.isSelectMenu()) return;
+
+            if (creature.$.info.locked && !IS_GM) {
+              interaction.followUp({
+                ephemeral: true,
+                content: "You cannot change that when you've locked in"
+              });
+              return;
+            }
 
             let dump = creature.dump();
             // @ts-expect-error

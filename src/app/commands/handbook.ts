@@ -110,7 +110,7 @@ export default new ApplicationCommand(
     switch (interaction.options.getSubcommand()) {
       case "list": {
         const array = Array.from(list.values());
-        let page = Number(interaction.options.getString("page"));
+        let page = Number(interaction.options.getInteger("page"));
         if (isNaN(page) || page < 1) {
           page = 1;
         }

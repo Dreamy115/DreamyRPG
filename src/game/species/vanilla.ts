@@ -198,7 +198,23 @@ export default [
           creature.$.stats.tech.base = 4;
         }
       }),
-      "blood_thirst"
+      "blood_thirst",
+      new PassiveEffect({
+        info: {
+          name: "Bat Blood",
+          lore: "Lifesteal base"
+        },
+        preload: function (creature) {
+          creature.$.stats.vamp.base += 14;
+        },
+        modifiers: [
+          {
+            stat: "vamp",
+            type: ModifierType.ADD_PERCENT,
+            value: 0.1
+          }
+        ]
+      })
     ]
   })
 ]

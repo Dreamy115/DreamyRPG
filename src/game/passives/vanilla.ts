@@ -27,14 +27,11 @@ export default [
       name: "Blood Thirst",
       lore: "Lifesteal bonus"
     },
-    preload: function (creature) {
-      creature.$.stats.vamp.base += 12;
-    },
     modifiers: [
       {
         stat: "vamp",
         type: ModifierType.MULTIPLY,
-        value: 1.35
+        value: 1.25
       }
     ]
   })

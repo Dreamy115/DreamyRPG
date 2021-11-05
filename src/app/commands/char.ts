@@ -88,7 +88,7 @@ export default new ApplicationCommand(
       case "info": {
         await interaction.deferReply({});
 
-        const char = await Creature.fetch(interaction.user.id, db, false).catch(() => null);
+        const char = await Creature.fetch(interaction.options.getString("id") ?? interaction.options.getUser("user")?.id ?? interaction.user.id, db, false).catch(() => null);
         if (!char) {
           interaction.editReply({
             content: "Not found!"

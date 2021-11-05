@@ -10,17 +10,17 @@ export default [
     info: {
       name: "Earth Pony",
       lore: "A big, strong equine. Best physical traits",
-      description: "TBA"
+      description: ""
     },
     playable: true,
     passives: [
       new PassiveEffect({
         info: {
           name: "Inherent Base",
-          lore: "**115%** Health base, **28** Armor, **12** Filter, **130%** Melee Base, **80%** Ranged Base, **6** Tech"
+          lore: "**112%** Health base, **28** Armor, **12** Filter, **130%** Melee Base, **85%** Ranged Base, **6** Tech"
         },
         preload: function (creature) {
-          creature.$.stats.health.base *= 1.15;
+          creature.$.stats.health.base *= 1.12;
           creature.$.stats.armor.base = 28;
           creature.$.stats.filter.base = 12;
           creature.$.stats.melee.base *= 1.30;
@@ -40,6 +40,11 @@ export default [
             value: 1.2
           },
           {
+            stat: "health",
+            type: ModifierType.MULTIPLY,
+            value: 1.1
+          },
+          {
             stat: "tenacity",
             type: ModifierType.ADD_PERCENT,
             value: 0.15
@@ -47,12 +52,12 @@ export default [
           {
             stat: "tech",
             type: ModifierType.MULTIPLY,
-            value: 0.8
+            value: 0.75
           },
           {
-            stat: "melee",
+            stat: "ranged",
             type: ModifierType.MULTIPLY,
-            value: 1.1
+            value: 0.9
           }
         ]
       })
@@ -63,21 +68,21 @@ export default [
     info: {
       name: "Pegasus",
       lore: "A smaller, swift, and agile equine",
-      description: "TBA"
+      description: ""
     },
     playable: true,
     passives: [
       new PassiveEffect({
         info: {
           name: "Inherent Base",
-          lore: "**95%** Health base, **18** Armor, **20** Filter, **75%** Melee Base, **135%** Ranged Base, **9** Tech"
+          lore: "**92%** Health base, **16** Armor, **20** Filter, **75%** Melee Base, **130%** Ranged Base, **9** Tech"
         },
         preload: function (creature) {
-          creature.$.stats.health.base *= 0.95;
+          creature.$.stats.health.base *= 0.92;
           creature.$.stats.armor.base = 16;
           creature.$.stats.filter.base = 20;
           creature.$.stats.melee.base *= 0.75;
-          creature.$.stats.ranged.base *= 1.35;
+          creature.$.stats.ranged.base *= 1.30;
           creature.$.stats.tech.base = 9;
         }
       }),
@@ -91,6 +96,11 @@ export default [
             stat: "health",
             type: ModifierType.MULTIPLY,
             value: 0.85
+          },
+          {
+            stat: "armor",
+            type: ModifierType.MULTIPLY,
+            value: 0.92
           },
           {
             stat: "accuracy",
@@ -121,14 +131,14 @@ export default [
     info: {
       name: "Unicorn",
       lore: "An average between equines. This one specialises in tech and abilities.",
-      description: "TBA"
+      description: ""
     },
     playable: true,
     passives: [
       new PassiveEffect({
         info: {
           name: "Inherent Base",
-          lore: "**100%** Health base, **18** Armor, **22** Filter, **100%** Melee Base, **105%** Ranged Base, **10** Tech"
+          lore: "**100%** Health base, **18** Armor, **22** Filter, **100%** Melee Base, **105%** Ranged Base, **12** Tech"
         },
         preload: function (creature) {
           creature.$.stats.health.base *= 1.0;
@@ -139,24 +149,7 @@ export default [
           creature.$.stats.tech.base = 12;
         }
       }),
-      new PassiveEffect({
-        info: {
-          name: "Unicorn Horn",
-          lore: "That horn works as a great amplifier!"
-        },
-        modifiers: [
-          {
-            stat: "tech",
-            type: ModifierType.MULTIPLY,
-            value: 1.2
-          },
-          {
-            stat: "filter",
-            type: ModifierType.MULTIPLY,
-            value: 1.15
-          }
-        ]
-      }),
+      "unicorn_horn",
       new PassiveEffect({
         info: {
           name: "Unicorn's Nature",
@@ -172,9 +165,40 @@ export default [
             stat: "ranged",
             type: ModifierType.MULTIPLY,
             value: 0.95
+          },
+          {
+            stat: "armor",
+            type: ModifierType.MULTIPLY,
+            value: 0.9
           }
         ]
       })
+    ]
+  }),
+  new CreatureSpecies({
+    id: "batpony",
+    info: {
+      name: "Batpony",
+      lore: "This one loves blood! Comes with lifesteal as a base",
+      description: ""
+    },
+    playable: true,
+    passives: [
+      new PassiveEffect({
+        info: {
+          name: "Inherent Base",
+          lore: "**75%** Health base, **21** Armor, **15** Filter, **102%** Melee Base, **102%** Ranged Base, **4** Tech"
+        },
+        preload: function (creature) {
+          creature.$.stats.health.base *= 0.75;
+          creature.$.stats.armor.base = 21;
+          creature.$.stats.filter.base = 15;
+          creature.$.stats.melee.base *= 1.02;
+          creature.$.stats.ranged.base *= 1.02;
+          creature.$.stats.tech.base = 4;
+        }
+      }),
+      "blood_thirst"
     ]
   })
 ]

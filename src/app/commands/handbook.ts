@@ -136,7 +136,8 @@ export default new ApplicationCommand(
 
         embed
         .setTitle(item.$.info.name)
-        .setDescription(item.$.info.lore);
+        // @ts-expect-error
+        .setDescription(item.$.info.description || item.$.info.lore);
 
           // @ts-expect-error
           if ((item.$.unique ?? []).length > 0) {
@@ -314,7 +315,7 @@ function passivesDescriptor(passives: (string | PassiveEffect)[]) {
   if (passives.length > 0) {
     for (const passive of passives) {
       if (typeof passive === "string") {
-        str += `[**G**] ${PassivesManager.map.get(passive)?.$.info.name}\`${passive}\``;
+        str += `[**G**] ${PassivesManager.map.get(passive)?.$.info.name} \`${passive}\`\n`;
       } else {
         str += `[**L**] ${passive.$.info.name}\n*${passive.$.info.lore}*\n${(passive.$.unique ?? []).length > 0 ? `Unique flags: ${passive.$.unique?.join(", ")}\n` : ""}\n${(passive.$.modifiers ?? []).length > 0 ? `**Modifiers**\n${modifierDescriptor(passive.$.modifiers ?? [])}` : ""}`;
       }

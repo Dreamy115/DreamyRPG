@@ -1,7 +1,8 @@
 import { MessageActionRow, MessageButton, MessageSelectMenu, MessageSelectOptionData } from "discord.js";
-import { ClassManager, CONFIG, messageInput, SpeciesManager } from "../..";
+import { ClassManager, CONFIG, ItemManager, messageInput, SpeciesManager } from "../..";
 import Creature, { HealType } from "../../game/Creature";
 import { DamageCause, DamageGroup, damageLogEmbed, DamageMedium, DamageType, ShieldReaction } from "../../game/Damage";
+import { Item } from "../../game/Items";
 import { ComponentCommand } from "../component_commands";
 
 export default new ComponentCommand(
@@ -152,17 +153,89 @@ export default new ComponentCommand(
             dump.info.class = interaction.values[0];
 
             // @ts-expect-error
-            dump.items?.backpack = [];
+            dump.items.backpack = [];
             // @ts-expect-error
-            dump.items?.primary_weapon = null;
+            dump.items.primary_weapon = null;
             // @ts-expect-error
-            dump.items?.equipped = [
+            dump.items.equipped = [
               "starter_revolver",
               "starter_shield",
               "starter_knife"
             ]
 
             creature = new Creature(dump);
+          } break;
+          case "weapon_switch": {
+            if (interaction.isSelectMenu()) {
+              const id = String(interaction.values[0]);
+              if (!id) {
+                interaction.followUp({
+                  ephemeral: true,
+                  content: "Invalid item"
+                })
+                return;
+              }
+
+              let item: Item | null = null;
+              var index = 0;
+              for (index; creature.$.items.equipped.length > index; index++) {
+                const equipped = ItemManager.map.get(creature.$.items.equipped[index]);
+                if (equipped?.$.type !== "weapon") continue;
+
+                item = equipped;
+                break;
+              }
+
+              if (!item) {
+                interaction.followUp({
+                  ephemeral: true,
+                  content: "Invalid item"
+                })
+                return;
+              }
+
+              if (creature.$.items.primary_weapon)
+                creature.$.items.equipped.push(creature.$.items.primary_weapon)
+              creature.$.items.primary_weapon = creature.$.items.equipped.splice(index, 1)[0];
+              creature = new Creature(creature.dump());
+
+            } else if(interaction.isButton()) {
+              interaction.followUp({
+                ephemeral: true,
+                content: "Choose a weapon from your equipped slots!",
+                components: [
+                  new MessageActionRow().addComponents([
+                    new MessageSelectMenu()
+                      .setCustomId(`cedit/${creature_id}/edit/weapon_switch`)
+                      .setOptions(function() {
+                        const array: MessageSelectOptionData[] = [];
+
+                        for (const i of creature.$.items.equipped) {
+                          const item = ItemManager.map.get(i);
+                          if (item?.$.type != "weapon") continue;
+
+                          array.push({
+                            label: item.$.info.name,
+                            description: item.$.info.lore.length > 100 ? item.$.info.lore.substr(0, 99) + "…" : item.$.info.lore,
+                            value: item.$.id ?? "",
+                          })
+                        }
+
+                        if (array.length == 0) {
+                          array.push({
+                            label: "None",
+                            value: "",
+                            description: "No weapons found"
+                          })
+                        }
+
+                        return array;
+                      }())
+                  ])
+                ]
+              })
+              return;
+            } else return;
           } break;
           case "gm": {
             if (!IS_GM) {
@@ -319,6 +392,12 @@ export function ceditMenu(creature_id: string): MessageActionRow[] {
 
         return array;
       }())
+    ]),
+    new MessageActionRow().addComponents([
+      new MessageButton()
+        .setCustomId(`cedit/${creature_id}/edit/weapon_switch`)
+        .setStyle("PRIMARY")
+        .setLabel("Switch Weapons")
     ]),
     new MessageActionRow().addComponents([
       new MessageButton()

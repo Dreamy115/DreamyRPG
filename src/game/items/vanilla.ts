@@ -37,13 +37,13 @@ export default [
         {
           type: DamageMedium.Melee,
           modifiers: {
-            accuracy: 73,
+            accuracy: -5,
             defiltering: 0,
             lethality: 0
           },
           sources: [
             {
-              flat_bonus: 0,
+              flat_bonus: 1,
               from_skill: 0.6,
               type: DamageType.Physical
             }
@@ -54,7 +54,7 @@ export default [
         {
           type: DamageMedium.Melee,
           modifiers: {
-            accuracy: 80,
+            accuracy: 0,
             defiltering: 0,
             lethality: 0
           },
@@ -71,7 +71,7 @@ export default [
         {
           type: DamageMedium.Melee,
           modifiers: {
-            accuracy: 85,
+            accuracy: 10,
             defiltering: 0,
             lethality: 2
           },
@@ -98,41 +98,41 @@ export default [
         {
           type: DamageMedium.Ranged,
           modifiers: {
-            accuracy: 75,
+            accuracy: -5,
             defiltering: 0,
             lethality: 1
           },
           sources: [{
             flat_bonus: 1,
-            from_skill: 0.5,
+            from_skill: 0.3,
             type: DamageType.Physical
           }]
         }
-      ],
+      ], 
       normal: [
         {
           type: DamageMedium.Ranged,
           modifiers: {
-            accuracy: 75,
+            accuracy: -5,
             defiltering: 0,
             lethality: 2
           },
           sources: [{
             flat_bonus: 1,
-            from_skill: 0.55,
+            from_skill: 0.3,
             type: DamageType.Physical
           }]
         },
         {
           type: DamageMedium.Ranged,
           modifiers: {
-            accuracy: 75,
+            accuracy: -5,
             defiltering: 0,
             lethality: 2
           },
           sources: [{
             flat_bonus: 1,
-            from_skill: 0.55,
+            from_skill: 0.3,
             type: DamageType.Physical
           }]
         }
@@ -141,39 +141,39 @@ export default [
         {
           type: DamageMedium.Ranged,
           modifiers: {
-            accuracy: 75,
+            accuracy: -5,
             defiltering: 0,
             lethality: 3
           },
           sources: [{
             flat_bonus: 1,
-            from_skill: 0.55,
+            from_skill: 0.3,
             type: DamageType.Physical
           }]
         },
         {
           type: DamageMedium.Ranged,
           modifiers: {
-            accuracy: 75,
+            accuracy: -5,
             defiltering: 0,
             lethality: 3
           },
           sources: [{
             flat_bonus: 1,
-            from_skill: 0.55,
+            from_skill: 0.3,
             type: DamageType.Physical
           }]
         },
         {
           type: DamageMedium.Ranged,
           modifiers: {
-            accuracy: 75,
+            accuracy: -5,
             defiltering: 0,
             lethality: 3
           },
           sources: [{
             flat_bonus: 1,
-            from_skill: 0.55,
+            from_skill: 0.3,
             type: DamageType.Physical
           }]
         }

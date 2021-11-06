@@ -29,6 +29,10 @@ export default new ApplicationCommand(
                 value: "stats"
               },
               {
+                name: "Items",
+                value: "items"
+              },
+              {
                 name: "Passives",
                 value: "passives"
               },

@@ -536,6 +536,40 @@ export default class Creature {
           )  
         }    
       } break;
+      case "items": {
+        embed.addFields([
+          {
+            name: "Equipped",
+            value: function(creature: Creature) {
+              var str = "";
+
+              for (const i of creature.getAllItemIDs()) {
+                const item = ItemManager.map.get(i);
+                if (!item) continue;
+
+                str += `**${item.$.info.name}** \`${item.$.id}\`\n*${item.$.info.lore}*\n\n`
+              }
+
+              return str.trim();
+            }(this) || "Empty"
+          },
+          {
+            name: "Backpack",
+            value: function(creature: Creature) {
+              var str = "";
+
+              for (const i of creature.$.items.backpack) {
+                const item = ItemManager.map.get(i);
+                if (!item) continue;
+
+                str += `**${item.$.info.name}** \`${item.$.id}\`\n*${item.$.info.lore}*\n\n`
+              }
+
+              return str;
+            }(this) || "Empty"
+          }
+        ])
+      } break;
       case "attack": {
         function attackInfo(creature: Creature, attacks: AttackData[]) {
           var str = "";
@@ -554,7 +588,7 @@ export default class Creature {
             }()}
             **${attackdata.modifiers.accuracy + creature.$.stats.accuracy.value} *(${creature.$.stats.accuracy.value} ${attackdata.modifiers.accuracy >= 0 ? "+" : "-"}${Math.abs(attackdata.modifiers.accuracy)})*** Accuracy
             **${attackdata.modifiers.lethality}** Lethality
-            **${attackdata.modifiers.defiltering}** Defiltering`;
+            **${attackdata.modifiers.defiltering}** Defiltering\n\n`;
           }
 
           return str;

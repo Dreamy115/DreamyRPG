@@ -150,6 +150,18 @@ export default new ComponentCommand(
             let dump = creature.dump();
             // @ts-expect-error
             dump.info.class = interaction.values[0];
+
+            // @ts-expect-error
+            dump.items?.backpack = [];
+            // @ts-expect-error
+            dump.items?.primary_weapon = null;
+            // @ts-expect-error
+            dump.items?.equipped = [
+              "starter_revolver",
+              "starter_shield",
+              "starter_knife"
+            ]
+
             creature = new Creature(dump);
           } break;
           case "gm": {

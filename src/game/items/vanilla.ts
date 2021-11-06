@@ -4,7 +4,7 @@ import { PassiveEffect } from "../PassiveEffects";
 
 export default [
   new Item({
-    id: "basic_shield-1",
+    id: "starter_shield",
     info: {
       name: "Starter Shield",
       lore: "A basic, used shield primer. Will stop a ping-pong ball thrown in your face but don't expect too much."
@@ -24,6 +24,67 @@ export default [
         }
       })
     ]
+  }),
+  new Item({
+    id: "starter_knife",
+    type: "weapon",
+    info: {
+      name: "Kitchen Knife",
+      lore: "You found this laying around! You can make use of it!"
+    },
+    attack: {
+      weak: [
+        {
+          type: DamageMedium.Melee,
+          modifiers: {
+            accuracy: 73,
+            defiltering: 0,
+            lethality: 0
+          },
+          sources: [
+            {
+              flat_bonus: 0,
+              from_skill: 0.6,
+              type: DamageType.Physical
+            }
+          ]
+        }
+      ],
+      normal: [
+        {
+          type: DamageMedium.Melee,
+          modifiers: {
+            accuracy: 80,
+            defiltering: 0,
+            lethality: 0
+          },
+          sources: [
+            {
+              flat_bonus: 3,
+              from_skill: 0.7,
+              type: DamageType.Physical
+            }
+          ]
+        }
+      ],
+      crit: [
+        {
+          type: DamageMedium.Melee,
+          modifiers: {
+            accuracy: 85,
+            defiltering: 0,
+            lethality: 2
+          },
+          sources: [
+            {
+              flat_bonus: 6,
+              from_skill: 0.75,
+              type: DamageType.Physical
+            }
+          ]
+        }
+      ]
+    }
   }),
   new Item({
     id: "starter_revolver",

@@ -287,7 +287,7 @@ function modifierDescriptor(modifiers: PassiveModifier[]) {
         case ModifierType.MULTIPLY: str += `${mod.value}x`; break;
         case ModifierType.ADD_PERCENT: str += `${mod.value >= 0 ? "+" : "-"}${Math.round(Math.abs(mod.value) * 1000) / 10}%`; break;
         case ModifierType.CAP_MAX: str += `${mod.value}^`; break;
-        case ModifierType.ADD_PERCENT: str += `${mod.value >= 0 ? "+" : "-"}${Math.abs(mod.value)}`; break;
+        case ModifierType.ADD: str += `${mod.value >= 0 ? "+" : "-"}${Math.abs(mod.value)}`; break;
       }
       str += `** ${capitalize(mod.stat.replaceAll(/_/g, " "))}\n`;
     }

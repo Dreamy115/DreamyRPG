@@ -128,7 +128,8 @@ export default new ApplicationCommand(
       case "item": {
         const item = list.get(interaction.options.getString("id", true));
         if (!item) {
-          interaction.editReply({
+          interaction.reply({
+            ephemeral: true,
             content: "No such entry"
           })
           return;

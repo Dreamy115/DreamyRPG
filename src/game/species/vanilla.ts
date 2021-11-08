@@ -295,12 +295,17 @@ export default [
           {
             stat: "shield",
             type: ModifierType.MULTIPLY,
-            value: 1.3
+            value: 1.35
+          },
+          {
+            stat: "tenacity",
+            type: ModifierType.ADD,
+            value: -10
           },
           {
             stat: "shield_regen",
             type: ModifierType.ADD_PERCENT,
-            value: 0.4
+            value: 0.25
           },
           {
             stat: "health",

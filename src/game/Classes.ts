@@ -1,8 +1,6 @@
 import fs from "fs";
 import path from "path";
 
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
 import { PassiveEffect } from "./PassiveEffects";
 
 export default class CreatureClassManager {

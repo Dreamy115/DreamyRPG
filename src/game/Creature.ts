@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import NodeCache from "node-cache";
 import { capitalize, ClassManager, ItemManager, PassivesManager, SpeciesManager } from "../index.js";
 import { DamageGroup, DamageLog, DamageMedium, DamageType, DAMAGE_TO_INJURY_RATIO, reductionMultiplier, ShieldReaction } from "./Damage.js";
-import { AttackData, AttackSet, Item } from "./Items.js";
+import { AttackData, AttackSet } from "./Items.js";
 import { PassiveEffect, PassiveModifier } from "./PassiveEffects.js";
 import { ModifierType, textStat, TrackableStat } from "./Stats.js";
 

@@ -1,10 +1,8 @@
 import fs from "fs";
 import path from "path";
 
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-import { PassiveEffect, PassiveModifier } from "./PassiveEffects";
-import { DamageGroup, DamageMedium, DamageSource, DamageType } from "./Damage";
+import { PassiveEffect } from "./PassiveEffects";
+import { DamageMedium, DamageType } from "./Damage";
 
 export default class ItemsManager {
   map = new Map<string, Item>();

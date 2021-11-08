@@ -1,17 +1,14 @@
-import { ApplicationCommandData, Client, Intents, Snowflake, SnowflakeUtil, TextBasedChannels, TextChannel, User } from "discord.js";
+import { ApplicationCommandData, Client, Intents, Snowflake, SnowflakeUtil, TextBasedChannels } from "discord.js";
 import Mongoose from "mongoose";
 import YAML from "yaml";
 
 import fs from "fs";
 import path from "path";
 
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
 import ApplicationCommandManager from "./app/commands.js";
 import ComponentCommandManager from "./app/component_commands.js";
 import CreatureSpeciesManager from "./game/Species.js";
 import PassiveEffectManager from "./game/PassiveEffects.js";
-import { DAMAGE_TO_INJURY_RATIO, reductionMultiplier } from "./game/Damage.js";
 import ItemsManager from "./game/Items.js";
 import CreatureClassManager from "./game/Classes.js";
 import CreatureAbilitiesManager from "./game/CreatureAbilities.js";

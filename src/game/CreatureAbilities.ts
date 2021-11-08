@@ -1,11 +1,6 @@
 import fs from "fs";
 import path from "path";
 
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-import Creature, { CreatureData } from "./Creature";
-import { Modifier } from "./Stats";
-
 export default class CreatureAbilitiesManager {
   map = new Map<string, CreatureAbility>();
   async load(dir: fs.PathLike) {

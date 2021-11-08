@@ -650,7 +650,6 @@ export default class Creature {
         }
 
         const attack = this.attackSet;
-        console.log(attack);
         embed.addFields([
           {
             name: "Crit",

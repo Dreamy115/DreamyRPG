@@ -119,7 +119,7 @@ export default [
           },
           sources: [{
             flat_bonus: 11,
-            from_skill: 0.1,
+            from_skill: 0.05,
             type: DamageType.Physical
           }]
         },
@@ -132,7 +132,7 @@ export default [
           },
           sources: [{
             flat_bonus: 11,
-            from_skill: 0.1,
+            from_skill: 0.05,
             type: DamageType.Physical
           }]
         }
@@ -147,7 +147,7 @@ export default [
           },
           sources: [{
             flat_bonus: 11,
-            from_skill: 0.1,
+            from_skill: 0.03,
             type: DamageType.Physical
           }]
         },
@@ -160,7 +160,7 @@ export default [
           },
           sources: [{
             flat_bonus: 11,
-            from_skill: 0.1,
+            from_skill: 0.03,
             type: DamageType.Physical
           }]
         },
@@ -173,7 +173,7 @@ export default [
           },
           sources: [{
             flat_bonus: 11,
-            from_skill: 0.1,
+            from_skill: 0.03,
             type: DamageType.Physical
           }]
         }

@@ -9,7 +9,7 @@ export default [
       name: "Starter Shield",
       lore: "A basic, used shield primer. Will stop a ping-pong ball thrown in your face but don't expect too much."
     },
-    type: "clothing",
+    type: "wearable",
     subtype: "utility",
     unique: ["shield"],
     passives: [
@@ -43,7 +43,7 @@ export default [
           },
           sources: [
             {
-              flat_bonus: 1,
+              flat_bonus: 4,
               from_skill: 0.6,
               type: DamageType.Physical
             }
@@ -60,7 +60,7 @@ export default [
           },
           sources: [
             {
-              flat_bonus: 3,
+              flat_bonus: 7,
               from_skill: 0.7,
               type: DamageType.Physical
             }
@@ -77,7 +77,7 @@ export default [
           },
           sources: [
             {
-              flat_bonus: 6,
+              flat_bonus: 12,
               from_skill: 0.75,
               type: DamageType.Physical
             }
@@ -103,7 +103,7 @@ export default [
             lethality: 1
           },
           sources: [{
-            flat_bonus: 1,
+            flat_bonus: 4,
             from_skill: 0.3,
             type: DamageType.Physical
           }]
@@ -118,7 +118,7 @@ export default [
             lethality: 2
           },
           sources: [{
-            flat_bonus: 1,
+            flat_bonus: 4,
             from_skill: 0.3,
             type: DamageType.Physical
           }]
@@ -131,7 +131,7 @@ export default [
             lethality: 2
           },
           sources: [{
-            flat_bonus: 1,
+            flat_bonus: 4,
             from_skill: 0.3,
             type: DamageType.Physical
           }]
@@ -146,7 +146,7 @@ export default [
             lethality: 3
           },
           sources: [{
-            flat_bonus: 1,
+            flat_bonus: 4,
             from_skill: 0.3,
             type: DamageType.Physical
           }]
@@ -159,7 +159,7 @@ export default [
             lethality: 3
           },
           sources: [{
-            flat_bonus: 1,
+            flat_bonus: 4,
             from_skill: 0.3,
             type: DamageType.Physical
           }]
@@ -172,7 +172,7 @@ export default [
             lethality: 3
           },
           sources: [{
-            flat_bonus: 1,
+            flat_bonus: 4,
             from_skill: 0.3,
             type: DamageType.Physical
           }]

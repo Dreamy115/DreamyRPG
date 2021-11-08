@@ -61,6 +61,11 @@ export default [
         stat: "mana_regen",
         type: ModifierType.MULTIPLY,
         value: 1.15
+      },
+      {
+        stat: "mana",
+        type: ModifierType.ADD_PERCENT,
+        value: 0.3
       }
     ]
   })

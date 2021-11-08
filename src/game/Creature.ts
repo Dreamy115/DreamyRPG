@@ -1,8 +1,9 @@
 import { Client, MessageEmbed } from "discord.js";
 import mongoose from "mongoose";
 import NodeCache from "node-cache";
-import { capitalize, ClassManager, ItemManager, PassivesManager, SpeciesManager } from "../index.js";
-import { DamageGroup, DamageLog, DamageMedium, DamageType, DAMAGE_TO_INJURY_RATIO, reductionMultiplier, ShieldReaction } from "./Damage.js";
+import { AbilitiesManager, capitalize, ClassManager, ItemManager, PassivesManager, SpeciesManager } from "../index.js";
+import { Ability } from "./Abilities.js";
+import { DamageCause, DamageGroup, DamageLog, DamageMedium, DamageType, DAMAGE_TO_INJURY_RATIO, reductionMultiplier, ShieldReaction } from "./Damage.js";
 import { AttackData, AttackSet } from "./Items.js";
 import { PassiveEffect, PassiveModifier } from "./PassiveEffects.js";
 import { ModifierType, textStat, TrackableStat } from "./Stats.js";
@@ -34,7 +35,7 @@ export default class Creature {
         melee: new TrackableStat(12),
         ranged: new TrackableStat(12),
         health: new TrackableStat(100),
-        mana: new TrackableStat(12),
+        mana: new TrackableStat(15),
         mana_regen: new TrackableStat(7),
         shield: new TrackableStat(0),
         shield_regen: new TrackableStat(0),
@@ -55,6 +56,11 @@ export default class Creature {
         equipped: data.items?.equipped ?? [],
         backpack: data.items?.backpack ?? [],
         primary_weapon: data.items?.primary_weapon ?? null
+      },
+      abilities: {
+        deck: data.abilities?.deck ?? [],
+        hand: data.abilities?.hand ?? [],
+        stacks: (data.abilities?.stacks ?? 0) % Creature.ATTACK_MAX_STACKS
       },
       vars: data.vars ?? {}
     }
@@ -170,10 +176,8 @@ export default class Creature {
 
   checkItemConflicts() {
     let utilAmount = 0;
+    let clothingAmount = 0;
     let weaponAmount = 0;
-
-    let hasInnerClothing = false;
-    let hasOuterClothing = false;
 
     const uniques: string[] = [];
     if (this.$.items.primary_weapon && ItemManager.map.get(this.$.items.primary_weapon)?.$.type !== "weapon") {
@@ -196,16 +200,10 @@ export default class Creature {
         }
 
       switch (item.$.type) {
-        case "clothing": {
+        case "wearable": {
           switch (item.$.subtype) {
-            case "inner_layer": {
-              if (hasInnerClothing) {
-                this.$.items.backpack.push(this.$.items.equipped.splice(i, 1)[0]);
-                i--;
-              }
-            } break;
-            case "outer_layer": {
-              if (hasOuterClothing) {
+            case "clothing": {
+              if (clothingAmount >= Creature.MAX_EQUIPPED_CLOTHING) {
                 this.$.items.backpack.push(this.$.items.equipped.splice(i, 1)[0]);
                 i--;
               }
@@ -228,29 +226,17 @@ export default class Creature {
     }
   }
 
-  findPassives(): PassiveEffect[] {
-    const passives: PassiveEffect[] = [];
-
-    function globalOrLocalPusher(array: PassiveEffect[], input: (PassiveEffect | string)[]) {
-      for (const p of input) {
-        if (typeof p === "string") {
-          const passive = PassivesManager.map.get(p);
-          if (passive)
-            array.push(passive);
-        } else {
-          array.push(p);
-        }
-      }
-    }
+  findAbilities(): Ability[] {
+    const abilities: Ability[] = [];
 
     const species = SpeciesManager.map.get(this.$.info.species);
     if (species) {
-      globalOrLocalPusher(passives, species.$.passives ?? []);
+      globalOrLocalPusher(abilities, species.$.abilities ?? [], AbilitiesManager);
     }
 
     const kit = ClassManager.map.get(this.$.info.class ?? "");
     if (kit) {
-      globalOrLocalPusher(passives, kit.$.passives ?? []);
+      globalOrLocalPusher(abilities, kit.$.abilities ?? [], AbilitiesManager);
     } 
 
 
@@ -258,7 +244,45 @@ export default class Creature {
       const item = ItemManager.map.get(useditem); 
       if (!item) continue;
 
-      globalOrLocalPusher(passives, item.$.passives ?? []);
+      globalOrLocalPusher(abilities, item.$.abilities ?? [], AbilitiesManager);
+    }
+
+    const uniques: string[] = [];
+    for (var i = 0; i < abilities.length; i++) {
+      const passive = abilities[i];
+      for (const u of passive.$.unique ?? []) {
+        if (uniques.includes(u)) {
+          abilities.splice(i, 1);
+          i--;
+          break;
+        } else {
+          uniques.push(u);
+        }
+      }
+    }
+
+    return abilities;
+  }
+
+  findPassives(): PassiveEffect[] {
+    const passives: PassiveEffect[] = [];
+
+    const species = SpeciesManager.map.get(this.$.info.species);
+    if (species) {
+      globalOrLocalPusher(passives, species.$.passives ?? [], PassivesManager);
+    }
+
+    const kit = ClassManager.map.get(this.$.info.class ?? "");
+    if (kit) {
+      globalOrLocalPusher(passives, kit.$.passives ?? [], PassivesManager);
+    } 
+
+
+    for (const useditem of this.getAllItemIDs()) {
+      const item = ItemManager.map.get(useditem); 
+      if (!item) continue;
+
+      globalOrLocalPusher(passives, item.$.passives ?? [], PassivesManager);
     }
 
     const uniques: string[] = [];
@@ -537,7 +561,38 @@ export default class Creature {
         }    
       } break;
       case "items": {
-        embed.addFields([
+        embed.setDescription(
+          function(creature: Creature) {
+            let utilAmount = 0;
+            let clothingAmount = 0;
+            let weaponAmount = 0;
+
+            for (const i of creature.getAllItemIDs()) {
+              const item = ItemManager.map.get(i);
+              if (!item) continue;
+
+              switch (item.$.type) {
+                case "wearable":
+                  switch (item.$.subtype) {
+                    case "clothing":
+                      clothingAmount++;
+                      break;
+                    case "utility":
+                      utilAmount++;
+                      break;
+                  }
+                  break;
+                case "weapon":
+                  weaponAmount++;
+                  break;
+              }
+            }
+
+            return `Clothing **${clothingAmount}**/**${Creature.MAX_EQUIPPED_CLOTHING}**
+            Weapons **${weaponAmount}**/**${Creature.MAX_EQUIPPED_WEAPONS + 1}**
+            Utility **${utilAmount}**/**${Creature.MAX_EQUIPPED_UTILITY}**`;
+          }(this)
+        ).addFields([
           {
             name: "Equipped",
             value: function(creature: Creature) {
@@ -595,6 +650,7 @@ export default class Creature {
         }
 
         const attack = this.attackSet;
+        console.log(attack);
         embed.addFields([
           {
             name: "Crit",
@@ -630,6 +686,7 @@ export default class Creature {
         shield: this.$.vitals.shield / this.$.stats.shield.value
       },
       items: this.$.items,
+      abilities: this.$.abilities,
       vars: this.$.vars
     }
 
@@ -665,6 +722,16 @@ export default class Creature {
 
   static readonly MAX_EQUIPPED_WEAPONS = 2;
   static readonly MAX_EQUIPPED_UTILITY = 3;
+  static readonly MAX_EQUIPPED_CLOTHING = 3;
+
+  static readonly ATTACK_MAX_STACKS = 12;
+  static readonly ATTACK_STACK_DIE_SIZE = 6;
+
+  // -----NNNWWWC
+  static readonly ATTACK_VALUES = [
+    null, null, null, null, null, DamageCause.Normal_Attack,
+    DamageCause.Normal_Attack, DamageCause.Normal_Attack, DamageCause.Weak_Attack, DamageCause.Weak_Attack, DamageCause.Weak_Attack, DamageCause.Critical_Attack
+  ]
 }
 
 /**
@@ -711,6 +778,11 @@ export interface CreatureData {
     backpack: string[]
     equipped: string[]
   }
+  abilities: {
+    deck: string[]
+    hand: string[]
+    stacks: number
+  }
   vars: {[key: string]: number}
 }
 /**
@@ -739,9 +811,30 @@ export interface CreatureDump {
     backpack?: string[]
     equipped?: string[]
   }
+  abilities?: {
+    deck?: string[]
+    hand?: string[]
+    stacks?: number
+  }
   vars?: {[key: string]: number}
 }
 
 export enum HealType {
   "Health", "Shield", "Overheal", "Mana", "Injuries"
+}
+
+function globalOrLocalPusher<T>(array: T[], input: (T | string)[], manager: any) {
+  for (const p of input) {
+    if (typeof p === "string") {
+      const item = manager.map.get(p);
+      if (item)
+        array.push(item);
+    } else {
+      array.push(p);
+    }
+  }
+}
+
+export function diceRoll(size = 6): number {
+  return Math.floor(Math.random() * size) + 1;
 }

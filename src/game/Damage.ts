@@ -47,7 +47,7 @@ export interface DamageLog {
 
 export enum DamageCause {
   "Other" = -1,
-  "Light_Attack", "Normal_Attack", "Critical_Attack",
+  "Weak_Attack", "Normal_Attack", "Critical_Attack",
   "Ability", "DoT"
 }
 

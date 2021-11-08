@@ -159,10 +159,10 @@ export default new ApplicationCommand(
 
           if (item instanceof Item) {
             switch (item.$.type) {
-              case "clothing": {
+              case "wearable": {
                 embed.addField(
                   "Type",
-                  `**Clothing, ${capitalize(item.$.subtype.replaceAll(/_/g, " "))}**`
+                  `**Wearable, ${capitalize(item.$.subtype.replaceAll(/_/g, " "))}**`
                 )
               } break;
               case "weapon": {

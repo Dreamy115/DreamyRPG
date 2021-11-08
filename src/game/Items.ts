@@ -47,8 +47,8 @@ export interface BaseItemData {
   unique?: string[]
 }
 export interface WearableItemData extends BaseItemData {
-  type: "clothing"
-  subtype: "utility" | "outer_layer" | "inner_layer"
+  type: "wearable"
+  subtype: "utility" | "clothing"
   passives?: (PassiveEffect | string)[]
   abilities?: string[]
 }

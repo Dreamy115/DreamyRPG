@@ -1,6 +1,7 @@
 import { ApplicationCommandOptionData, MessageEmbed } from "discord.js";
-import { AbilitiesManager, capitalize, ClassManager, ItemManager, PassivesManager, SpeciesManager } from "../..";
+import { AbilitiesManager, capitalize, ClassManager, EffectManager, ItemManager, PassivesManager, SpeciesManager } from "../..";
 import { Ability } from "../../game/Abilities";
+import { ActiveEffect } from "../../game/ActiveEffects";
 import { CreatureClass } from "../../game/Classes";
 import { DamageMedium, DamageType } from "../../game/Damage";
 import { AttackData, AttackSet, Item } from "../../game/Items";
@@ -36,6 +37,10 @@ const typeOption: ApplicationCommandOptionData = {
     {
       name: "Abilities",
       value: "abilities"
+    },
+    {
+      name: "Effects",
+      value: "effects"
     }
   ]
 }
@@ -100,6 +105,10 @@ export default new ApplicationCommand(
         list = AbilitiesManager.map;
         title = "Abilities";
         break;
+      case "effects":
+        list = EffectManager.map;
+        title = "Effects";
+        break;
     }
 
     const _defer = interaction.deferReply({ ephemeral: true });
@@ -122,7 +131,7 @@ export default new ApplicationCommand(
 
         for (const item of array) {
           // @ts-expect-error
-          embed.description += `\`${item.$.id}\` **${item.$.info.name}** ${item.$.type ? `(${capitalize(item.$.type)})` : "" }\n`
+          embed.description += `\`${item.$.id}\` **${item.$.info.name}**${item.$.type ? ` (${capitalize(item.$.type)})` : "" }\n`
         }
       } break;
       case "item": {
@@ -244,6 +253,8 @@ export default new ApplicationCommand(
             )
           } else if (item instanceof Ability) {
             embed.description += `\nHaste **${item.$.haste}**\n`;
+          } else if (item instanceof ActiveEffect) {
+            embed.description += `\nMax At Once **${item.$.consecutive_limit}**\n`;
           }
       }
     }
@@ -326,4 +337,4 @@ function passivesDescriptor(passives: (string | PassiveEffect)[]) {
   return str;
 }
 
-type ManagedItems = Item | CreatureClass | CreatureSpecies | PassiveEffect | Ability;
+type ManagedItems = Item | CreatureClass | CreatureSpecies | PassiveEffect | Ability | ActiveEffect;

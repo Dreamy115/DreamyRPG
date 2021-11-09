@@ -12,6 +12,7 @@ import PassiveEffectManager from "./game/PassiveEffects.js";
 import ItemsManager from "./game/Items.js";
 import CreatureClassManager from "./game/Classes.js";
 import CreatureAbilitiesManager from "./game/CreatureAbilities.js";
+import ActiveEffectManager from "./game/ActiveEffects.js";
 
 process.on("uncaughtException", (e) => {
   console.error(e);
@@ -47,6 +48,7 @@ export const ClassManager = new CreatureClassManager();
 export const SpeciesManager = new CreatureSpeciesManager();
 export const PassivesManager = new PassiveEffectManager();
 export const AbilitiesManager = new CreatureAbilitiesManager();
+export const EffectManager = new ActiveEffectManager();
 ///
 
 const Bot = new Client({
@@ -80,6 +82,7 @@ Bot.on("ready", async () => {
   PassivesManager.load(path.join(__dirname, "game/passives"));
   SpeciesManager.load(path.join(__dirname, "game/species"));
   AbilitiesManager.load(path.join(__dirname, "game/abilities"));
+  EffectManager.load(path.join(__dirname, "game/effects"))
 
   // Listeners
   Bot.on("interactionCreate", async (interaction) => {

@@ -1,8 +1,9 @@
 import { Client, MessageEmbed } from "discord.js";
 import mongoose from "mongoose";
 import NodeCache from "node-cache";
-import { AbilitiesManager, capitalize, ClassManager, ItemManager, PassivesManager, SpeciesManager } from "../index.js";
+import { AbilitiesManager, capitalize, ClassManager, EffectManager, ItemManager, PassivesManager, SpeciesManager } from "../index.js";
 import { Ability } from "./Abilities.js";
+import { AppliedActiveEffect } from "./ActiveEffects.js";
 import { DamageCause, DamageGroup, DamageLog, DamageMedium, DamageType, DAMAGE_TO_INJURY_RATIO, reductionMultiplier, ShieldReaction } from "./Damage.js";
 import { AttackData, AttackSet } from "./Items.js";
 import { PassiveEffect, PassiveModifier } from "./PassiveEffects.js";
@@ -62,7 +63,19 @@ export default class Creature {
         hand: data.abilities?.hand ?? [],
         stacks: (data.abilities?.stacks ?? 0) % Creature.ATTACK_MAX_STACKS
       },
+      active_effects: data.active_effects ?? [],
       vars: data.vars ?? {}
+    }
+
+    this.checkItemConflicts();
+
+    const passives = this.findPassives();
+    // PRELOAD
+    for (const passive of passives) {
+      passive.$.preload?.(this);
+      for (const mod of passive.$.modifiers ?? []) {
+        this.applyNamedModifier(mod);
+      }
     }
 
     // CAPPING
@@ -75,17 +88,6 @@ export default class Creature {
       value: 80
     });
     //
-
-    this.checkItemConflicts();
-
-    const passives = this.findPassives();
-    // PRELOAD
-    for (const passive of passives) {
-      passive.$.preload?.(this);
-      for (const mod of passive.$.modifiers ?? []) {
-        this.applyNamedModifier(mod);
-      }
-    }
 
     if (isNaN(this.$.vitals.health)) {
       this.$.vitals.health = 1;
@@ -483,194 +485,80 @@ export default class Creature {
     this.vitalsIntegrity();
   }
 
-  async infoEmbed(Bot: Client, page: string): Promise<MessageEmbed> {
-    const embed = new MessageEmbed();
+  applyActiveEffect(effect: AppliedActiveEffect, override_existing = false): boolean {
+    let effectData = EffectManager.map.get(effect.id);
+    if (!effectData) return false;
 
-    const owner = await Bot.users.fetch(this.$._id).catch(() => null);
-
-    embed
-      .setTitle(this.$.info.display.name)
-      .setAuthor(this.$.info.npc ? "NPC" : (owner?.tag ?? "Unknown"))
-      .setColor("BLUE")
-      .setThumbnail(this.$.info.display.avatar ?? "")
-
-    switch (page) {
-      default:
-      case "stats": {
-        embed.addField(
-          "Basic",
-          `Race - **${SpeciesManager.map.get(this.$.info.species ?? "")?.$.info.name ?? "Unknown"}**\n` +  
-          `Class - **${ClassManager.map.get(this.$.info.class ?? "")?.$.info.name ?? "Unknown"}**`  
-        ).addFields([
-          {
-            name: "Vitals",
-            inline: false,
-            value: 
-            `**Health** **${this.$.vitals.health}**/**${this.$.stats.health.value - this.$.vitals.injuries}** (**${Math.round(100 * this.$.vitals.health / this.$.stats.health.value)}%**)  *(**${this.$.stats.health.value}** Health - **${this.$.vitals.injuries}** Injuries)*\n` +
-            (this.$.stats.shield.value > 0 ? `**Shield** ${textStat(this.$.vitals.shield, this.$.stats.shield.value)} **${this.$.stats.shield_regen.value}**/t` : "No **Shield**") + "\n" +
-            `**Mana** ${textStat(this.$.vitals.mana, this.$.stats.mana.value)} **${this.$.stats.mana_regen.value}**/t\n`
-          },
-          {
-            name: "Offense",
-            value: 
-              `**${this.$.stats.accuracy.value}%** Accuracy *(Hit Chance)*\n` +
-              `Melee **${this.$.stats.melee.value}** | **${this.$.stats.ranged.value}** Ranged *(Attack Power)*\n` +
-              "\n" +
-              `Vamp **${this.$.stats.vamp.value}%** | **${this.$.stats.siphon.value}%** Siphon *(Regenerates **health** | **shields** by **%** of damage dealt when dealing **physical** | **energy** damage)*\n` +
-              "\n" +
-              `**${this.$.stats.tech.value}** Tech *(Ability Power)*` 
-          },
-          {
-            name: "Defense",
-            value:
-            `**${this.$.stats.armor.value}** Armor *(**${Math.round(100 * (1 - reductionMultiplier(this.$.stats.armor.value)))}%** Reduced Physical Damage)*\n` +
-            `**${this.$.stats.filter.value}** Filter *(**${Math.round(100 * (1 - reductionMultiplier(this.$.stats.filter.value)))}%** Reduced Energy Damage)*\n` +
-            "\n" +
-            `**${this.$.stats.tenacity.value}** Tenacity *(Taking **${Math.round(100 * reductionMultiplier(this.$.stats.tenacity.value) * DAMAGE_TO_INJURY_RATIO)}%** health damage as **Injuries**)*` +
-            "\n" +
-            `Parry **${this.$.stats.parry.value}%** | **${this.$.stats.deflect.value}%** Deflect *(Reduces hit chance from **Melee** | **Ranged**)*\n`
-          }
-        ])
-      } break;
-      case "passives": {
-        const passives = this.findPassives();
-
-        for (var i = 0; i < passives.length && i < 20; i++) {
-          const passive = passives[i];
-
-          embed.addField(
-            `${passive.$.info.name}`,
-            function() {
-              var str = `*${passive.$.info.lore}*`;
-              if ((passive.$.modifiers ?? []).length > 0) {
-                str += `\n- **Modifiers**\n`;
-                for (const mod of passive.$.modifiers ?? []) {
-                  str += `**`;
-                  switch (mod.type) {
-                    case ModifierType.MULTIPLY: str += `${mod.value}x`; break;
-                    case ModifierType.ADD_PERCENT: str += `${mod.value >= 0 ? "+" : "-"}${Math.round(Math.abs(mod.value) * 1000) / 10}%`; break;
-                    case ModifierType.CAP_MAX: str += `${mod.value}^`; break;
-                    case ModifierType.ADD: str += `${mod.value >= 0 ? "+" : "-"}${Math.abs(mod.value)}`; break;
-                  }
-                  str += `** ${capitalize(mod.stat.replaceAll(/_/g, " "))}\n`;
-                }
-              }
-              return str;
-            }()
-          )  
-        }    
-      } break;
-      case "items": {
-        embed.setDescription(
-          function(creature: Creature) {
-            let utilAmount = 0;
-            let clothingAmount = 0;
-            let weaponAmount = 0;
-
-            for (const i of creature.getAllItemIDs()) {
-              const item = ItemManager.map.get(i);
-              if (!item) continue;
-
-              switch (item.$.type) {
-                case "wearable":
-                  switch (item.$.subtype) {
-                    case "clothing":
-                      clothingAmount++;
-                      break;
-                    case "utility":
-                      utilAmount++;
-                      break;
-                  }
-                  break;
-                case "weapon":
-                  weaponAmount++;
-                  break;
-              }
-            }
-
-            return `Clothing **${clothingAmount}**/**${Creature.MAX_EQUIPPED_CLOTHING}**
-            Weapons **${weaponAmount}**/**${Creature.MAX_EQUIPPED_WEAPONS + 1}**
-            Utility **${utilAmount}**/**${Creature.MAX_EQUIPPED_UTILITY}**`;
-          }(this)
-        ).addFields([
-          {
-            name: "Equipped",
-            value: function(creature: Creature) {
-              var str = "";
-
-              for (const i of creature.getAllItemIDs()) {
-                const item = ItemManager.map.get(i);
-                if (!item) continue;
-
-                str += `**${item.$.info.name}** \`${item.$.id}\`\n*${item.$.info.lore}*\n\n`
-              }
-
-              return str.trim();
-            }(this) || "Empty"
-          },
-          {
-            name: "Backpack",
-            value: function(creature: Creature) {
-              var str = "";
-
-              for (const i of creature.$.items.backpack) {
-                const item = ItemManager.map.get(i);
-                if (!item) continue;
-
-                str += `**${item.$.info.name}** \`${item.$.id}\`\n*${item.$.info.lore}*\n\n`
-              }
-
-              return str;
-            }(this) || "Empty"
-          }
-        ])
-      } break;
-      case "attack": {
-        function attackInfo(creature: Creature, attacks: AttackData[]) {
-          var str = "";
-
-          for (const attackdata of attacks) {
-            str += `- ${attackdata.type === DamageMedium.Melee ? "Melee" : "Ranged"}
-            Sources:
-            ${function () {
-              var str = "";
-
-              for (const source of attackdata.sources) {
-                str += `[**${Math.round(source.flat_bonus + (source.from_skill * (attackdata.type === DamageMedium.Melee ? creature.$.stats.melee.value : creature.$.stats.ranged.value)))} *(${source.flat_bonus} + ${Math.round(100 * source.from_skill) / 100}x)* ${DamageType[source.type]}**]\n`
-              }
-
-              return str;
-            }()}
-            **${attackdata.modifiers.accuracy + creature.$.stats.accuracy.value} *(${creature.$.stats.accuracy.value} ${attackdata.modifiers.accuracy >= 0 ? "+" : "-"}${Math.abs(attackdata.modifiers.accuracy)})*** Accuracy
-            **${attackdata.modifiers.lethality}** Lethality
-            **${attackdata.modifiers.defiltering}** Defiltering\n\n`;
-          }
-
-          return str;
-        }
-
-        const attack = this.attackSet;
-        embed.addFields([
-          {
-            name: "Crit",
-            value: attackInfo(this, attack.crit),
-            inline: true
-          },
-          {
-            name: "Normal",
-            value: attackInfo(this, attack.normal),
-            inline: true
-          },
-          {
-            name: "Weak",
-            value: attackInfo(this, attack.weak),
-            inline: true
-          }
-        ])
+    let count = 0;
+    if (effectData.$.consecutive_limit > 0)
+      for (const e of this.$.active_effects) {
+        if (e.id === effect.id) count++;
       }
+
+    if (effectData.$.consecutive_limit > 0 && count > effectData.$.consecutive_limit) {
+      if (override_existing) {
+        this.$.active_effects[this.$.active_effects.findIndex((v) => v.id === effect.id)] = effect;
+      } else return false;
+    } else {
+      this.$.active_effects.push(effect);
     }
 
-    return embed;
+    effectData.$.onApply?.(this, effect);
+
+    return true;
+  }
+  clearActiveEffect(id: string, type: "wipe" | "expire" | "delete"): boolean {
+    const index = this.$.active_effects.findIndex((v) => v.id === id);
+    if (index === -1) return false;
+
+    const effect = this.$.active_effects.splice(index, 1)[0];
+    const effectData = EffectManager.map.get(effect.id);
+
+    switch (type) {
+      case "delete": {
+        effectData?.$.onDelete?.(this, effect);
+      } break;
+      case "expire": {
+        effect.ticks = 0;
+        effectData?.$.onTick?.(this, effect);
+      } break;
+    }
+
+    return true;
+  }
+  clearAllEffects(type: "wipe" | "expire" | "delete") {
+    for (const effect of this.$.active_effects) {
+      this.clearActiveEffect(effect.id, type);
+    }
+  }
+
+  tickEffects() {
+    for (const effect of this.$.active_effects) {
+      const effectData = EffectManager.map.get(effect.id);
+      if (!effectData) {
+        this.clearActiveEffect(effect.id, "wipe");
+        continue;
+      }
+
+      if (--effect.ticks <= 0) {
+        effect.ticks = 0;
+        effectData.$.onTick?.(this, effect);
+      } else {
+        effectData.$.onTick?.(this, effect);
+      }
+    }
+  }
+
+  tickVitals() {
+    this.$.vitals.shield += this.$.stats.shield_regen.value;
+    this.$.vitals.mana += this.$.stats.mana_regen.value;
+
+    this.vitalsIntegrity();
+  }
+
+  tick() {
+    this.tickEffects();
+    this.tickVitals();
   }
 
 
@@ -686,6 +574,7 @@ export default class Creature {
       },
       items: this.$.items,
       abilities: this.$.abilities,
+      active_effects: this.$.active_effects,
       vars: this.$.vars
     }
 
@@ -782,6 +671,7 @@ export interface CreatureData {
     hand: string[]
     stacks: number
   }
+  active_effects: AppliedActiveEffect[]
   vars: {[key: string]: number}
 }
 /**
@@ -815,6 +705,7 @@ export interface CreatureDump {
     hand?: string[]
     stacks?: number
   }
+  active_effects?: AppliedActiveEffect[]
   vars?: {[key: string]: number}
 }
 

@@ -40,7 +40,6 @@ export class ActiveEffect {
     consecutive_limit: number
     onApply?: (creature: Creature, {ticks, severity}: AppliedActiveEffect) => void
     onTick?: (creature: Creature, {ticks, severity}: AppliedActiveEffect) => void
-    onExpire?: (creature: Creature, {ticks, severity}: AppliedActiveEffect) => void
     onDelete?: (creature: Creature, {ticks, severity}: AppliedActiveEffect) => void
   }
 

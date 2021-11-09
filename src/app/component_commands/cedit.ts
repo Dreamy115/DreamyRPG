@@ -331,6 +331,100 @@ export default new ComponentCommand(
                 }
 
               } break;
+              case "tick": {
+                creature.tick();
+              }
+              case "effect": {
+                switch (args.shift()) {
+                  case "apply": {
+                    await interaction.followUp({
+                      ephemeral: true,
+                      content: `Please type in the Effect id followed by severity, then amount of ticks. Ex. \`bleeding,2,5\``
+                    });
+    
+                    var inputmsg = await messageInput(channel, interaction.user.id).catch(() => "#");
+                    if (inputmsg === "#") {
+                      interaction.followUp({
+                        ephemeral: true,
+                        content: "Cancelled"
+                      });
+                      return;
+                    }
+
+                    const input = inputmsg.split(",");
+
+                    try {
+                      const effect = {
+                        id: input[0],
+                        severity: Number(input[1]),
+                        ticks: Number(input[2])
+                      }
+
+                      if (isNaN(effect.ticks) || isNaN(effect.severity)) throw new Error("Effect composition error.");
+
+                      if (!creature.applyActiveEffect(effect, true)) throw new Error("Error applying effect!")
+                    } catch (e) {
+                      console.error(e);
+                      interaction.followUp({
+                        ephemeral: true,
+                        content: "Error!"
+                      });
+                      return;
+                    }
+
+                  } break;
+                  case "clear_all": {
+                    if (interaction.isButton()) {
+                      interaction.followUp({
+                        ephemeral: true,
+                        content: "Please select wipe type",
+                        components: [wipeType(creature_id)]
+                      })
+                      return;
+                    } else if (interaction.isSelectMenu()) {
+                      // @ts-ignore
+                      creature.clearAllEffects(interaction.values[0]);
+                    }
+                  } break;
+                  case "clear": {
+                    if (interaction.isButton()) {
+                      `cedit/${creature_id}/edit/gm/effect/clear`
+                      await interaction.followUp({
+                        ephemeral: true,
+                        content: `Please type in the Effect id`
+                      });
+      
+                      var inputmsg = await messageInput(channel, interaction.user.id).catch(() => "#");
+                      if (inputmsg === "#") {
+                        interaction.followUp({
+                          ephemeral: true,
+                          content: "Cancelled"
+                        });
+                        return;
+                      }
+
+                      const components = [wipeType(creature_id)];
+                      components[0].components[0].customId += `/${inputmsg}`
+
+                      interaction.followUp({
+                        ephemeral: true,
+                        content: "Please select wipe type",
+                        components
+                      })
+                      return;
+                    } else if (interaction.isSelectMenu()) {
+                      // @ts-ignore
+                      if(!creature.clearActiveEffect(args.shift(), interaction.values[0])) {
+                        interaction.followUp({
+                          ephemeral: true,
+                          content: "Errored. Perhaps the effect does not exist or isn't applied to this Creature?"
+                        })
+                        return;
+                      } 
+                    }
+                  } break;
+                }
+              }
             }
           } break;
         }
@@ -412,6 +506,10 @@ export function gm_ceditMenu(creature_id: string): MessageActionRow[] {
   return [
     new MessageActionRow().addComponents([
       new MessageButton()
+        .setCustomId(`cedit/${creature_id}/edit/gm/tick`)
+        .setStyle("PRIMARY")
+        .setLabel("Advance Tick"),
+      new MessageButton()
         .setCustomId(`cedit/${creature_id}/edit/gm/damage`)
         .setStyle("DANGER")
         .setLabel("Deal Damage"),
@@ -419,6 +517,45 @@ export function gm_ceditMenu(creature_id: string): MessageActionRow[] {
         .setCustomId(`cedit/${creature_id}/edit/gm/heal`)
         .setStyle("SUCCESS")
         .setLabel("Heal")
+    ]),
+    new MessageActionRow().addComponents([
+      new MessageButton()
+        .setCustomId(`cedit/${creature_id}/edit/gm/effect/apply`)
+        .setStyle("PRIMARY")
+        .setLabel("Apply Effect"),
+      new MessageButton()
+        .setCustomId(`cedit/${creature_id}/edit/gm/effect/clear`)
+        .setStyle("PRIMARY")
+        .setLabel("Clear Effect"),
+      new MessageButton()
+        .setCustomId(`cedit/${creature_id}/edit/gm/effect/clear_all`)
+        .setStyle("SECONDARY")
+        .setLabel("Clear All Effects")
     ])
   ]
+}
+
+
+export function wipeType(creature_id: string) {
+  return new MessageActionRow().addComponents([
+    new MessageSelectMenu()
+      .setCustomId(`cedit/${creature_id}/edit/gm/effect/clear_all`)
+      .setOptions([
+        {
+          label: "Wipe",
+          value: "wipe",
+          description: "Wipe effects clean off without a closer function"
+        },
+        {
+          label: "Delete",
+          value: "delete",
+          description: "Clear the effects and call their onDelete function (recommended)"
+        },
+        {
+          label: "Expire",
+          value: "expire",
+          description: "Simulate natural expiration of the effects"
+        }
+      ])
+  ])
 }

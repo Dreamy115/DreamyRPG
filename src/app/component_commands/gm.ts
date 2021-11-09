@@ -61,15 +61,23 @@ export default [
               /* SCOPE */ {
                 const cursor = db.connection.collection("Creatures").find();
 
+                var pre_date = new Date();
                 for await (let data of cursor) {
                   // @ts-expect-error
                   const creature = new Creature(data);
 
-                  creature.tick();
+                  for (var i = 0; i < input; i++) {
+                    creature.tick();
+                  }
 
                   creature.put(db);
                 }
+                var post_date = new Date();
                 
+                interaction.followUp({
+                  ephemeral: true,
+                  content: `Done in ${(post_date.getMilliseconds() - pre_date.getMilliseconds()) / 1000}s `
+                })
               }
 
             } break;

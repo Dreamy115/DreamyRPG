@@ -7,7 +7,7 @@ export default [
     consecutive_limit: 5,
     info: {
       name: "Bleeding",
-      lore: "Receive **1** True Damage on Health for each point of Severity until expired"
+      lore: "Receive **1 Direct True Damage** on **Health** for each point of Severity until expired"
     },
     onTick: (creature, {ticks, severity}) => {
       creature.applyDamage({

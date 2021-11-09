@@ -507,7 +507,7 @@ export default class Creature {
 
     return true;
   }
-  clearActiveEffect(id: string, type: "wipe" | "expire" | "delete"): boolean {
+  clearActiveEffect(id: string, type: "expire" | "delete"): boolean {
     const index = this.$.active_effects.findIndex((v) => v.id === id);
     if (index === -1) return false;
 
@@ -526,7 +526,7 @@ export default class Creature {
 
     return true;
   }
-  clearAllEffects(type: "wipe" | "expire" | "delete") {
+  clearAllEffects(type: "expire" | "delete") {
     for (const effect of this.$.active_effects) {
       this.clearActiveEffect(effect.id, type);
     }
@@ -536,7 +536,7 @@ export default class Creature {
     for (const effect of this.$.active_effects) {
       const effectData = EffectManager.map.get(effect.id);
       if (!effectData) {
-        this.clearActiveEffect(effect.id, "wipe");
+        this.clearActiveEffect(effect.id, "delete");
         continue;
       }
 

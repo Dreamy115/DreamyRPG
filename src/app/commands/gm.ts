@@ -1,3 +1,4 @@
+import { MessageActionRow, MessageButton } from "discord.js";
 import { CONFIG } from "../..";
 import Creature from "../../game/Creature";
 import { ApplicationCommand } from "../commands";
@@ -72,6 +73,20 @@ export default new ApplicationCommand(
           components: gm_ceditMenu(creature_id)
         })
       } break;
+      case "global": {
+        interaction.reply({
+          ephemeral: true,
+          content: "Global editing",
+          components: [
+            new MessageActionRow().addComponents([
+              new MessageButton()
+                .setCustomId("gm/global/advance_time")
+                .setStyle("PRIMARY")
+                .setLabel("Advance Time")
+            ])
+          ]
+        })
+      }
     }
   }
 )

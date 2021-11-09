@@ -25,6 +25,11 @@ export default new ApplicationCommand(
             type: "USER"
           }
         ]
+      },
+      {
+        name: "global",
+        description: "Global World management",
+        type: "SUB_COMMAND"
       }
     ]
   },

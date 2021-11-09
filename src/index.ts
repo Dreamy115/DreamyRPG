@@ -12,7 +12,7 @@ import PassiveEffectManager from "./game/PassiveEffects.js";
 import ItemsManager from "./game/Items.js";
 import CreatureClassManager from "./game/Classes.js";
 import CreatureAbilitiesManager from "./game/CreatureAbilities.js";
-import ActiveEffectManager from "./game/ActiveEffects.js";
+import ActiveEffectManager, { romanNumeral } from "./game/ActiveEffects.js";
 
 process.on("uncaughtException", (e) => {
   console.error(e);

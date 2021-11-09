@@ -542,11 +542,6 @@ export function wipeType(creature_id: string) {
       .setCustomId(`cedit/${creature_id}/edit/gm/effect/clear_all`)
       .setOptions([
         {
-          label: "Wipe",
-          value: "wipe",
-          description: "Wipe effects clean off without a closer function"
-        },
-        {
           label: "Delete",
           value: "delete",
           description: "Clear the effects and call their onDelete function (recommended)"

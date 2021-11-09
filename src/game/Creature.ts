@@ -77,6 +77,12 @@ export default class Creature {
         this.applyNamedModifier(mod);
       }
     }
+    for (const effect of this.$.active_effects) {
+      const effectData = EffectManager.map.get(effect.id);
+      if (!effectData) continue;
+      
+      effectData.$.preload?.(this, effect);
+    }
 
     // CAPPING
     this.$.stats.vamp.modifiers.push({
@@ -112,6 +118,12 @@ export default class Creature {
     // POSTLOAD
     for (const passive of passives) {
       passive.$.postload?.(this);
+    }
+    for (const effect of this.$.active_effects) {
+      const effectData = EffectManager.map.get(effect.id);
+      if (!effectData) continue;
+      
+      effectData.$.postload?.(this, effect);
     }
   }
 
@@ -541,8 +553,7 @@ export default class Creature {
       }
 
       if (--effect.ticks <= 0) {
-        effect.ticks = 0;
-        effectData.$.onTick?.(this, effect);
+        this.clearActiveEffect(effect.id, "expire");
       } else {
         effectData.$.onTick?.(this, effect);
       }

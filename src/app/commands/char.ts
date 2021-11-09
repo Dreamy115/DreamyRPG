@@ -1,7 +1,9 @@
 import { Client, MessageEmbed } from "discord.js";
+import { DisplaySeverity, romanNumeral } from "../../game/ActiveEffects.js";
 import Creature from "../../game/Creature.js";
 import { reductionMultiplier, DAMAGE_TO_INJURY_RATIO, DamageMedium, DamageType } from "../../game/Damage.js";
 import { AttackData } from "../../game/Items.js";
+import { PassiveModifier } from "../../game/PassiveEffects.js";
 import { textStat, ModifierType } from "../../game/Stats.js";
 import { SpeciesManager, ClassManager, capitalize, ItemManager, EffectManager } from "../../index.js";
 import { ApplicationCommand } from "../commands.js";
@@ -48,6 +50,10 @@ export default new ApplicationCommand(
               {
                 name: "Effects",
                 value: "effects"
+              },
+              {
+                name: "All Active Modifiers",
+                value: "modifiers"
               }
             ]
           },
@@ -324,7 +330,13 @@ async function infoEmbed(creature: Creature, Bot: Client, page: string): Promise
         if (!effectData) continue;
     
         embed.addField(
-          `${effectData.$.info.name} ${effect.severity}`,
+          `${effectData.$.info.name} ${function() {
+            switch (effectData.$.display_severity) {
+              default: return "";
+              case DisplaySeverity.ARABIC: return String(effect.severity);
+              case DisplaySeverity.ROMAN: return romanNumeral(effect.severity);
+            }
+          }()}`,
           `*${effectData.$.info.lore}*\n\nfor **${effect.ticks}** Ticks`
         )
       }
@@ -332,6 +344,38 @@ async function infoEmbed(creature: Creature, Bot: Client, page: string): Promise
       if (embed.fields.length == 0) {
         embed.setDescription("None");
       }
+    } break;
+    case "modifiers": {
+      embed.setDescription(function() {
+        var str = "";
+
+        const array: PassiveModifier[] = [];
+        for (const s in creature.$.stats) {
+          // @ts-ignore
+          const stat = creature.$.stats[s];
+          
+          for (const mod of stat.modifiers) {
+            array.push({
+              stat: s,
+              type: mod.type,
+              value: mod.value
+            });
+          }
+        }
+
+        for (const mod of array) {
+          str += `**`;
+          switch (mod.type) {
+            case ModifierType.MULTIPLY: str += `${mod.value}x`; break;
+            case ModifierType.ADD_PERCENT: str += `${mod.value >= 0 ? "+" : "-"}${Math.round(Math.abs(mod.value) * 1000) / 10}%`; break;
+            case ModifierType.CAP_MAX: str += `${mod.value}^`; break;
+            case ModifierType.ADD: str += `${mod.value >= 0 ? "+" : "-"}${Math.abs(mod.value)}`; break;
+          }
+          str += `** ${capitalize(mod.stat.replaceAll(/_/g, " "))}\n`;
+        }
+
+        return str;
+      }() || "None")
     } break;
   }
 

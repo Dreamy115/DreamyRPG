@@ -36,7 +36,7 @@ export class CreatureClass {
       lore: string
       description: string
     }
-    incompatibleSpecies: string[]
+    compatibleSpecies: string[]
     passives?: (string | PassiveEffect)[]
     abilities?: string[]
   }

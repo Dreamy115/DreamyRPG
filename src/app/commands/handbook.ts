@@ -232,9 +232,9 @@ export default new ApplicationCommand(
               }
             ]);
 
-            if (item.$.incompatibleSpecies && item.$.incompatibleSpecies.length > 0) {
+            if (item.$.compatibleSpecies && item.$.compatibleSpecies.length > 0) {
               const species: string[] = [];
-              for (const r of item.$.incompatibleSpecies) {
+              for (const r of item.$.compatibleSpecies) {
                 const race = SpeciesManager.map.get(r);
                 if (!race) continue;
 
@@ -242,7 +242,7 @@ export default new ApplicationCommand(
               }
 
               embed.addField(
-                "Incompatible Species",
+                "Compatible Species",
                 species.join(", ")
               )
             }

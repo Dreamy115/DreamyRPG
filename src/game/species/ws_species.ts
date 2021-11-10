@@ -165,12 +165,12 @@ export default [
           {
             stat: "melee",
             type: ModifierType.MULTIPLY,
-            value: 0.97
+            value: 0.9
           },
           {
             stat: "ranged",
             type: ModifierType.MULTIPLY,
-            value: 1.04
+            value: 0.95
           }
         ]
       }),

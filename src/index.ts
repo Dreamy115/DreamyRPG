@@ -30,6 +30,10 @@ export const CONFIG: {
     id?: string
     gm_role?: string
   }
+  cache?: {
+    creatureTTL?: number
+    creatureCheckPeriod?: number
+  }
 } = YAML.parse(fs.readFileSync(path.join(__dirname, "../config.yml")).toString());
 
 if (!CONFIG.client?.token) throw new Error("client/token not defined in configuration file");

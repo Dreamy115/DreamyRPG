@@ -6,5 +6,8 @@ database:
 guild:
   id: # The ID of the guild/server you wanna RP in
   gm_role: # The ID of the admin/game master role goes here (AND YES, YOU NEED ONE. REGULAR DISCORD PERMISSIONS ARE NOT TAKEN INTO ACCOUNT)
+cache:
+  creatureTTL: 90 # The time to live for a cached Creature in seconds
+  creatureCheckPeriod: 120 # The period of time in seconds between checking the cache for expired Creatures
 # PLEASE NOTE!
 # You need to encapsulate each ID in ""s to make them strings. Discord does NOT like them in numerical form!

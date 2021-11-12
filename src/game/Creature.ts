@@ -1,7 +1,7 @@
 import { Client, MessageEmbed } from "discord.js";
 import mongoose from "mongoose";
 import NodeCache from "node-cache";
-import { AbilitiesManager, capitalize, ClassManager, EffectManager, ItemManager, PassivesManager, SpeciesManager } from "../index.js";
+import { AbilitiesManager, capitalize, ClassManager, CONFIG, EffectManager, ItemManager, PassivesManager, SpeciesManager } from "../index.js";
 import { Ability } from "./Abilities.js";
 import { AppliedActiveEffect } from "./ActiveEffects.js";
 import { DamageCause, DamageGroup, DamageLog, DamageMedium, DamageType, DAMAGE_TO_INJURY_RATIO, reductionMultiplier, ShieldReaction } from "./Damage.js";
@@ -11,8 +11,8 @@ import { ModifierType, textStat, TrackableStat } from "./Stats.js";
 
 export default class Creature {
   static cache: NodeCache = new NodeCache({
-    checkperiod: 30,
-    stdTTL: 60
+    checkperiod: CONFIG.cache?.creatureCheckPeriod ?? 120,
+    stdTTL: CONFIG.cache?.creatureTTL ?? 90
   })
   $: CreatureData
 

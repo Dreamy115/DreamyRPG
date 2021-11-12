@@ -1,5 +1,5 @@
 import { MessageActionRow, MessageButton, MessageSelectMenu, MessageSelectOptionData } from "discord.js";
-import { ClassManager, CONFIG, ItemManager, messageInput, SpeciesManager } from "../..";
+import { capitalize, ClassManager, CONFIG, ItemManager, messageInput, SpeciesManager } from "../..";
 import Creature, { HealType } from "../../game/Creature";
 import { DamageCause, DamageGroup, damageLogEmbed, DamageMedium, DamageType, ShieldReaction } from "../../game/Damage";
 import { Item } from "../../game/Items";
@@ -237,6 +237,92 @@ export default new ComponentCommand(
               return;
             } else return;
           } break;
+          case "item": {
+            if (interaction.isButton()) {
+              switch (args.shift()) {
+                case "equip": {
+                  const items: MessageSelectOptionData[] = [];
+
+                  for (const i of creature.$.items.backpack) {
+                    const item = ItemManager.map.get(i);
+                    if (!item) continue;
+
+                    items.push({
+                      label: item.$.info.name,
+                      value: item.$.id ?? ""
+                    })
+                  }
+
+                  if (items.length == 0) {
+                    interaction.followUp({
+                      ephemeral: true,
+                      content: "Backpack is empty!"
+                    });
+                    return;
+                  }
+
+                  interaction.followUp({
+                    ephemeral: true,
+                    content: "Backpack contents...",
+                    components: backpackItemComponents(creature_id, items, `cedit/${creature_id}/edit/item/equip`)
+                  })
+                  return;
+                } break;
+                case "unequip": {
+                  interaction.followUp({
+                    ephemeral: true,
+                    content: "Selected item will go to backpack",
+                    components: [new MessageActionRow().addComponents([
+                      new MessageSelectMenu()
+                        .setCustomId(`cedit/${creature_id}/edit/item/unequip`)
+                        .setOptions(function() {
+                          const array: MessageSelectOptionData[] = [];
+
+                          const items = creature.$.items.equipped;
+                          for (var i = 0; i < items.length; i++) {
+                            const item = ItemManager.map.get(items[i]);
+                            if (!item) continue;
+
+                            array.push({
+                              label: item.$.info.name,
+                              value: item.$.id ?? "",
+                              description: capitalize(item.$.type)
+                            })
+                          }
+
+                          const array2: MessageSelectOptionData[] = [];
+                          for (const item of array) {
+                            const index = array2.findIndex((v) => v.value === item.value);
+                            if (index === -1) {
+                              array2.push(item);
+                            } else {
+                              array2[index].description = "Multiple items found, only one will be unequipped"
+                            }
+                          }
+
+                          return array2;
+                        }())
+                      ])
+                    ]})
+                  return;
+                } break;
+              }
+            } else if (interaction.isSelectMenu()) {
+              switch (args.shift()) {
+                case "unequip": {
+                  for (const i of interaction.values) {
+                    creature.$.items.backpack.push(creature.$.items.equipped.splice(creature.$.items.equipped.findIndex(v => v === i),1)[0]);
+                  }
+                } break;
+                case "equip": {
+                  for (const i of interaction.values) {
+                    creature.$.items.equipped.push(creature.$.items.backpack.splice(creature.$.items.backpack.findIndex(v => v === i),1)[0]);
+                  }
+                  creature.checkItemConflicts();
+                }
+              }
+            }
+          } break;
           case "gm": {
             if (!IS_GM) {
               interaction.followUp({
@@ -334,6 +420,73 @@ export default new ComponentCommand(
               case "tick": {
                 creature.tick();
               }
+              case "item": {
+                if (interaction.isButton()) {
+                  switch (args.shift()) {
+                    case "add": {
+                      await interaction.followUp({
+                        ephemeral: true,
+                        content: "Please input a comma separated list of item IDs, ex. \`starter_shield,starter_revolver\`"
+                      });
+
+                      let items = (await messageInput(channel, interaction.user.id)).split(/,/g);
+
+                      var invalid_count = 0;
+                      for (const i of items) {
+                        const item = ItemManager.map.get(i);
+                        if (!item?.$.id) {
+                          invalid_count++;
+                          continue;
+                        }
+
+                        creature.$.items.backpack.push(item.$.id);
+                      }
+
+                      if (invalid_count > 0)
+                        interaction.followUp(({
+                          ephemeral: true,
+                          content: `${invalid_count} items were invalid and have not been added!`
+                        }))
+                    } break;
+                    case "remove": {
+                      const items: MessageSelectOptionData[] = [];
+
+                      for (const i of creature.$.items.backpack) {
+                        const item = ItemManager.map.get(i);
+                        if (!item) continue;
+
+                        items.push({
+                          label: item.$.info.name,
+                          value: item.$.id ?? ""
+                        })
+                      }
+
+                      if (items.length == 0) {
+                        interaction.followUp({
+                          ephemeral: true,
+                          content: "Backpack is empty!"
+                        });
+                        return;
+                      }
+
+                      interaction.followUp({
+                        ephemeral: true,
+                        content: "Select items from backpack. (To remove equipped items de-equip them first)",
+                        components: backpackItemComponents(creature_id, items, `cedit/${creature_id}/edit/gm/item/remove`)
+                      })
+                      return;
+                    } break;
+                  }
+                } else if (interaction.isSelectMenu()) {
+                  switch (args.shift()) {
+                    case "remove": {
+                      for (const i of interaction.values) {
+                        creature.$.items.backpack.splice(creature.$.items.backpack.findIndex((v) => v === i),1);
+                      }
+                    } break;
+                  }
+                }
+              } break;
               case "effect": {
                 switch (args.shift()) {
                   case "apply": {
@@ -449,7 +602,11 @@ export function ceditMenu(creature_id: string): MessageActionRow[] {
       new MessageButton()
         .setCustomId(`cedit/${creature_id}/edit/avatar`)
         .setStyle("SECONDARY")
-        .setLabel("Change Avatar")
+        .setLabel("Change Avatar"),
+      new MessageButton()
+        .setCustomId(`cedit/${creature_id}/delete`)
+        .setStyle("DANGER")
+        .setLabel("Delete")
     ]),
     new MessageActionRow().addComponents([
       new MessageSelectMenu()
@@ -491,13 +648,15 @@ export function ceditMenu(creature_id: string): MessageActionRow[] {
       new MessageButton()
         .setCustomId(`cedit/${creature_id}/edit/weapon_switch`)
         .setStyle("PRIMARY")
-        .setLabel("Switch Weapons")
-    ]),
-    new MessageActionRow().addComponents([
+        .setLabel("Switch Weapons"),
       new MessageButton()
-        .setCustomId(`cedit/${creature_id}/delete`)
-        .setStyle("DANGER")
-        .setLabel("Delete")
+        .setCustomId(`cedit/${creature_id}/edit/item/equip`)
+        .setStyle("SECONDARY")
+        .setLabel("Equip Item"),
+      new MessageButton()
+        .setCustomId(`cedit/${creature_id}/edit/item/unequip`)
+        .setStyle("SECONDARY")
+        .setLabel("Unequip Item")   
     ])
   ]
 }
@@ -531,6 +690,16 @@ export function gm_ceditMenu(creature_id: string): MessageActionRow[] {
         .setCustomId(`cedit/${creature_id}/edit/gm/effect/clear_all`)
         .setStyle("SECONDARY")
         .setLabel("Clear All Effects")
+    ]),
+    new MessageActionRow().addComponents([
+      new MessageButton()
+        .setCustomId(`cedit/${creature_id}/edit/gm/item/add`)
+        .setStyle("PRIMARY")
+        .setLabel("Add Item"),
+      new MessageButton()
+        .setCustomId(`cedit/${creature_id}/edit/gm/item/remove`)
+        .setStyle("SECONDARY")
+        .setLabel("Remove Item"),
     ])
   ]
 }
@@ -553,4 +722,35 @@ export function wipeType(creature_id: string) {
         }
       ])
   ])
+}
+
+export function backpackItemComponents(creature_id: string, items: MessageSelectOptionData[], goto: string) {
+  const array: MessageActionRow[] = [];
+  
+  for (var i = 0; i < items.length;) {
+    const subitems: MessageSelectOptionData[] = [];
+    for (var j = 0; j < 25; j++) {
+      if (!items[i]) break;
+
+      const index = subitems.findIndex((v) => v.value === items[i].value);
+      if (index == -1) {
+        subitems.push(items[i]);
+      } else {
+        subitems[index].description = "Multiple of the same item found, command affects only one"
+      }
+      i++;
+    }
+    array.push(
+      new MessageActionRow().addComponents([
+        new MessageSelectMenu()
+          .setCustomId(goto)
+          .setOptions(subitems)
+          .setMinValues(1)
+          .setMaxValues(subitems.length)
+      ])
+    )
+    if (array.length >= 5) break;
+  }
+
+  return array;
 }

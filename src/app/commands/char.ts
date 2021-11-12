@@ -346,36 +346,71 @@ async function infoEmbed(creature: Creature, Bot: Client, page: string): Promise
       }
     } break;
     case "modifiers": {
-      embed.setDescription(function() {
-        var str = "";
+      embed
+      .addField(
+        "Bases",
+        function() {
+          var str = "";
 
-        const array: PassiveModifier[] = [];
-        for (const s in creature.$.stats) {
-          // @ts-ignore
-          const stat = creature.$.stats[s];
-          
-          for (const mod of stat.modifiers) {
-            array.push({
-              stat: s,
-              type: mod.type,
-              value: mod.value
-            });
+          for (const s in creature.$.stats) {
+            // @ts-ignore
+            const stat = creature.$.stats[s];
+
+            str += `**${Math.round(stat.base)}** ${capitalize(s.replaceAll(/_/g, " "))}\n`;
           }
-        }
 
-        for (const mod of array) {
-          str += `**`;
-          switch (mod.type) {
-            case ModifierType.MULTIPLY: str += `${mod.value}x`; break;
-            case ModifierType.ADD_PERCENT: str += `${mod.value >= 0 ? "+" : "-"}${Math.round(Math.abs(mod.value) * 1000) / 10}%`; break;
-            case ModifierType.CAP_MAX: str += `${mod.value}^`; break;
-            case ModifierType.ADD: str += `${mod.value >= 0 ? "+" : "-"}${Math.abs(mod.value)}`; break;
+          return str;
+        }(),
+        true
+      ).addField(
+        "Modifiers",
+        function() {
+          var str = "";
+
+          const array: PassiveModifier[] = [];
+          for (const s in creature.$.stats) {
+            // @ts-ignore
+            const stat = creature.$.stats[s];
+            
+            for (const mod of stat.modifiers) {
+              array.push({
+                stat: s,
+                type: mod.type,
+                value: mod.value
+              });
+            }
           }
-          str += `** ${capitalize(mod.stat.replaceAll(/_/g, " "))}\n`;
-        }
 
-        return str;
-      }() || "None")
+          for (const mod of array) {
+            str += `**`;
+            switch (mod.type) {
+              case ModifierType.MULTIPLY: str += `${mod.value}x`; break;
+              case ModifierType.ADD_PERCENT: str += `${mod.value >= 0 ? "+" : "-"}${Math.round(Math.abs(mod.value) * 1000) / 10}%`; break;
+              case ModifierType.CAP_MAX: str += `${mod.value}^`; break;
+              case ModifierType.ADD: str += `${mod.value >= 0 ? "+" : "-"}${Math.abs(mod.value)}`; break;
+            }
+            str += `** ${capitalize(mod.stat.replaceAll(/_/g, " "))}\n`;
+          }
+
+          return str;
+        }() || "None",
+        true
+        ).addField(
+          "Values",
+          function() {
+            var str = "";
+  
+            for (const s in creature.$.stats) {
+              // @ts-ignore
+              const stat = creature.$.stats[s];
+  
+              str += `**${Math.round(stat.value)}** ${capitalize(s.replaceAll(/_/g, " "))}\n`;
+            }
+  
+            return str;
+          }(),
+          true
+        )
     } break;
   }
 

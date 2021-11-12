@@ -136,7 +136,7 @@ Bot.on("ready", async () => {
 
 Bot.login(CONFIG.client.token);
 
-export async function messageInput(channel: TextBasedChannels, userid: Snowflake, time = 10000) {
+export async function messageInput(channel: TextBasedChannels, userid: Snowflake, time = 30000) {
   const input = await channel.awaitMessages({
     errors: ["time"],
     max: 1,

@@ -1,0 +1,10 @@
+client:
+  token: # The token of your Discord Bot goes here
+database:
+  uri: # insert your mongodb URI here
+  #localhost example: mongodb://127.0.0.1:27017/DreamyRPG?readPreference=primary&directConnection=true&ssl=false
+guild:
+  id: # The ID of the guild/server you wanna RP in
+  gm_role: # The ID of the admin/game master role goes here (AND YES, YOU NEED ONE. REGULAR DISCORD PERMISSIONS ARE NOT TAKEN INTO ACCOUNT)
+# PLEASE NOTE!
+# You need to encapsulate each ID in ""s to make them strings. Discord does NOT like them in numerical form!

@@ -269,6 +269,14 @@ export default new ComponentCommand(
                   return;
                 } break;
                 case "unequip": {
+                  if (creature.$.items.equipped.length == 0) {
+                    interaction.followUp({
+                      ephemeral: true,
+                      content: "No items equipped"
+                    })
+                    return;
+                  }
+
                   interaction.followUp({
                     ephemeral: true,
                     content: "Selected item will go to backpack",

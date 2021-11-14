@@ -9,5 +9,7 @@ guild:
 cache:
   creatureTTL: 90 # The time to live for a cached Creature in seconds
   creatureCheckPeriod: 120 # The period of time in seconds between checking the cache for expired Creatures
+  fightTTL: 120
+  fightCheckPeriod: 120
 # PLEASE NOTE!
 # You need to encapsulate each ID in ""s to make them strings. Discord does NOT like them in numerical form!

@@ -33,6 +33,8 @@ export const CONFIG: {
   cache?: {
     creatureTTL?: number
     creatureCheckPeriod?: number
+    fightTTL?: number
+    fightCheckPeriod?: number
   }
 } = YAML.parse(fs.readFileSync(path.join(__dirname, "../config.yml")).toString());
 
@@ -160,4 +162,17 @@ export function capitalize(str: string): string {
   array.forEach((v, i, a) => a[i] = v.substr(0, 1).toUpperCase().concat(v.substr(1)));
 
   return array.join(" ");
+}
+export function shuffle(array: any[]): any[] {
+  let currentIndex = array.length,  randomIndex;
+
+  while (currentIndex != 0) {
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex--;
+    
+    [array[currentIndex], array[randomIndex]] = [
+      array[randomIndex], array[currentIndex]];
+  }
+
+  return array;
 }

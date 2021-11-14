@@ -30,6 +30,11 @@ export default new ApplicationCommand(
         name: "global",
         description: "Global World management",
         type: "SUB_COMMAND"
+      },
+      {
+        name: "fight",
+        description: "Instantiate a fight between Creatures",
+        type: "SUB_COMMAND"
       }
     ]
   },

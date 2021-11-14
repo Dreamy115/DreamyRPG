@@ -573,6 +573,12 @@ export default class Creature {
     this.tickVitals();
   }
 
+  isAbleToFight(): boolean {
+    if (this.$.vitals.health <= 0) return false;
+
+    return true;
+  }
+
 
   dump(): CreatureDump {
     let dump: CreatureDump = {

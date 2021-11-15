@@ -1,6 +1,7 @@
 import { MessageActionRow, MessageButton } from "discord.js";
 import { CONFIG } from "../..";
 import Creature from "../../game/Creature";
+import { Fight } from "../../game/Fight";
 import { ApplicationCommand } from "../commands";
 import { ceditMenu, gm_ceditMenu } from "../component_commands/cedit";
 
@@ -34,7 +35,22 @@ export default new ApplicationCommand(
       {
         name: "fight",
         description: "Instantiate a fight between Creatures",
-        type: "SUB_COMMAND"
+        type: "SUB_COMMAND_GROUP",
+        options: [
+          {
+            name: "start",
+            description: "Start a Fight",
+            type: "SUB_COMMAND",
+            options: [
+              {
+                name: "creatures",
+                description: "Comma separate Creatures, and semicolon separate Parties",
+                type: "STRING",
+                required: true
+              }
+            ]
+          }
+        ]
       }
     ]
   },
@@ -60,7 +76,7 @@ export default new ApplicationCommand(
       return;
     }
 
-    switch (interaction.options.getSubcommand()) {
+    switch (interaction.options.getSubcommandGroup() ?? interaction.options.getSubcommand()) {
       case "cedit": {
         let creature_id = interaction.options.getString("id") ?? interaction.options.getUser("user")?.id ?? interaction.user.id;
 
@@ -96,7 +112,33 @@ export default new ApplicationCommand(
             ])
           ]
         })
-      }
+      } break;
+      case "fight": {
+        switch (interaction.options.getSubcommand()) {
+          case "start": {
+            await interaction.deferReply({ ephemeral: true });
+
+            const full: string[] = interaction.options.getString("creatures", true).split(";"); 
+            const parties: string[][] = [];
+            for (const p of full) {
+              parties.push(p.split(/,/g))
+            }
+
+            const fight = new Fight({
+              parties
+            })
+
+            await interaction.editReply({
+              content: "Done!"
+            });
+
+            await fight.constructQueue(db);
+            await interaction.followUp(
+              await fight.announceTurn(db, Bot)
+            )
+          } break;
+        }
+      } break;
     }
   }
 )

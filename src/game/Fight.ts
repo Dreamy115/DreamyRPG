@@ -1,8 +1,9 @@
 import NodeCache from "node-cache";
 import { CONFIG, shuffle } from "..";
 import Mongoose from "mongoose";
-import { InteractionReplyOptions, MessageEmbed, MessagePayload, SnowflakeUtil } from "discord.js";
+import { Client, EmbedFieldData, InteractionReplyOptions, MessageEmbed, MessagePayload, SnowflakeUtil, User } from "discord.js";
 import Creature from "./Creature";
+import { textStat } from "./Stats";
 
 export class Fight {
   static cache = new NodeCache({
@@ -22,8 +23,8 @@ export class Fight {
   }) {
     this.$ = {
       _id: data._id ?? SnowflakeUtil.generate(),
-      parties: [],
-      queue: []
+      parties: data.parties ?? [],
+      queue: data.queue ?? []
     }
   }
 
@@ -31,7 +32,9 @@ export class Fight {
   async constructQueue(db: typeof Mongoose) {
     this.$.queue = [];
     for (const party of this.$.parties) {
-      this.$.queue = this.$.queue.concat(party);
+      for (const c of party) {
+        this.$.queue.push(c);
+      }
     }
 
     const queue: Creature[] = [];
@@ -94,12 +97,62 @@ export class Fight {
     return -1;
   }
 
-  async announceTurn(db: typeof Mongoose): Promise<InteractionReplyOptions> {
+  async announceTurn(db: typeof Mongoose, Bot: Client): Promise<InteractionReplyOptions> {
     const embed = new MessageEmbed();
 
+    const creature = await Creature.fetch(this.$.queue[0], db);
+    if (!creature) return { content: "Invalid turn" }
+
+    const owner: null | User = await Bot.users.fetch(creature.$._id).catch(() => null);
+
+    embed
+      .setAuthor(`${!creature.$.info.npc ? owner?.username ?? "Unknown" : "NPC"}`)
+      .setTitle(`${creature.$.info.display.name}'s turn!`)
+      .setColor("AQUA")
+      .setFooter(`Fight ID: ${this.$._id} | Creature ID: ${creature.$._id}`)
+      .addFields(await async function(fight: Fight){
+        var fields: EmbedFieldData[] = [];
+
+        for (const p in fight.$.parties) {
+          fields.push({
+            name: `Party ${p}`,
+            inline: true,
+            value: await async function (){
+              var str = "";
+
+              for await (const c of fight.$.parties[p]) {
+                const char = await Creature.fetch(c, db);
+                if (!char) continue;
+
+                str += `**${char.$.info.display.name}**\nHealth **${creature.$.vitals.health}**/**${creature.$.stats.health.value - creature.$.vitals.injuries}** (**${Math.round(100 * creature.$.vitals.health / creature.$.stats.health.value)}%**)\nShield ` + (creature.$.stats.shield.value > 0 ? `${textStat(creature.$.vitals.shield, creature.$.stats.shield.value)} **${creature.$.stats.shield_regen.value}**/t` : "No **Shield**") + "\n"
+              }
+
+              return str;
+            }()
+          })
+        }        
+
+        return fields;
+      }(this))
+      .addField(
+        "Up Next this Round",
+        await async function (fight: Fight){
+          var str = "";
+
+          for (var i = 1; i < fight.$.queue.length; i++) {
+            const char = await Creature.fetch(fight.$.queue[i], db);
+            if (!char) continue;
+
+            str += `\`${char.$._id}\` ${char.$.info.display.name}${char.$.info.npc ? " (NPC)" : ""}\n`;
+          }
+
+          return str;
+        }(this) || "---"
+      )
 
     return {
       embeds: [embed],
+      content: `${owner}`
     }
   }
 

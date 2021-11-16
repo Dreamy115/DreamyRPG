@@ -1,9 +1,9 @@
 import { CONFIG, messageInput } from "../..";
 import Creature from "../../game/Creature";
-import { ComponentCommand } from "../component_commands";
+import { ComponentCommandHandler } from "../component_commands";
 
 export default [
-  new ComponentCommand(
+  new ComponentCommandHandler(
     "gm",
     async function(interaction, Bot, db, args) {
       const guild = await Bot.guilds.fetch(CONFIG.guild?.id ?? "");

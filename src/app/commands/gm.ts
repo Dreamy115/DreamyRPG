@@ -2,10 +2,10 @@ import { MessageActionRow, MessageButton } from "discord.js";
 import { CONFIG } from "../..";
 import Creature from "../../game/Creature";
 import { Fight } from "../../game/Fight";
-import { ApplicationCommand } from "../commands";
+import { ApplicationCommandHandler } from "../commands";
 import { ceditMenu, gm_ceditMenu } from "../component_commands/cedit";
 
-export default new ApplicationCommand(
+export default new ApplicationCommandHandler(
   {
     name: "gm",
     description: "Game master stuff",
@@ -55,6 +55,8 @@ export default new ApplicationCommand(
     ]
   },
   async function (interaction, Bot, db) {
+    if (!interaction.isCommand()) return;
+
     const guild = await Bot.guilds.fetch(CONFIG.guild?.id ?? "");
     await guild.roles.fetch();
 

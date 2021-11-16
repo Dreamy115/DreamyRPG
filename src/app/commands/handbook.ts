@@ -8,7 +8,7 @@ import { AttackData, AttackSet, Item } from "../../game/Items";
 import { PassiveEffect, PassiveModifier } from "../../game/PassiveEffects";
 import { CreatureSpecies } from "../../game/Species";
 import { Modifier, ModifierType } from "../../game/Stats";
-import { ApplicationCommand } from "../commands";
+import { ApplicationCommandHandler } from "../commands";
 
 const ITEMS_PER_PAGE = 25;
 
@@ -45,7 +45,7 @@ const typeOption: ApplicationCommandOptionData = {
   ]
 }
 
-export default new ApplicationCommand(
+export default new ApplicationCommandHandler(
   {
     name: "handbook",
     description: "All your info in one place",
@@ -81,6 +81,8 @@ export default new ApplicationCommand(
     ]
   },
   async function (interaction, Bot, db) {
+    if (!interaction.isCommand()) return;
+
     let list: Map<string, ManagedItems>;
     let title: string;
     switch (interaction.options.getString("type")) {

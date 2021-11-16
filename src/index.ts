@@ -13,6 +13,7 @@ import ItemsManager from "./game/Items.js";
 import CreatureClassManager from "./game/Classes.js";
 import CreatureAbilitiesManager from "./game/CreatureAbilities.js";
 import ActiveEffectManager, { romanNumeral } from "./game/ActiveEffects.js";
+import AutocompleteManager from "./app/autocomplete.js";
 
 process.on("uncaughtException", (e) => {
   console.error(e);
@@ -48,6 +49,7 @@ export const db = Mongoose.connect(CONFIG.database.uri).then((v) => {console.log
 
 export const AppCmdManager = new ApplicationCommandManager();
 export const CmpCmdManager = new ComponentCommandManager();
+export const AutoManager = new AutocompleteManager();
 
 export const ItemManager = new ItemsManager();
 export const ClassManager = new CreatureClassManager();
@@ -70,6 +72,7 @@ Bot.on("ready", async () => {
   // Loading Bot Stuff
   await AppCmdManager.load(path.join(__dirname, "app/commands"));
   await CmpCmdManager.load(path.join(__dirname, "app/component_commands"));
+  await AutoManager.load(path.join(__dirname, "app/autocomplete"));
 
   console.log(`/${Array.from(AppCmdManager.map.keys()).length} >${Array.from(CmpCmdManager.map.keys()).length} Commands loaded`);
 
@@ -136,6 +139,26 @@ Bot.on("ready", async () => {
       } finally {
         console.timeEnd(`cmp-${executionId}`);
       }
+    } else if (interaction.isAutocomplete()) {
+      const command = AutoManager.map.get(interaction.commandName);
+      if (!command) {
+        console.error(`Missing handler for A/${interaction.commandName}`);
+        return;
+      }
+
+      const executionId = SnowflakeUtil.generate();
+
+      console.log(`A/${interaction.commandName} ${function() {
+        var str = "";
+        for (const v of Array.from(interaction.options.data.values())) {
+          str += `${v.name} `
+        }
+        return str.trim();
+      }()} @${interaction.user.id}`);
+
+      console.time(`aut-${executionId}`);
+      await command.run(interaction, Bot, await db);
+      console.timeEnd(`aut-${executionId}`);
     }
   })
 })

@@ -49,7 +49,8 @@ export class Fight {
       const creature_a = queue.find((v) => v.$._id === a);
       const creature_b = queue.find((v) => v.$._id === b);
 
-      // @ts-expect-error
+      if (!creature_a || !creature_b) return 0;
+
       return creature_b.$.stats.speed.value - creature_a.$.stats.speed.value + (Math.random() - 0.5);
     })
 
@@ -164,20 +165,22 @@ export class Fight {
       }
     }
 
-    const data = await db.connection.collection("Fights").findOne({_id: id});
+    const data = await db.connection.collection(Fight.COLLECTION_NAME).findOne({_id: id});
     if (!data) throw new Error("Not found");
     return new Fight(data);
   }
   async put(db: typeof Mongoose) {
     try {
       // @ts-expect-error
-      await db.connection.collection("Fights").insertOne(this.dump());
+      await db.connection.collection(Fight.COLLECTION_NAME).insertOne(this.dump());
     } catch {
-      await db.connection.collection("Fights").replaceOne({_id: this.$._id}, this.$);
+      await db.connection.collection(Fight.COLLECTION_NAME).replaceOne({_id: this.$._id}, this.$);
     }
   }
   async delete(db: typeof Mongoose) {
     Fight.cache.del(this.$._id);
-    return db.connection.collection("Fights").deleteOne({_id: this.$._id});
+    return db.connection.collection(Fight.COLLECTION_NAME).deleteOne({_id: this.$._id});
   }
+
+  static readonly COLLECTION_NAME = "Fights";
 }

@@ -59,7 +59,7 @@ export default [
               }
 
               /* SCOPE */ {
-                const cursor = db.connection.collection("Creatures").find();
+                const cursor = db.connection.collection(Creature.COLLECTION_NAME).find();
 
                 var pre_date = new Date();
                 for await (let data of cursor) {

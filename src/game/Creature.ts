@@ -607,7 +607,7 @@ export default class Creature {
       }
     }
 
-    const data = await db.connection.collection("Creatures").findOne({_id: id});
+    const data = await db.connection.collection(Creature.COLLECTION_NAME).findOne({_id: id});
     if (!data) throw new Error("Not found");
 
     // @ts-expect-error
@@ -616,14 +616,14 @@ export default class Creature {
   async put(db: typeof mongoose) {
     try {
       // @ts-expect-error
-      await db.connection.collection("Creatures").insertOne(this.dump());
+      await db.connection.collection(Creature.COLLECTION_NAME).insertOne(this.dump());
     } catch {
-      await db.connection.collection("Creatures").replaceOne({_id: this.$._id}, this.dump());
+      await db.connection.collection(Creature.COLLECTION_NAME).replaceOne({_id: this.$._id}, this.dump());
     }
   }
   async delete(db: typeof mongoose) {
     Creature.cache.del(this.$._id);
-    return db.connection.collection("Creatures").deleteOne({_id: this.$._id});
+    return db.connection.collection(Creature.COLLECTION_NAME).deleteOne({_id: this.$._id});
   }
 
   static readonly MAX_EQUIPPED_WEAPONS = 2;
@@ -638,6 +638,8 @@ export default class Creature {
     null, null, null, null, null, DamageCause.Normal_Attack,
     DamageCause.Normal_Attack, DamageCause.Normal_Attack, DamageCause.Weak_Attack, DamageCause.Weak_Attack, DamageCause.Weak_Attack, DamageCause.Critical_Attack
   ]
+
+  static readonly COLLECTION_NAME = "Creatures";
 }
 
 /**

@@ -3,9 +3,9 @@ import { capitalize, ClassManager, CONFIG, ItemManager, messageInput, SpeciesMan
 import Creature, { HealType } from "../../game/Creature";
 import { DamageCause, DamageGroup, damageLogEmbed, DamageMedium, DamageType, ShieldReaction } from "../../game/Damage";
 import { Item } from "../../game/Items";
-import { ComponentCommand } from "../component_commands";
+import { ComponentCommandHandler } from "../component_commands";
 
-export default new ComponentCommand(
+export default new ComponentCommandHandler(
   "cedit",
   async function (interaction, Bot, db, args) {
     const creature_id = args.shift();

@@ -6,10 +6,10 @@ import { AttackData } from "../../game/Items.js";
 import { PassiveModifier } from "../../game/PassiveEffects.js";
 import { textStat, ModifierType } from "../../game/Stats.js";
 import { SpeciesManager, ClassManager, capitalize, ItemManager, EffectManager } from "../../index.js";
-import { ApplicationCommand } from "../commands.js";
+import { ApplicationCommandHandler } from "../commands.js";
 import { ceditMenu } from "../component_commands/cedit.js";
 
-export default new ApplicationCommand(
+export default new ApplicationCommandHandler(
   {
     name: "char",
     description: "Character management for players",
@@ -77,6 +77,8 @@ export default new ApplicationCommand(
     ]
   },
   async function (interaction, Bot, db) {
+    if (!interaction.isCommand()) return;
+
     switch (interaction.options.getSubcommand(true)) {
       case "create": {
         await interaction.deferReply({ ephemeral: true });

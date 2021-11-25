@@ -1,8 +1,8 @@
 import { ApplicationCommandOptionData, MessageEmbed } from "discord.js";
 import { AbilitiesManager, capitalize, ClassManager, EffectManager, ItemManager, PassivesManager, SpeciesManager } from "../..";
-import { Ability } from "../../game/Abilities";
 import { ActiveEffect } from "../../game/ActiveEffects";
 import { CreatureClass } from "../../game/Classes";
+import { CreatureAbility } from "../../game/CreatureAbilities";
 import { DamageMedium, DamageType } from "../../game/Damage";
 import { AttackData, AttackSet, Item } from "../../game/Items";
 import { PassiveEffect, PassiveModifier } from "../../game/PassiveEffects";
@@ -74,7 +74,8 @@ export default new ApplicationCommandHandler(
             name: "id",
             description: "The ID of the item (Not name!)",
             type: "STRING",
-            required: true
+            required: true,
+            autocomplete: true
           }
         ]
       }
@@ -150,14 +151,12 @@ export default new ApplicationCommandHandler(
         .setTitle(item.$.info.name)
         // @ts-expect-error
         .setDescription(item.$.info.description || item.$.info.lore);
-
           // @ts-expect-error
           if ((item.$.unique ?? []).length > 0) {
             embed.addField(
               "Unique Flags",
               function() {
                 var str = "";
-
                 // @ts-expect-error
                 for (const u of item.$.unique) {
                   str += `${capitalize(u.replaceAll(/_/g, " "))}, `;
@@ -253,7 +252,7 @@ export default new ApplicationCommandHandler(
               "Modifiers",
               modifierDescriptor(item.$.modifiers ?? []) || "None"
             )
-          } else if (item instanceof Ability) {
+          } else if (item instanceof CreatureAbility) {
             embed.description += `\nHaste **${item.$.haste}**\n`;
           } else if (item instanceof ActiveEffect) {
             embed.description += `\nMax At Once **${item.$.consecutive_limit}**\n`;
@@ -339,4 +338,4 @@ function passivesDescriptor(passives: (string | PassiveEffect)[]) {
   return str;
 }
 
-type ManagedItems = Item | CreatureClass | CreatureSpecies | PassiveEffect | Ability | ActiveEffect;
+type ManagedItems = Item | CreatureClass | CreatureSpecies | PassiveEffect | CreatureAbility | ActiveEffect;

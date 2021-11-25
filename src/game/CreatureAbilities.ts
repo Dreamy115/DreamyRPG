@@ -34,9 +34,10 @@ export class CreatureAbility {
     info: {
       name: string
       lore: string
+      description: string
     }
     unique?: string[]
-
+    haste?: number
   }
 
   constructor(data: CreatureAbility["$"]) {

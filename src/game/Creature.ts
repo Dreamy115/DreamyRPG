@@ -2,8 +2,8 @@ import { Client, MessageEmbed } from "discord.js";
 import mongoose from "mongoose";
 import NodeCache from "node-cache";
 import { AbilitiesManager, capitalize, ClassManager, CONFIG, EffectManager, ItemManager, PassivesManager, SpeciesManager } from "../index.js";
-import { Ability } from "./Abilities.js";
 import { AppliedActiveEffect } from "./ActiveEffects.js";
+import { CreatureAbility } from "./CreatureAbilities.js";
 import { DamageCause, DamageGroup, DamageLog, DamageMedium, DamageType, DAMAGE_TO_INJURY_RATIO, reductionMultiplier, ShieldReaction } from "./Damage.js";
 import { AttackData, AttackSet } from "./Items.js";
 import { PassiveEffect, PassiveModifier } from "./PassiveEffects.js";
@@ -241,8 +241,8 @@ export default class Creature {
     }
   }
 
-  findAbilities(): Ability[] {
-    const abilities: Ability[] = [];
+  findAbilities(): CreatureAbility[] {
+    const abilities: CreatureAbility[] = [];
 
     const species = SpeciesManager.map.get(this.$.info.species);
     if (species) {
@@ -632,6 +632,9 @@ export default class Creature {
 
   static readonly ATTACK_MAX_STACKS = 12;
   static readonly ATTACK_STACK_DIE_SIZE = 6;
+
+  static readonly MIN_HAND_AMOUNT = 3;
+  static readonly MAX_HAND_AMOUNT = 6;
 
   // -----NNNWWWC
   static readonly ATTACK_VALUES = [

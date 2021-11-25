@@ -78,7 +78,7 @@ export default new ApplicationCommandHandler(
       return;
     }
 
-    switch (interaction.options.getSubcommandGroup() ?? interaction.options.getSubcommand()) {
+    switch (interaction.options.getSubcommandGroup(false) ?? interaction.options.getSubcommand()) {
       case "cedit": {
         let creature_id = interaction.options.getString("id") ?? interaction.options.getUser("user")?.id ?? interaction.user.id;
 

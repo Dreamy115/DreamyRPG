@@ -51,7 +51,7 @@ export class Fight {
 
       if (!creature_a || !creature_b) return 0;
 
-      return creature_b.$.stats.speed.value - creature_a.$.stats.speed.value + (Math.random() - 0.5);
+      return creature_b.$.stats.initiative.value - creature_a.$.stats.initiative.value + (Math.random() - 0.5);
     })
 
     if (this.$.queue.length < 2) throw new Error("Not enough fight participants");

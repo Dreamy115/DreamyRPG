@@ -46,7 +46,7 @@ export default class Creature {
         tech: new TrackableStat(0),
         vamp: new TrackableStat(0),
         siphon: new TrackableStat(0),
-        speed: new TrackableStat(10)
+        initiative: new TrackableStat(10)
       },
       vitals: {
         health: (data.vitals?.health ?? 1),
@@ -677,7 +677,7 @@ export interface CreatureData {
     tech: TrackableStat
     vamp: TrackableStat
     siphon: TrackableStat
-    speed: TrackableStat
+    initiative: TrackableStat
   }
   vitals: {
     health: number

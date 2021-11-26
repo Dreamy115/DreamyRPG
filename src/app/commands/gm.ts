@@ -11,6 +11,38 @@ export default new ApplicationCommandHandler(
     description: "Game master stuff",
     options: [
       {
+        name: "ccreate",
+        description: "Create a Creature",
+        type: "SUB_COMMAND",
+        options: [
+          {
+            name: "id",
+            description: "An ID",
+            type: "STRING",
+            required: true
+          }
+        ]
+      },
+      {
+        name: "cclone",
+        description: "Clone a Creature",
+        type: "SUB_COMMAND",
+        options: [
+          {
+            name: "old_id",
+            description: "Source Creature",
+            type: "STRING",
+            required: true
+          },
+          {
+            name: "new_id",
+            description: "New Creature",
+            type: "STRING",
+            required: true
+          }
+        ]
+      },
+      {
         name: "cedit",
         description: "Edit a Creature",
         type: "SUB_COMMAND",
@@ -140,6 +172,71 @@ export default new ApplicationCommandHandler(
             )
           } break;
         }
+      } break;
+      case "ccreate": {
+        await interaction.deferReply({ephemeral: true});
+
+        const cid = interaction.options.getString("id", true);
+
+        let creature = await Creature.fetch(cid, db).catch(() => null);
+        if (creature) {
+          interaction.followUp({
+            ephemeral: true,
+            content: "Creature already exists"
+          })
+          return;
+        }
+
+        creature = new Creature({
+          _id: cid,
+          info: {
+            npc: true
+          }
+        })
+
+        await creature.put(db);
+
+        interaction.followUp({
+          ephemeral: true,
+          content: "Saved new Creature"
+        })
+      } break;
+      case "cclone": {
+        await interaction.deferReply({ephemeral: true});
+
+        const old_cid = interaction.options.getString("old_id", true);
+        const new_cid = interaction.options.getString("new_id", true);
+
+        let creature = await Creature.fetch(old_cid, db).catch(() => null);
+        if (!creature) {
+          interaction.followUp({
+            ephemeral: true,
+            content: "Nonexistent source Creature"
+          })
+          return;
+        }
+
+        let new_creature = await Creature.fetch(new_cid, db).catch(() => null);
+        if (new_creature) {
+          interaction.followUp({
+            ephemeral: true,
+            content: "Creature already exists"
+          })
+          return;
+        }
+
+        let data = creature.dump();
+        data._id = new_cid;
+        // @ts-expect-error
+        data.info.npc = true;
+
+        new_creature = new Creature(data);
+        await new_creature.put(db);
+
+        interaction.followUp({
+          ephemeral: true,
+          content: "Saved new Creature"
+        })
       } break;
     }
   }

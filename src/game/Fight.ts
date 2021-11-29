@@ -1,7 +1,7 @@
 import NodeCache from "node-cache";
 import { CONFIG, shuffle } from "..";
 import Mongoose from "mongoose";
-import { Client, EmbedFieldData, InteractionReplyOptions, MessageEmbed, MessagePayload, SnowflakeUtil, User } from "discord.js";
+import { Client, EmbedFieldData, InteractionReplyOptions, MessageActionRow, MessageButton, MessageEmbed, MessagePayload, SnowflakeUtil, User } from "discord.js";
 import Creature from "./Creature";
 import { textStat } from "./Stats";
 
@@ -98,6 +98,17 @@ export class Fight {
     return -1;
   }
 
+  async announceEnd(db: typeof Mongoose, Bot: Client): Promise<InteractionReplyOptions> {
+    return {
+      embeds: [
+        new MessageEmbed()
+          .setColor("AQUA")
+          .setFooter(this.$._id)
+          .setTitle("Fight has ended")
+      ]
+    }
+  }
+
   async announceTurn(db: typeof Mongoose, Bot: Client): Promise<InteractionReplyOptions> {
     const embed = new MessageEmbed();
 
@@ -153,8 +164,26 @@ export class Fight {
 
     return {
       embeds: [embed],
-      content: `${owner}`
+      content: `${owner}`,
+      components: await this.getComponents()
     }
+  }
+
+  async getComponents(): Promise<MessageActionRow[]> {
+    const components: MessageActionRow[] = [
+      new MessageActionRow().setComponents([
+        new MessageButton()
+          .setCustomId(`fight/${this.$._id}/attack`)
+          .setLabel("Attack")
+          .setStyle("PRIMARY"),
+        new MessageButton()
+          .setCustomId(`fight/${this.$._id}/endturn`)
+          .setLabel("End Turn")
+          .setStyle("DANGER")
+      ])
+    ];
+
+    return components;
   }
 
   static async fetch(id: string, db: typeof Mongoose, cache = true): Promise<Fight> {
@@ -170,6 +199,8 @@ export class Fight {
     return new Fight(data);
   }
   async put(db: typeof Mongoose) {
+    Fight.cache.set(this.$._id, this);
+
     try {
       // @ts-expect-error
       await db.connection.collection(Fight.COLLECTION_NAME).insertOne(this.dump());

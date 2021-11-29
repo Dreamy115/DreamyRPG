@@ -81,6 +81,19 @@ export default new ApplicationCommandHandler(
                 required: true
               }
             ]
+          },
+          {
+            name: "end",
+            description: "End a fight",
+            type: "SUB_COMMAND",
+            options: [
+              {
+                name: "id",
+                description: "Fight ID",
+                type: "STRING",
+                required: true
+              }
+            ]
           }
         ]
       }
@@ -170,6 +183,31 @@ export default new ApplicationCommandHandler(
             await interaction.followUp(
               await fight.announceTurn(db, Bot)
             )
+            await fight.put(db);
+          } break;
+          case "end": {
+            const fid = interaction.options.getString("id", true);
+
+            const [fight, ] = await Promise.all([
+              Fight.fetch(fid, db).catch(() => null),
+              interaction.deferReply({ephemeral: true})
+            ]);
+
+            if (!fight) {
+              interaction.editReply({
+                content: "Invalid fight"
+              })
+              return;
+            }
+
+            await fight.delete(db);
+            interaction.editReply({
+              content: "Deleted!"
+            })
+            interaction.followUp({
+              ephemeral: false,
+              embeds: (await fight.announceEnd(db, Bot)).embeds
+            });
           } break;
         }
       } break;

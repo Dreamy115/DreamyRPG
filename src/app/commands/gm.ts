@@ -91,7 +91,22 @@ export default new ApplicationCommandHandler(
                 name: "id",
                 description: "Fight ID",
                 type: "STRING",
-                required: true
+                required: true,
+                autocomplete: true
+              }
+            ]
+          },
+          {
+            name: "reannounce",
+            description: "Reannounce a fight message. Has no effect otherwise.",
+            type: "SUB_COMMAND",
+            options: [
+              {
+                name: "id",
+                description: "Fight ID",
+                type: "STRING",
+                required: true,
+                autocomplete: true
               }
             ]
           }
@@ -176,10 +191,15 @@ export default new ApplicationCommandHandler(
             })
 
             await interaction.editReply({
-              content: "Done!"
+              content: "Preparing..."
             });
 
-            await fight.constructQueue(db);
+            await fight.prepare(db).then(() => interaction.editReply({
+              content: "Queueing..."
+            }));
+            await fight.constructQueue(db).then(() => interaction.editReply({
+              content: "Done!"
+            }));;
             await interaction.followUp(
               await fight.announceTurn(db, Bot)
             )
@@ -209,6 +229,24 @@ export default new ApplicationCommandHandler(
               embeds: (await fight.announceEnd(db, Bot)).embeds
             });
           } break;
+          case "reannounce": {
+            const fid = interaction.options.getString("id", true);
+
+            const [fight, ] = await Promise.all([
+              Fight.fetch(fid, db).catch(() => null),
+              interaction.deferReply({ephemeral: true})
+            ]);
+
+            if (!fight) {
+              interaction.editReply({
+                content: "Invalid fight"
+              })
+              return;
+            }
+
+            await interaction.editReply({content: "OK"});
+            interaction.followUp(await fight.announceTurn(db, Bot))
+          }
         }
       } break;
       case "ccreate": {

@@ -199,3 +199,9 @@ export function shuffle(array: any[]): any[] {
 
   return array;
 }
+
+export function limitString(str: string, max_length: number) {
+  max_length = Math.max(1, max_length);
+
+  return str.length > 100 ? str.substr(0, max_length - 1) + "…" : str;
+}

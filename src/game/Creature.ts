@@ -1,7 +1,7 @@
 import { Client, MessageEmbed } from "discord.js";
 import mongoose from "mongoose";
 import NodeCache from "node-cache";
-import { AbilitiesManager, capitalize, ClassManager, CONFIG, EffectManager, ItemManager, PassivesManager, SpeciesManager } from "../index.js";
+import { AbilitiesManager, capitalize, ClassManager, CONFIG, EffectManager, ItemManager, PassivesManager, shuffle, SpeciesManager } from "../index.js";
 import { AppliedActiveEffect } from "./ActiveEffects.js";
 import { CreatureAbility } from "./CreatureAbilities.js";
 import { DamageCause, DamageGroup, DamageLog, DamageMedium, DamageType, DAMAGE_TO_INJURY_RATIO, reductionMultiplier, ShieldReaction } from "./Damage.js";
@@ -108,7 +108,7 @@ export default class Creature {
     if (isNaN(this.$.vitals.shield)) {
       this.$.vitals.shield = 0;
     }
-
+    
     this.$.vitals.health *= this.$.stats.health.value;
     this.$.vitals.injuries *= this.$.stats.health.value;
     this.$.vitals.shield *= this.$.stats.shield.value;
@@ -239,6 +239,36 @@ export default class Creature {
         } break;
       }
     }
+  }
+
+  drawAbilityCard(): CreatureAbility | null {
+    if (this.$.abilities.hand.length >= Creature.MAX_HAND_AMOUNT) return null;
+
+    var shuffled = false;
+    var ability: CreatureAbility | undefined = undefined;
+    while (!ability) {
+      const id = this.$.abilities.deck.shift();
+      if (id) {
+        ability = AbilitiesManager.map.get(id);
+      } else {
+        if (!shuffled) {
+          this.reshuffleAbilityDeck();
+          shuffled = true;
+        } else {
+          break;
+        }
+      }
+    }
+
+    return ability ?? null;
+  }
+
+  reshuffleAbilityDeck() {
+    this.$.abilities.deck = [];
+    for (const ability of this.findAbilities()) {
+      this.$.abilities.deck.push(ability.$.id);
+    }
+    shuffle(this.$.abilities.deck);
   }
 
   findAbilities(): CreatureAbility[] {

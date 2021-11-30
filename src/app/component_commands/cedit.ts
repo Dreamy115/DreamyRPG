@@ -1,5 +1,5 @@
 import { MessageActionRow, MessageButton, MessageSelectMenu, MessageSelectOptionData } from "discord.js";
-import { capitalize, ClassManager, CONFIG, ItemManager, messageInput, SpeciesManager } from "../..";
+import { capitalize, ClassManager, CONFIG, ItemManager, limitString, messageInput, SpeciesManager } from "../..";
 import Creature, { HealType } from "../../game/Creature";
 import { DamageCause, DamageGroup, damageLogEmbed, DamageMedium, DamageType, ShieldReaction } from "../../game/Damage";
 import { Item } from "../../game/Items";
@@ -11,12 +11,13 @@ export default new ComponentCommandHandler(
     const creature_id = args.shift();
     if (!creature_id) throw new Error("Invalid ID");
 
+    await interaction.deferReply({ ephemeral: true });
+
     const guild = await Bot.guilds.fetch(CONFIG.guild?.id ?? "");
     await guild.roles.fetch();
 
     if (creature_id !== interaction.user.id && guild.id !== interaction.guild?.id) {
-      interaction.reply({
-        ephemeral: true,
+      interaction.editReply({
         content: "Operations on foreign creatures must be made on the Home Guild"
       });
       return;
@@ -27,8 +28,7 @@ export default new ComponentCommandHandler(
     if (!member || !member.roles.cache.has(CONFIG.guild?.gm_role ?? "")) {
       IS_GM = false;
       if (creature_id !== interaction.user.id) {
-        interaction.reply({
-          ephemeral: true,
+        interaction.editReply({
           content: "Not enough permissions (Must own Creature or be GM)"
         });
         return;
@@ -41,8 +41,6 @@ export default new ComponentCommandHandler(
 
     switch(args.shift()) {
       case "delete": {
-        await interaction.deferReply({ ephemeral: true });
-
         const creature = await Creature.fetch(creature_id, db).catch(() => null);
         if (!creature) {
           interaction.editReply({
@@ -57,8 +55,6 @@ export default new ComponentCommandHandler(
         })
       } break;
       case "edit": {
-        await interaction.deferReply({ ephemeral: true });
-
         let creature = await Creature.fetch(creature_id, db).catch(() => null);
         if (!creature) {
           interaction.editReply({
@@ -216,7 +212,7 @@ export default new ComponentCommandHandler(
 
                           array.push({
                             label: item.$.info.name,
-                            description: item.$.info.lore.length > 100 ? item.$.info.lore.substr(0, 99) + "…" : item.$.info.lore,
+                            description: limitString(item.$.info.lore, 100),
                             value: item.$.id ?? "",
                           })
                         }

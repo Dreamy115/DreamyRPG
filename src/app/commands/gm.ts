@@ -194,16 +194,25 @@ export default new ApplicationCommandHandler(
               content: "Preparing..."
             });
 
-            await fight.prepare(db).then(() => interaction.editReply({
-              content: "Queueing..."
-            }));
-            await fight.constructQueue(db).then(() => interaction.editReply({
-              content: "Done!"
-            }));;
+            try {
+              await fight.prepare(db).then(() => interaction.editReply({
+                content: "Queueing..."
+              }));
+              await fight.constructQueue(db).then(() => interaction.editReply({
+                content: "Done!"
+              }));;
+              await fight.put(db);
+            } catch (e: any) {
+              console.error(e);
+              interaction.editReply({
+                content: e?.message
+              })
+              return;
+            }
+
             await interaction.followUp(
               await fight.announceTurn(db, Bot)
             )
-            await fight.put(db);
           } break;
           case "end": {
             const fid = interaction.options.getString("id", true);

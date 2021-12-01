@@ -176,7 +176,9 @@ async function infoEmbed(creature: Creature, Bot: Client, page: string): Promise
             "\n" +
             `Vamp **${creature.$.stats.vamp.value}%** | **${creature.$.stats.siphon.value}%** Siphon *(Regenerates **health** | **shields** by **%** of damage dealt when dealing **physical** | **energy** damage)*\n` +
             "\n" +
-            `**${creature.$.stats.tech.value}** Tech *(Ability Power)*` 
+            `**${creature.$.stats.tech.value}** Tech *(Ability Power)*\n` +
+            "\n" +
+            `**${creature.$.stats.initiative.value}** Initiative` 
         },
         {
           name: "Defense",

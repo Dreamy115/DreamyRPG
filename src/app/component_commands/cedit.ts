@@ -342,6 +342,11 @@ export default new ComponentCommandHandler(
                   ephemeral: true,
                   content: 
                     "Please input damage string using this syntax: `<type>,<medium>,<value>,<chance>,<penetration>,<shield_reaction>` without spaces, whole numbers, and without %.\n" +
+                    "Possible values:\n" +
+                    "`<type>` - `Physical` `Energy` `True`\n" +
+                    "`<medium>` - `Melee` `Ranged` `Direct`\n" +
+                    "`<value>` `<chance>` `<penetration>` - A non-negative integer\n" +
+                    "`<shield_reaction>` - `Normal` `Ignore` `Only`\n"+
                     "ex. `Physical,Melee,25,100,0,Normal`"
                 });
 
@@ -394,6 +399,8 @@ export default new ComponentCommandHandler(
                   ephemeral: true,
                   content: 
                     "Please input heal string using this syntax: `<amount>,<type>` without spaces, whole numbers, and without %.\n" +
+                    "Possible values:\n" +
+                    "`<amount>` - A positive integer\n`<type` - `Health` `Mana` `Shield` `Overheal` `Injuries`\n" +
                     "ex. `25,Health`"
                 });
 

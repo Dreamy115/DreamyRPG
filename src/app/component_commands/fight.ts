@@ -114,7 +114,7 @@ export default new ComponentCommandHandler(
                 function () {
                   var str = "";
 
-                  for (var i = 1; i < Creature.ATTACK_MAX_STACKS; i++) {
+                  for (var i = 1; i <= Creature.ATTACK_MAX_STACKS; i++) {
                     if (i <= creature.$.abilities.stacks + rolled) {
                       switch (Creature.ATTACK_VALUES[i]) {
                         case null:

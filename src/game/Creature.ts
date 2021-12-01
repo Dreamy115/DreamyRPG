@@ -62,7 +62,7 @@ export default class Creature {
       abilities: {
         deck: data.abilities?.deck ?? [],
         hand: data.abilities?.hand ?? [],
-        stacks: (data.abilities?.stacks ?? 0) % Creature.ATTACK_MAX_STACKS
+        stacks: data.abilities?.stacks ?? 0
       },
       active_effects: data.active_effects ?? [],
       vars: data.vars ?? {}
@@ -126,6 +126,8 @@ export default class Creature {
       
       effectData.$.postload?.(this, effect);
     }
+
+    this.vitalsIntegrity();
   }
 
   get defaultAttackSet(): AttackSet {
@@ -660,6 +662,7 @@ export default class Creature {
   static readonly MAX_EQUIPPED_UTILITY = 3;
   static readonly MAX_EQUIPPED_CLOTHING = 3;
 
+  static readonly ATTACK_COST = 6;
   static readonly ATTACK_MAX_STACKS = 12;
   static readonly ATTACK_STACK_DIE_SIZE = 6;
 
@@ -668,7 +671,7 @@ export default class Creature {
 
   // -----NNNWWWC
   static readonly ATTACK_VALUES = [
-    null, null, null, null, null, DamageCause.Normal_Attack,
+    undefined, null, null, null, null, null, DamageCause.Normal_Attack,
     DamageCause.Normal_Attack, DamageCause.Normal_Attack, DamageCause.Weak_Attack, DamageCause.Weak_Attack, DamageCause.Weak_Attack, DamageCause.Critical_Attack
   ]
 

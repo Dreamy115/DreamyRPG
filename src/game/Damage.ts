@@ -62,10 +62,11 @@ export function reductionMultiplier(protection: number): number {
 
 export function damageLogEmbed(log: DamageLog) {
   const embed = new MessageEmbed();
-
+  console.log(log.final.attacker)
   embed
     .setTitle("Damage Log")
-    .setAuthor(`${log.final.attacker instanceof Creature ? log.final.attacker.$.info.display.name : (log.final.attacker ?? "Unknown")} >>> ${(log.final.victim?.$.info.display.name ?? "Unknown")}`)
+    // @ts-expect-error
+    .setAuthor(`${log.final?.attacker?.$?.info.display.name ?? log.final.attacker ?? "Unknown"} >>> ${(log.final.victim?.$.info.display.name ?? "Unknown")}`)
     .setColor("RED")
     .addField(
       "Before",

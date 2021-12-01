@@ -205,3 +205,7 @@ export function limitString(str: string, max_length: number) {
 
   return str.length > 100 ? str.substr(0, max_length - 1) + "…" : str;
 }
+
+export async function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}

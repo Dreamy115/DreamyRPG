@@ -310,9 +310,8 @@ export default new ApplicationCommandHandler(
           return;
         }
 
-        let data = creature.dump();
+        let data = JSON.parse(JSON.stringify(creature.dump()));
         data._id = new_cid;
-        // @ts-expect-error
         data.info.npc = true;
 
         new_creature = new Creature(data);

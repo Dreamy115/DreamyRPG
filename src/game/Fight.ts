@@ -44,8 +44,9 @@ export class Fight {
         }
 
         creature.$.vitals.shield = creature.$.stats.shield.value;
-        creature.$.vitals.mana = 0;
+        creature.$.vitals.mana = creature.$.stats.mana_regen.value;
         creature.$.abilities.hand = [];
+        creature.$.abilities.stacks = 0;
 
         creature.put(db);
       }
@@ -165,11 +166,15 @@ export class Fight {
             value: await async function (){
               var str = "";
 
-              for await (const c of fight.$.parties[p]) {
+              for (const c of fight.$.parties[p]) {
                 const char = await Creature.fetch(c, db).catch(() => null);
                 if (!char) continue;
 
-                str += `**${char.$.info.display.name}**\nHealth **${creature.$.vitals.health}**/**${creature.$.stats.health.value - creature.$.vitals.injuries}** (**${Math.round(100 * creature.$.vitals.health / creature.$.stats.health.value)}%**)\nShield ` + (creature.$.stats.shield.value > 0 ? `${textStat(creature.$.vitals.shield, creature.$.stats.shield.value)} **${creature.$.stats.shield_regen.value}**/t` : "No **Shield**") + "\n"
+                str += 
+                  `**${char.$.info.display.name}**\n` +
+                  `Health **${char.$.vitals.health}**/**${char.$.stats.health.value - char.$.vitals.injuries}** (**${Math.round(100 * char.$.vitals.health / char.$.stats.health.value)}%**)\n` +
+                  `Shield ` + (char.$.stats.shield.value > 0 ? `${textStat(char.$.vitals.shield, char.$.stats.shield.value)} **${char.$.stats.shield_regen.value}**/t` : "No **Shield**") + "\n" +
+                  `Mana ${textStat(char.$.vitals.mana, char.$.stats.mana.value)} **${char.$.stats.mana_regen.value}**/t`
               }
 
               return str;
@@ -207,7 +212,7 @@ export class Fight {
       new MessageActionRow().setComponents([
         new MessageButton()
           .setCustomId(`fight/${this.$._id}/attack`)
-          .setLabel("Attack")
+          .setLabel("Attack" + `(${Creature.ATTACK_COST})`)
           .setStyle("PRIMARY"),
         new MessageButton()
           .setCustomId(`cedit/${this.$.queue[0]}/edit/weapon_switch`)

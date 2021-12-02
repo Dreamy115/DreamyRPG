@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import Creature from "./Creature";
 
 export default class CreatureAbilitiesManager {
   map = new Map<string, CreatureAbility>();
@@ -36,8 +37,11 @@ export class CreatureAbility {
       lore: string
       description: string
     }
+    min_targets: number // If this is 0, only caster is provided and targets is empty
+    max_targets?: number // Min targets must be at least 1 to take effect, and must be more than min targets.
     unique?: string[]
     haste?: number
+    use: (caster: Creature, targets: Creature[]) => Promise<void>
   }
 
   constructor(data: CreatureAbility["$"]) {

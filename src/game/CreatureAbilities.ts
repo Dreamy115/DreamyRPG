@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { capitalize } from "..";
 import Creature from "./Creature";
 
 export default class CreatureAbilitiesManager {
@@ -35,7 +36,7 @@ export class CreatureAbility {
     info: {
       name: string
       lore: string
-      description: string
+      lore_replacers: LoreReplacer[]
     }
     min_targets: number // If this is 0, only caster is provided and targets is empty
     max_targets?: number // Min targets must be at least 1 to take effect, and must be more than min targets.
@@ -47,4 +48,29 @@ export class CreatureAbility {
   constructor(data: CreatureAbility["$"]) {
     this.$ = data;
   }
+}
+
+export interface LoreReplacer {
+  stat: string
+  bonus?: number
+  multiplier: number
+}
+
+export function replaceLore(input: string, replacers: LoreReplacer[], creature?: Creature): string {
+  let str = input;
+
+  for (const r in replacers) {
+    const replacer = replacers[r];
+
+    str = str.replaceAll(
+      `{${r}}`,
+      `${Math.round(1000 * replacer.multiplier) / 10}% ${replacer.bonus ? ((replacer.bonus > 0 ? "+" : "-") + Math.abs(replacer.bonus)) : ""} ${capitalize(replacer.stat.replaceAll(/_/g, " "))}` +
+      (creature
+      // @ts-expect-error
+      ? `*(${(creature.$.stats[replacer.stat]?.value * replacer.multiplier) + replacer.bonus})*`
+      : "")
+    );
+  }
+
+  return str;
 }

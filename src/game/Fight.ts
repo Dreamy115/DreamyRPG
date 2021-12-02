@@ -1,9 +1,10 @@
 import NodeCache from "node-cache";
-import { AbilitiesManager, CONFIG, limitString, shuffle } from "..";
+import { AbilitiesManager, CONFIG, limitString, removeMarkdown, shuffle } from "..";
 import Mongoose from "mongoose";
 import { Client, EmbedFieldData, InteractionReplyOptions, MessageActionRow, MessageButton, MessageEmbed, MessagePayload, MessageSelectMenu, MessageSelectOptionData, SnowflakeUtil, User } from "discord.js";
 import Creature, { HealType } from "./Creature";
 import { textStat } from "./Stats";
+import { replaceLore } from "./CreatureAbilities";
 
 export class Fight {
   static cache = new NodeCache({
@@ -208,6 +209,8 @@ export class Fight {
   }
 
   async getComponents(db: typeof Mongoose): Promise<MessageActionRow[]> {
+    const creature = await Creature.fetch(this.$.queue[0], db).catch(() => null);
+
     const components: MessageActionRow[] = [
       new MessageActionRow().setComponents([
         new MessageButton()
@@ -226,20 +229,24 @@ export class Fight {
       new MessageActionRow().setComponents([
         new MessageSelectMenu()
           .setCustomId(`fight/${this.$._id}/ability`)
-          .setPlaceholder("Use Ability")
-          .setOptions(await async function (fight: Fight) {
+          .setPlaceholder(`Use Ability (${creature?.$.abilities.hand.length ?? 0}/${Creature.MAX_HAND_AMOUNT})`)
+          .setOptions(await async function () {
             const array: MessageSelectOptionData[] = [];
 
-            const creature = await Creature.fetch(fight.$.queue[0], db).catch(() => null);
             if (creature) for (const a of creature.$.abilities.hand) {
               const ability = AbilitiesManager.map.get(a);
               if (!ability) continue;
 
-              array.push({
-                label: ability.$.info.name,
-                value: ability.$.id,
-                description: limitString(ability.$.info.lore, 100)
-              })
+              const index = array.findIndex((v) => v.value === ability.$.id)
+              if (index === -1) {
+                array.push({
+                  label: ability.$.info.name + " []",
+                  value: ability.$.id,
+                  description: limitString(removeMarkdown(replaceLore(ability.$.info.lore, ability.$.info.lore_replacers)), 100)
+                })
+              } else {
+                array[index].label += "[]";
+              }
             }
 
             if (array.length == 0)
@@ -249,7 +256,7 @@ export class Fight {
               })
 
             return array;
-          }(this))
+          }())
       ])
     ];
 

@@ -1,5 +1,5 @@
 import { MessageActionRow, MessageButton, MessageSelectMenu, MessageSelectOptionData } from "discord.js";
-import { capitalize, ClassManager, CONFIG, ItemManager, limitString, messageInput, SpeciesManager } from "../..";
+import { capitalize, ClassManager, CONFIG, ItemManager, limitString, messageInput, removeMarkdown, SpeciesManager } from "../..";
 import Creature, { HealType } from "../../game/Creature";
 import { DamageCause, DamageGroup, damageLogEmbed, DamageMedium, DamageType, ShieldReaction } from "../../game/Damage";
 import { Item } from "../../game/Items";
@@ -630,7 +630,7 @@ export function ceditMenu(creature_id: string): MessageActionRow[] {
           array.push({
             label: species.$.info.name,
             value: species.$.id,
-            description: species.$.info.lore
+            description: removeMarkdown(species.$.info.lore)
           })
         }
 
@@ -648,7 +648,7 @@ export function ceditMenu(creature_id: string): MessageActionRow[] {
           array.push({
             label: itemclass.$.info.name,
             value: itemclass.$.id,
-            description: itemclass.$.info.lore
+            description: removeMarkdown(itemclass.$.info.lore)
           })
         }
 

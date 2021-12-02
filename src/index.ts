@@ -209,3 +209,7 @@ export function limitString(str: string, max_length: number) {
 export async function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+export function removeMarkdown(str: string) {
+  return str.replaceAll(/\\(\*|_|`|~|\\)/g, '$1').replace(/(\*|_|`|~|\\)/g, "")
+}

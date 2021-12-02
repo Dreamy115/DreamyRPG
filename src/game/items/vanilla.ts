@@ -179,5 +179,17 @@ export default [
         }
       ]
     }
+  }),
+  new Item({
+    id: "debug_util",
+    type: "wearable",
+    subtype: "utility",
+    info: {
+      name: "Debug Utility",
+      lore: "Test Item"
+    },
+    abilities: [
+      "debug_ability"
+    ]
   })
 ]

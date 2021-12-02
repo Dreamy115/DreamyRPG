@@ -2,7 +2,7 @@ import { ApplicationCommandOptionData, MessageEmbed } from "discord.js";
 import { AbilitiesManager, capitalize, ClassManager, EffectManager, ItemManager, PassivesManager, SpeciesManager } from "../..";
 import { ActiveEffect } from "../../game/ActiveEffects";
 import { CreatureClass } from "../../game/Classes";
-import { CreatureAbility } from "../../game/CreatureAbilities";
+import { CreatureAbility, replaceLore } from "../../game/CreatureAbilities";
 import { DamageMedium, DamageType } from "../../game/Damage";
 import { AttackData, AttackSet, Item } from "../../game/Items";
 import { PassiveEffect, PassiveModifier } from "../../game/PassiveEffects";
@@ -149,8 +149,7 @@ export default new ApplicationCommandHandler(
 
         embed
         .setTitle(item.$.info.name)
-        // @ts-expect-error
-        .setDescription(item.$.info.description || item.$.info.lore);
+        .setDescription(item.$.info.lore);
           // @ts-expect-error
           if ((item.$.unique ?? []).length > 0) {
             embed.addField(
@@ -253,7 +252,9 @@ export default new ApplicationCommandHandler(
               modifierDescriptor(item.$.modifiers ?? []) || "None"
             )
           } else if (item instanceof CreatureAbility) {
-            embed.description += `\nHaste **${item.$.haste}**\n`;
+            embed.description =
+              replaceLore(embed.description ?? "", item.$.info.lore_replacers) +
+              `\n\nHaste **${item.$.haste ?? 1}**\n`
           } else if (item instanceof ActiveEffect) {
             embed.description += `\nMax At Once **${item.$.consecutive_limit}**\n`;
           }

@@ -1,11 +1,12 @@
-import { Client, MessageEmbed } from "discord.js";
+import { Client, EmbedFieldData, MessageEmbed } from "discord.js";
 import { DisplaySeverity, romanNumeral } from "../../game/ActiveEffects.js";
 import Creature from "../../game/Creature.js";
+import { replaceLore } from "../../game/CreatureAbilities.js";
 import { reductionMultiplier, DAMAGE_TO_INJURY_RATIO, DamageMedium, DamageType } from "../../game/Damage.js";
 import { AttackData } from "../../game/Items.js";
 import { PassiveModifier } from "../../game/PassiveEffects.js";
 import { textStat, ModifierType } from "../../game/Stats.js";
-import { SpeciesManager, ClassManager, capitalize, ItemManager, EffectManager } from "../../index.js";
+import { SpeciesManager, ClassManager, capitalize, ItemManager, EffectManager, AbilitiesManager } from "../../index.js";
 import { ApplicationCommandHandler } from "../commands.js";
 import { ceditMenu } from "../component_commands/cedit.js";
 
@@ -46,6 +47,10 @@ export default new ApplicationCommandHandler(
               {
                 name: "Attack",
                 value: "attack"
+              },
+              {
+                name: "Abilities",
+                value: "abilities"
               },
               {
                 name: "Effects",
@@ -284,6 +289,20 @@ async function infoEmbed(creature: Creature, Bot: Client, page: string): Promise
           }(creature) || "Empty"
         }
       ])
+    } break;
+    case "abilities": {
+      embed.addFields(function() {
+        const array: EmbedFieldData[] = [];
+
+        for (const ability of creature.findAbilities()) {
+          array.push({
+            name: ability.$.info.name,
+            value: `${replaceLore(ability.$.info.lore, ability.$.info.lore_replacers, creature)}\n\n**${ability.$.haste ?? 1}** Haste`
+          })
+        }
+
+        return array;
+      }())
     } break;
     case "attack": {
       function attackInfo(creature: Creature, attacks: AttackData[]) {

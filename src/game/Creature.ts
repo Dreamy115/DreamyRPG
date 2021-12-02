@@ -262,6 +262,8 @@ export default class Creature {
       }
     }
 
+    if (ability)
+      this.$.abilities.hand.push(ability.$.id)
     return ability ?? null;
   }
 
@@ -671,8 +673,8 @@ export default class Creature {
 
   // -----NNNWWWC
   static readonly ATTACK_VALUES = [
-    undefined, null, null, null, null, null, DamageCause.Normal_Attack,
-    DamageCause.Normal_Attack, DamageCause.Normal_Attack, DamageCause.Weak_Attack, DamageCause.Weak_Attack, DamageCause.Weak_Attack, DamageCause.Critical_Attack
+    undefined, null, null, null, null, null, DamageCause.Weak_Attack,
+    DamageCause.Weak_Attack, DamageCause.Weak_Attack, DamageCause.Normal_Attack, DamageCause.Normal_Attack, DamageCause.Normal_Attack, DamageCause.Critical_Attack
   ]
 
   static readonly COLLECTION_NAME = "Creatures";

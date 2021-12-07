@@ -139,7 +139,7 @@ export default new ApplicationCommandHandler(
 
         interaction.editReply({
           content: `Editing menu for **${char.$.info.display.name}**`,
-          components: ceditMenu(interaction.user.id)
+          components: ceditMenu(char)
         })
       } break;
     }
@@ -154,8 +154,9 @@ async function infoEmbed(creature: Creature, Bot: Client, page: string): Promise
   embed
     .setTitle(creature.$.info.display.name)
     .setAuthor(creature.$.info.npc ? "NPC" : (owner?.tag ?? "Unknown"))
-    .setColor("BLUE")
+    .setColor((creature.$.info.locked || creature.$.info.npc) ? "AQUA" : "GREY")
     .setThumbnail(creature.$.info.display.avatar ?? "")
+    .setFooter(`ID: ${creature.$._id}${(creature.$.info.locked || creature.$.info.npc) ? "" : "  NOT LOCKED NOT LOCKED NOT LOCKED"}`)
 
   switch (page) {
     default:

@@ -133,6 +133,26 @@ export default new ComponentCommandHandler(
             dump.info.species = interaction.values[0];
             creature = new Creature(dump);
           } break;
+          case "lock": {
+            if (args.shift() !== "confirm") {
+              interaction.followUp({
+                content: "Are you sure? You will not be able to edit the Species or Class of your character anymore, but you'll gain the ability to use the character!",
+                components: [new MessageActionRow().setComponents([new MessageButton()
+                  .setCustomId(`cedit/${creature.$._id}/edit/lock/confirm`)
+                  .setStyle("DANGER")
+                  .setLabel("I understand!")
+                ])],
+                ephemeral: true
+              })
+              return;
+            } else {
+              creature.$.info.locked = true;
+              interaction.followUp({
+                content: "Saved!",
+                ephemeral: true
+              })
+            }
+          } break;
           case "class": {
             if (!interaction.isSelectMenu()) return;
 
@@ -144,20 +164,33 @@ export default new ComponentCommandHandler(
               return;
             }
 
+            const chosen_class = ClassManager.map.get(interaction.values[0]);
+            if (!chosen_class) {
+              interaction.followUp({
+                ephemeral: true,
+                content: "Invalid class!"
+              })
+              return;
+            }
+
+            if (chosen_class.$.compatibleSpecies.length > 0 && chosen_class.$.compatibleSpecies.includes(creature.$.info.species)) {
+              interaction.followUp({
+                ephemeral: true,
+                content: "Class incompatible with race"
+              })
+              return;
+            }
+
             let dump = creature.dump();
             // @ts-expect-error
-            dump.info.class = interaction.values[0];
+            dump.info.class = chosen_class.$.id;
 
             // @ts-expect-error
             dump.items.backpack = [];
             // @ts-expect-error
             dump.items.primary_weapon = null;
             // @ts-expect-error
-            dump.items.equipped = [
-              "starter_revolver",
-              "starter_shield",
-              "starter_knife"
-            ]
+            dump.items.equipped = chosen_class.$.items ?? [];
 
             creature = new Creature(dump);
           } break;
@@ -603,25 +636,25 @@ export default new ComponentCommandHandler(
   }
 )
 
-export function ceditMenu(creature_id: string): MessageActionRow[] {
-  return [
+export function ceditMenu(creature: Creature): MessageActionRow[] {
+  const array = [
     new MessageActionRow().addComponents([
       new MessageButton()
-        .setCustomId(`cedit/${creature_id}/edit/name`)
+        .setCustomId(`cedit/${creature.$._id}/edit/name`)
         .setStyle("SECONDARY")
         .setLabel("Change Name"),
       new MessageButton()
-        .setCustomId(`cedit/${creature_id}/edit/avatar`)
+        .setCustomId(`cedit/${creature.$._id}/edit/avatar`)
         .setStyle("SECONDARY")
         .setLabel("Change Avatar"),
       new MessageButton()
-        .setCustomId(`cedit/${creature_id}/delete`)
+        .setCustomId(`cedit/${creature.$._id}/delete`)
         .setStyle("DANGER")
         .setLabel("Delete")
     ]),
     new MessageActionRow().addComponents([
       new MessageSelectMenu()
-        .setCustomId(`cedit/${creature_id}/edit/species`)
+        .setCustomId(`cedit/${creature.$._id}/edit/species`)
         .setPlaceholder("Change Species")
         .addOptions(function() {
         const array: MessageSelectOptionData[] = [];
@@ -639,16 +672,25 @@ export function ceditMenu(creature_id: string): MessageActionRow[] {
     ]),
     new MessageActionRow().addComponents([
       new MessageSelectMenu()
-        .setCustomId(`cedit/${creature_id}/edit/class`)
+        .setCustomId(`cedit/${creature.$._id}/edit/class`)
         .setPlaceholder("Change Class")
         .addOptions(function() {
         const array: MessageSelectOptionData[] = [];
 
         for (const itemclass of ClassManager.map.values()) {
+          if (itemclass.$.compatibleSpecies.length > 0 && itemclass.$.compatibleSpecies.includes(creature.$.info.species))
+            array.push({
+              label: itemclass.$.info.name,
+              value: itemclass.$.id,
+              description: removeMarkdown(itemclass.$.info.lore)
+            })
+        }
+
+        if (array.length == 0) {
           array.push({
-            label: itemclass.$.info.name,
-            value: itemclass.$.id,
-            description: removeMarkdown(itemclass.$.info.lore)
+            label: "Not Found",
+            value: "nothing",
+            description: "No compatible kits found"
           })
         }
 
@@ -657,19 +699,30 @@ export function ceditMenu(creature_id: string): MessageActionRow[] {
     ]),
     new MessageActionRow().addComponents([
       new MessageButton()
-        .setCustomId(`cedit/${creature_id}/edit/weapon_switch`)
+        .setCustomId(`cedit/${creature.$._id}/edit/weapon_switch`)
         .setStyle("PRIMARY")
         .setLabel("Switch Weapons"),
       new MessageButton()
-        .setCustomId(`cedit/${creature_id}/edit/item/equip`)
+        .setCustomId(`cedit/${creature.$._id}/edit/item/equip`)
         .setStyle("SECONDARY")
         .setLabel("Equip Item"),
       new MessageButton()
-        .setCustomId(`cedit/${creature_id}/edit/item/unequip`)
+        .setCustomId(`cedit/${creature.$._id}/edit/item/unequip`)
         .setStyle("SECONDARY")
         .setLabel("Unequip Item")   
     ])
-  ]
+  ];
+
+  if (!creature.$.info.locked) {
+    array.push(new MessageActionRow().setComponents([
+      new MessageButton()
+        .setCustomId(`cedit/${creature.$._id}/edit/lock`)
+        .setStyle("SUCCESS")
+        .setLabel("Lock n Load")
+    ]))
+  }
+
+  return array;
 }
 
 export function gm_ceditMenu(creature_id: string): MessageActionRow[] {

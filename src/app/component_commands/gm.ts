@@ -1,4 +1,4 @@
-import { CONFIG, messageInput } from "../..";
+import { CONFIG, gameLoad, messageInput } from "../..";
 import Creature from "../../game/Creature";
 import { ComponentCommandHandler } from "../component_commands";
 
@@ -80,6 +80,25 @@ export default [
                 })
               }
 
+            } break;
+            case "reload": {
+              var r = interaction.reply({
+                ephemeral: true,
+                content: "Reloading..."
+              });
+              try {
+                gameLoad();
+                await r;
+              } catch (e) {
+                console.log(e);
+                interaction.editReply({
+                  content: "Something went wrong!"
+                })
+                return;
+              }
+              interaction.editReply({
+                content: "Reloaded!"
+              })
             } break;
           }
         } break;

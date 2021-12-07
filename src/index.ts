@@ -86,12 +86,7 @@ Bot.on("ready", async () => {
   guild.commands.set(commandData).then(() => console.log(`Commands uploaded to ${guild.id}`)).catch(() => console.error("Failed uploading commands"));
 
   // Loading Game Stuff
-  ItemManager.load(path.join(__dirname, "game/items"));
-  ClassManager.load(path.join(__dirname, "game/classes"));
-  PassivesManager.load(path.join(__dirname, "game/passives"));
-  SpeciesManager.load(path.join(__dirname, "game/species"));
-  AbilitiesManager.load(path.join(__dirname, "game/abilities"));
-  EffectManager.load(path.join(__dirname, "game/effects"))
+  gameLoad();
 
   // Listeners
   Bot.on("interactionCreate", async (interaction) => {
@@ -164,6 +159,19 @@ Bot.on("ready", async () => {
 })
 
 Bot.login(CONFIG.client.token);
+
+export function gameLoad() {
+  console.log("Loading game items");
+  
+  ItemManager.load(path.join(__dirname, "game/items"));
+  ClassManager.load(path.join(__dirname, "game/classes"));
+  PassivesManager.load(path.join(__dirname, "game/passives"));
+  SpeciesManager.load(path.join(__dirname, "game/species"));
+  AbilitiesManager.load(path.join(__dirname, "game/abilities"));
+  EffectManager.load(path.join(__dirname, "game/effects"));
+
+  console.log("Loading complete");
+}
 
 export async function messageInput(channel: TextBasedChannels, userid: Snowflake, time = 30000) {
   const input = await channel.awaitMessages({

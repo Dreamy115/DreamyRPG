@@ -154,11 +154,11 @@ export default new ApplicationCommandHandler(
 
         await interaction.editReply({
           content: `Editing menu for **${char.$.info.display.name}**`,
-          components: ceditMenu(creature_id)
+          components: ceditMenu(char)
         })
         interaction.followUp({
           content: "Additional GM-Only editing",
-          components: gm_ceditMenu(creature_id)
+          components: gm_ceditMenu(char.$._id)
         })
       } break;
       case "global": {
@@ -170,7 +170,11 @@ export default new ApplicationCommandHandler(
               new MessageButton()
                 .setCustomId("gm/global/advance_time")
                 .setStyle("PRIMARY")
-                .setLabel("Advance Time")
+                .setLabel("Advance Time"),
+              new MessageButton()
+                .setCustomId("gm/global/reload")
+                .setStyle("SECONDARY")
+                .setLabel("Reload Game")
             ])
           ]
         })

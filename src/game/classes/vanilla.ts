@@ -6,8 +6,7 @@ export default [
     compatibleSpecies: [],
     info: {
       name: "Nothing",
-      lore: "Placeholder. Gives nothing.",
-      description: "King Nothing~"
+      lore: "Placeholder. Gives nothing."
     },
     abilities: [],
     passives: []

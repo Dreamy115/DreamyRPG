@@ -1,12 +1,13 @@
 import { Client, MessageEmbed } from "discord.js";
 import mongoose from "mongoose";
 import NodeCache from "node-cache";
-import { AbilitiesManager, capitalize, ClassManager, CONFIG, EffectManager, ItemManager, PassivesManager, shuffle, SpeciesManager } from "../index.js";
+import { AbilitiesManager, capitalize, ClassManager, CONFIG, EffectManager, ItemManager, PassivesManager, PerkManager, shuffle, SpeciesManager } from "../index.js";
 import { AppliedActiveEffect } from "./ActiveEffects.js";
 import { CreatureAbility } from "./CreatureAbilities.js";
 import { DamageCause, DamageGroup, DamageLog, DamageMedium, DamageType, DAMAGE_TO_INJURY_RATIO, reductionMultiplier, ShieldReaction } from "./Damage.js";
-import { AttackData, AttackSet } from "./Items.js";
+import { AttackData, AttackSet, Item } from "./Items.js";
 import { PassiveEffect, PassiveModifier } from "./PassiveEffects.js";
+import { CreaturePerk } from "./Perks.js";
 import { Modifier, ModifierType, textStat, TrackableStat } from "./Stats.js";
 
 export default class Creature {
@@ -82,10 +83,24 @@ export default class Creature {
 
     this.checkItemConflicts();
 
+    const passives = this.passives;
+    // PRELOAD
+    for (const passive of passives) {
+      passive.$.preload?.(this);
+      for (const mod of passive.$.modifiers ?? []) {
+        this.applyNamedModifier(mod);
+      }
+    }
+    for (const effect of this.$.active_effects) {
+      const effectData = EffectManager.map.get(effect.id);
+      if (!effectData) continue;
+      
+      effectData.$.preload?.(this, effect);
+    }
+    
     for (const a in this.$.attributes) {
       // @ts-expect-error
       const attr: number = Math.round(this.$.attributes[a]);
-      
       for (const mod of Creature.ATTRIBUTE_MODS[a]) {
         switch (mod.type) {
           case ModifierType.ADD:
@@ -102,21 +117,6 @@ export default class Creature {
             this.$.stats[mod.stat].base *= Math.pow(mod.value, attr);
         }
       }
-    }
-
-    const passives = this.passives;
-    // PRELOAD
-    for (const passive of passives) {
-      passive.$.preload?.(this);
-      for (const mod of passive.$.modifiers ?? []) {
-        this.applyNamedModifier(mod);
-      }
-    }
-    for (const effect of this.$.active_effects) {
-      const effectData = EffectManager.map.get(effect.id);
-      if (!effectData) continue;
-      
-      effectData.$.preload?.(this, effect);
     }
 
     // CAPPING
@@ -323,10 +323,7 @@ export default class Creature {
     } 
 
 
-    for (const useditem of this.allItems) {
-      const item = ItemManager.map.get(useditem); 
-      if (!item) continue;
-
+    for (const item of this.items) {
       globalOrLocalPusher(abilities, item.$.abilities ?? [], AbilitiesManager);
     }
 
@@ -361,10 +358,7 @@ export default class Creature {
     } 
 
 
-    for (const useditem of this.allItems) {
-      const item = ItemManager.map.get(useditem); 
-      if (!item) continue;
-
+    for (const item of this.items) {
       globalOrLocalPusher(passives, item.$.passives ?? [], PassivesManager);
     }
 
@@ -385,7 +379,20 @@ export default class Creature {
     return passives;
   }
 
-  get allItems(): string[] {
+  get items(): Item[] {
+    const items: Item[] = [];
+
+    const ids = this.itemIDs;
+    for (const i of ids) {
+      const item = ItemManager.map.get(i);
+      if (!item) continue;
+
+      items.push(item);
+    }
+
+    return items;
+  }
+  get itemIDs(): string[] {
     const array = new Array().concat(this.$.items.primary_weapon, this.$.items.equipped);
     for (var i = 0; i < array.length; i++) {
       if (array[i]) continue;
@@ -667,6 +674,33 @@ export default class Creature {
   }
 
 
+  get perkIDs(): string[] {
+    const perks: string[] = [];
+
+    const items = this.itemIDs;
+    for (const i of items) {
+      const item = ItemManager.map.get(i);
+      if (!item) continue;
+
+      perks.push(...item.$.perks ?? [])
+    }
+
+    return perks;
+  }
+  get perks(): CreaturePerk[] {
+    const array: CreaturePerk[] = [];
+
+    const perks = this.perkIDs;
+    for (const p of perks) {
+      const perk = PerkManager.map.get(p);
+      if (perk)
+        array.push(perk);
+    }
+
+    return array;
+  }
+
+
   dump(): CreatureDump {
     let dump: CreatureDump = {
       _id: this.$._id,
@@ -741,19 +775,19 @@ export default class Creature {
       },
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.16,
+        value: 0.15,
         stat: "ranged"
       }
     ],
     FOR: [
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.15,
+        value: 0.25,
         stat: "armor"
       },
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.14,
+        value: 0.24,
         stat: "filter"
       },
       {
@@ -765,7 +799,7 @@ export default class Creature {
     REJ: [
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.15,
+        value: 0.18,
         stat: "mana_regen"
       },
       {
@@ -794,12 +828,12 @@ export default class Creature {
     INT: [
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.32,
+        value: 0.3,
         stat: "tech"
       },
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.18,
+        value: 0.2,
         stat: "mana"
       }
     ],

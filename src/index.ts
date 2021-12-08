@@ -14,6 +14,7 @@ import CreatureClassManager from "./game/Classes.js";
 import CreatureAbilitiesManager from "./game/CreatureAbilities.js";
 import ActiveEffectManager, { romanNumeral } from "./game/ActiveEffects.js";
 import AutocompleteManager from "./app/autocomplete.js";
+import CreaturePerkManager from "./game/Perks.js";
 
 process.on("uncaughtException", (e) => {
   console.error(e);
@@ -57,6 +58,7 @@ export const SpeciesManager = new CreatureSpeciesManager();
 export const PassivesManager = new PassiveEffectManager();
 export const AbilitiesManager = new CreatureAbilitiesManager();
 export const EffectManager = new ActiveEffectManager();
+export const PerkManager = new CreaturePerkManager();
 ///
 
 const Bot = new Client({
@@ -169,6 +171,7 @@ export function gameLoad() {
   SpeciesManager.load(path.join(__dirname, "game/species"));
   AbilitiesManager.load(path.join(__dirname, "game/abilities"));
   EffectManager.load(path.join(__dirname, "game/effects"));
+  PerkManager.load(path.join(__dirname, "game/perks"));
 
   console.log("Loading complete");
 }

@@ -1,5 +1,5 @@
 import { ApplicationCommandOptionData, MessageEmbed } from "discord.js";
-import { AbilitiesManager, capitalize, ClassManager, EffectManager, ItemManager, PassivesManager, SpeciesManager } from "../..";
+import { AbilitiesManager, capitalize, ClassManager, EffectManager, ItemManager, PassivesManager, PerkManager, SpeciesManager } from "../..";
 import { ActiveEffect } from "../../game/ActiveEffects";
 import { CreatureClass } from "../../game/Classes";
 import { CreatureAbility, replaceLore } from "../../game/CreatureAbilities";
@@ -41,6 +41,10 @@ const typeOption: ApplicationCommandOptionData = {
     {
       name: "Effects",
       value: "effects"
+    },
+    {
+      name: "Perks",
+      value: "perks"
     }
   ]
 }
@@ -111,6 +115,10 @@ export default new ApplicationCommandHandler(
       case "effects":
         list = EffectManager.map;
         title = "Effects";
+        break;
+      case "perks":
+        list = PerkManager.map;
+        title = "Perks";
         break;
     }
 

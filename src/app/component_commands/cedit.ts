@@ -369,18 +369,56 @@ export default new ComponentCommandHandler(
                   creature.clearAttributes();
                 } else {
                   interaction.followUp({
-                    content: "Not enough permissions (Must be GM)"
+                    content: "Not enough permissions (Must be GM)",
+                    ephemeral: true
                   })
                   return;
                 }
               } else {
-                // TODO
+                // @ts-expect-error
+                if (typeof creature.$.attributes[arg] === "number") {
+                  if (IS_GM || creature.totalAttributePointsUsed < creature.$.experience.level) {
+                    // @ts-expect-error
+                    creature.$.attributes[arg]++;
+                  } else {
+                    interaction.followUp({
+                      ephemeral: true,
+                      content: "Not enough points!"
+                    })
+                  }
+                } else {
+                  interaction.followUp({
+                    ephemeral: true,
+                    content: "Invalid attribute"
+                  });
+                  return;
+                }
               }
             } else {
               interaction.followUp({
                 ephemeral: true,
                 content: `Expendable points: **${creature.totalAttributePointsUsed}**/${creature.$.experience.level}\nPoint assignment is final!`,
-                embeds: [await infoEmbed(creature, Bot, "attributes")]
+                embeds: [await infoEmbed(creature, Bot, "attributes")],
+                components: function () {
+                  const array: MessageActionRow[] = [];
+
+                  let row = new MessageActionRow();
+                  for (const a in creature.$.attributes) {
+                    row.addComponents(new MessageButton()
+                      .setCustomId(`cedit/${creature_id}/edit/attr/${a}`)
+                      .setLabel(`Add ${a}`)
+                      .setStyle("PRIMARY")
+                    )
+                    if (row.components.length >= 5) {
+                      array.push(new MessageActionRow().setComponents(JSON.parse(JSON.stringify(row.components))));
+                      row = new MessageActionRow();
+                    }
+                  }
+                  if (row.components.length != 0)
+                    array.push(row);
+
+                  return array;
+                }()
               })
               return;
             }

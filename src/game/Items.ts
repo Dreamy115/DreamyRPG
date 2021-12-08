@@ -45,6 +45,7 @@ export interface BaseItemData {
     lore: string
   }
   unique?: string[]
+  perks?: string[]
 }
 export interface WearableItemData extends BaseItemData {
   type: "wearable"

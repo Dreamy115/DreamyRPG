@@ -64,6 +64,10 @@ export default new ApplicationCommandHandler(
               {
                 name: "All Active Modifiers",
                 value: "modifiers"
+              },
+              {
+                name: "Perks",
+                value: "perks"
               }
             ]
           },
@@ -239,10 +243,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string): 
           let clothingAmount = 0;
           let weaponAmount = 0;
 
-          for (const i of creature.allItems) {
-            const item = ItemManager.map.get(i);
-            if (!item) continue;
-
+          for (const item of creature.items) {
             switch (item.$.type) {
               case "wearable":
                 switch (item.$.subtype) {
@@ -270,10 +271,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string): 
           value: function(creature: Creature) {
             var str = "";
 
-            for (const i of creature.allItems) {
-              const item = ItemManager.map.get(i);
-              if (!item) continue;
-
+            for (const item of creature.items) {
               str += `**${item.$.info.name}** \`${item.$.id}\`\n*${item.$.info.lore}*\n\n`
             }
 
@@ -464,6 +462,17 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string): 
         `\n*All attribute modifiers add to BASE stats, not modify. Descriptions are per-point.*`
       )
     } break;
+    case "perks": {
+      embed.setDescription(function() {
+        var str = "";
+
+        for (const perk of creature.perks) {
+          str += `**${perk.$.info.name}**\n${perk.$.info.lore}\n\n`
+        }
+
+        return str;
+      }())
+    }
   }
 
   return embed;

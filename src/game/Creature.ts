@@ -7,7 +7,7 @@ import { CreatureAbility } from "./CreatureAbilities.js";
 import { DamageCause, DamageGroup, DamageLog, DamageMedium, DamageType, DAMAGE_TO_INJURY_RATIO, reductionMultiplier, ShieldReaction } from "./Damage.js";
 import { AttackData, AttackSet } from "./Items.js";
 import { PassiveEffect, PassiveModifier } from "./PassiveEffects.js";
-import { ModifierType, textStat, TrackableStat } from "./Stats.js";
+import { Modifier, ModifierType, textStat, TrackableStat } from "./Stats.js";
 
 export default class Creature {
   static cache: NodeCache = new NodeCache({
@@ -30,23 +30,35 @@ export default class Creature {
         npc: data.info?.npc ?? false,
       },
       stats: {
-        accuracy: new TrackableStat(85),
+        accuracy: new TrackableStat(95),
         armor: new TrackableStat(24),
         filter: new TrackableStat(16),
-        melee: new TrackableStat(12),
-        ranged: new TrackableStat(12),
+        melee: new TrackableStat(14),
+        ranged: new TrackableStat(14),
         health: new TrackableStat(100),
         mana: new TrackableStat(25),
         mana_regen: new TrackableStat(10),
         shield: new TrackableStat(0),
         shield_regen: new TrackableStat(0),
-        parry: new TrackableStat(5),
-        deflect: new TrackableStat(2),
+        parry: new TrackableStat(10),
+        deflect: new TrackableStat(5),
         tenacity: new TrackableStat(42),
         tech: new TrackableStat(0),
         vamp: new TrackableStat(0),
         siphon: new TrackableStat(0),
         initiative: new TrackableStat(10)
+      },
+      attributes: {
+        STR: Math.round(data.attributes?.STR ?? 0),
+        FOR: Math.round(data.attributes?.FOR ?? 0),
+        REJ: Math.round(data.attributes?.REJ ?? 0),
+        PER: Math.round(data.attributes?.PER ?? 0),
+        INT: Math.round(data.attributes?.INT ?? 0),
+        DEX: Math.round(data.attributes?.DEX ?? 0),
+        CHA:Math.round( data.attributes?.CHA ?? 0)
+      },
+      experience: {
+        level: Math.max(data.experience?.level ?? 1, 1)
       },
       vitals: {
         health: (data.vitals?.health ?? 1),
@@ -70,7 +82,29 @@ export default class Creature {
 
     this.checkItemConflicts();
 
-    const passives = this.findPassives();
+    for (const a in this.$.attributes) {
+      // @ts-expect-error
+      const attr: number = Math.round(this.$.attributes[a]);
+      
+      for (const mod of Creature.ATTRIBUTE_MODS[a]) {
+        switch (mod.type) {
+          case ModifierType.ADD:
+          default:
+            // @ts-expect-error
+            this.$.stats[mod.stat].base += mod.value * attr;
+            break;
+          case ModifierType.ADD_PERCENT:
+            // @ts-expect-error
+            this.$.stats[mod.stat].base += mod.value * this.$.stats[mod.stat].base * attr;
+            break;
+          case ModifierType.MULTIPLY:
+            // @ts-expect-error
+            this.$.stats[mod.stat].base *= Math.pow(mod.value, attr);
+        }
+      }
+    }
+
+    const passives = this.passives;
     // PRELOAD
     for (const passive of passives) {
       passive.$.preload?.(this);
@@ -269,13 +303,13 @@ export default class Creature {
 
   reshuffleAbilityDeck() {
     this.$.abilities.deck = [];
-    for (const ability of this.findAbilities()) {
+    for (const ability of this.abilities) {
       this.$.abilities.deck.push(ability.$.id);
     }
     shuffle(this.$.abilities.deck);
   }
 
-  findAbilities(): CreatureAbility[] {
+  get abilities(): CreatureAbility[] {
     const abilities: CreatureAbility[] = [];
 
     const species = SpeciesManager.map.get(this.$.info.species);
@@ -289,7 +323,7 @@ export default class Creature {
     } 
 
 
-    for (const useditem of this.getAllItemIDs()) {
+    for (const useditem of this.allItems) {
       const item = ItemManager.map.get(useditem); 
       if (!item) continue;
 
@@ -313,7 +347,7 @@ export default class Creature {
     return abilities;
   }
 
-  findPassives(): PassiveEffect[] {
+  get passives(): PassiveEffect[] {
     const passives: PassiveEffect[] = [];
 
     const species = SpeciesManager.map.get(this.$.info.species);
@@ -327,7 +361,7 @@ export default class Creature {
     } 
 
 
-    for (const useditem of this.getAllItemIDs()) {
+    for (const useditem of this.allItems) {
       const item = ItemManager.map.get(useditem); 
       if (!item) continue;
 
@@ -351,7 +385,7 @@ export default class Creature {
     return passives;
   }
 
-  getAllItemIDs(): string[] {
+  get allItems(): string[] {
     const array = new Array().concat(this.$.items.primary_weapon, this.$.items.equipped);
     for (var i = 0; i < array.length; i++) {
       if (array[i]) continue;
@@ -387,11 +421,11 @@ export default class Creature {
 
     log.final.victim = this;
 
-    for (const passive of this.findPassives()) {
+    for (const passive of this.passives) {
       passive.$.beforeDamageTaken?.(this);
     }
     if (group.attacker instanceof Creature) {
-      for (const passive of group.attacker.findPassives()) {
+      for (const passive of group.attacker.passives) {
         passive.$.beforeDamageGiven?.(group.attacker);
       }
     }
@@ -492,14 +526,14 @@ export default class Creature {
       }
     }
     
-    for (const passive of this.findPassives()) {
+    for (const passive of this.passives) {
       passive.$.afterDamageTaken?.(this);
     }
     if (group.attacker instanceof Creature) {
       group.attacker.heal(Math.round(log.total_physical_damage * group.attacker.$.stats.vamp.value / 100), HealType.Health);
       group.attacker.heal(Math.round(log.total_energy_damage * group.attacker.$.stats.siphon.value / 100), HealType.Shield);
 
-      for (const passive of group.attacker.findPassives()) {
+      for (const passive of group.attacker.passives) {
         passive.$.afterDamageGiven?.(group.attacker);
       }
     }
@@ -607,10 +641,29 @@ export default class Creature {
     this.tickVitals();
   }
 
-  isAbleToFight(): boolean {
+  get isAbleToFight(): boolean {
     if (this.$.vitals.health <= 0) return false;
 
     return true;
+  }
+
+
+  clearAttributes() {
+    for (const a in this.$.attributes) {
+      // @ts-expect-error
+      this.$.attributes[a] = 0;
+    }
+  }
+
+  get totalAttributePointsUsed(): number {
+    let num = 0;
+
+    for (const a in this.$.attributes) {
+      // @ts-expect-error
+      num += this.$.attributes[a] ?? 0;
+    }
+
+    return num;
   }
 
 
@@ -624,6 +677,8 @@ export default class Creature {
         mana: this.$.vitals.mana / this.$.stats.mana.value,
         shield: this.$.vitals.shield / this.$.stats.shield.value
       },
+      attributes: this.$.attributes,
+      experience: this.$.experience,
       items: this.$.items,
       abilities: this.$.abilities,
       active_effects: this.$.active_effects,
@@ -677,6 +732,103 @@ export default class Creature {
     DamageCause.Weak_Attack, DamageCause.Weak_Attack, DamageCause.Normal_Attack, DamageCause.Normal_Attack, DamageCause.Normal_Attack, DamageCause.Critical_Attack
   ]
 
+  static readonly ATTRIBUTE_MODS: {[key: string]: PassiveModifier[]} = {
+    STR: [
+      {
+        type: ModifierType.ADD_PERCENT,
+        value: 0.16,
+        stat: "melee"
+      },
+      {
+        type: ModifierType.ADD_PERCENT,
+        value: 0.16,
+        stat: "ranged"
+      }
+    ],
+    FOR: [
+      {
+        type: ModifierType.ADD_PERCENT,
+        value: 0.15,
+        stat: "armor"
+      },
+      {
+        type: ModifierType.ADD_PERCENT,
+        value: 0.14,
+        stat: "filter"
+      },
+      {
+        type: ModifierType.ADD_PERCENT,
+        value: 0.1,
+        stat: "health"
+      }
+    ],
+    REJ: [
+      {
+        type: ModifierType.ADD_PERCENT,
+        value: 0.15,
+        stat: "mana_regen"
+      },
+      {
+        type: ModifierType.ADD_PERCENT,
+        value: 0.1,
+        stat: "shield_regen"
+      },
+      {
+        type: ModifierType.ADD_PERCENT,
+        value: 0.115,
+        stat: "tenacity"
+      }
+    ],
+    PER: [
+      {
+        type: ModifierType.ADD_PERCENT,
+        value: 0.115,
+        stat: "accuracy"
+      },
+      {
+        type: ModifierType.ADD,
+        value: 1,
+        stat: "initiative"
+      }
+    ],
+    INT: [
+      {
+        type: ModifierType.ADD_PERCENT,
+        value: 0.32,
+        stat: "tech"
+      },
+      {
+        type: ModifierType.ADD_PERCENT,
+        value: 0.18,
+        stat: "mana"
+      }
+    ],
+    DEX: [
+      {
+        type: ModifierType.ADD_PERCENT,
+        value: 0.225,
+        stat: "deflect"
+      },
+      {
+        type: ModifierType.ADD_PERCENT,
+        value: 0.25,
+        stat: "parry"
+      }
+    ],
+    CHA: [
+
+    ]
+  }
+  static readonly ATTRIBUTE_DESCRIPTIONS = {
+    STR: "Physical Strength and brute force.",
+    FOR: "Fortitude, resilience, and physical resistance.",
+    REJ: "Rejuvination, the quickness of regaining ground.",
+    PER: "Perception, all 6 senses. Know your enemy.",
+    INT: "Intelligence, crafting, technological swiftness.",
+    DEX: "Dexterity, agility, light as a feather.",
+    CHA: "Charisma, looks, and wits. Negotiation skills. Strictly for IN-RP use."
+  }
+
   static readonly COLLECTION_NAME = "Creatures";
 }
 
@@ -713,6 +865,18 @@ export interface CreatureData {
     vamp: TrackableStat
     siphon: TrackableStat
     initiative: TrackableStat
+  }
+  attributes: {
+    STR: number
+    FOR: number
+    REJ: number
+    PER: number
+    INT: number
+    DEX: number
+    CHA: number
+  }
+  experience: {
+    level: number
   }
   vitals: {
     health: number
@@ -753,6 +917,18 @@ export interface CreatureDump {
     mana?: number
     shield?: number
     injuries?: number
+  }
+  attributes?: {
+    STR?: number
+    FOR?: number
+    REJ?: number
+    PER?: number
+    INT?: number
+    DEX?: number
+    CHA?: number
+  }
+  experience?: {
+    level?: number
   }
   items?: {
     primary_weapon?: string | null

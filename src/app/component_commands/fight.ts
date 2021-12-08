@@ -81,7 +81,7 @@ export default new ComponentCommandHandler(
         while (true) {
           await fight.advanceTurn(db);
           const char = await Creature.fetch(fight.$.queue[0], db).catch(() => null);
-          if (char?.isAbleToFight()) {
+          if (char?.isAbleToFight) {
             break;
           } else {
             interaction.followUp({

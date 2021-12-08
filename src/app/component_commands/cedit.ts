@@ -1,8 +1,9 @@
-import { MessageActionRow, MessageButton, MessageSelectMenu, MessageSelectOptionData } from "discord.js";
+import { MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu, MessageSelectOptionData } from "discord.js";
 import { capitalize, ClassManager, CONFIG, ItemManager, limitString, messageInput, removeMarkdown, SpeciesManager } from "../..";
 import Creature, { HealType } from "../../game/Creature";
 import { DamageCause, DamageGroup, damageLogEmbed, DamageMedium, DamageType, ShieldReaction } from "../../game/Damage";
 import { Item } from "../../game/Items";
+import { infoEmbed } from "../commands/char";
 import { ComponentCommandHandler } from "../component_commands";
 
 export default new ComponentCommandHandler(
@@ -360,6 +361,30 @@ export default new ComponentCommandHandler(
               }
             }
           } break;
+          case "attr": {
+            var arg = args.shift();
+            if (arg) {
+              if (arg === "!clear") {
+                if (IS_GM) {
+                  creature.clearAttributes();
+                } else {
+                  interaction.followUp({
+                    content: "Not enough permissions (Must be GM)"
+                  })
+                  return;
+                }
+              } else {
+                // TODO
+              }
+            } else {
+              interaction.followUp({
+                ephemeral: true,
+                content: `Expendable points: **${creature.totalAttributePointsUsed}**/${creature.$.experience.level}\nPoint assignment is final!`,
+                embeds: [await infoEmbed(creature, Bot, "attributes")]
+              })
+              return;
+            }
+          } break;
           case "gm": {
             if (!IS_GM) {
               interaction.followUp({
@@ -653,6 +678,24 @@ export function ceditMenu(creature: Creature): MessageActionRow[] {
         .setLabel("Delete")
     ]),
     new MessageActionRow().addComponents([
+      new MessageButton()
+        .setCustomId(`cedit/${creature.$._id}/edit/weapon_switch`)
+        .setStyle("PRIMARY")
+        .setLabel("Switch Weapons"),
+      new MessageButton()
+        .setCustomId(`cedit/${creature.$._id}/edit/item/equip`)
+        .setStyle("SECONDARY")
+        .setLabel("Equip Item"),
+      new MessageButton()
+        .setCustomId(`cedit/${creature.$._id}/edit/item/unequip`)
+        .setStyle("SECONDARY")
+        .setLabel("Unequip Item"),
+      new MessageButton()
+        .setCustomId(`cedit/${creature.$._id}/edit/attr`)
+        .setStyle("SUCCESS")
+        .setLabel("Assign Attributes")
+    ]),
+    new MessageActionRow().addComponents([
       new MessageSelectMenu()
         .setCustomId(`cedit/${creature.$._id}/edit/species`)
         .setPlaceholder("Change Species")
@@ -697,20 +740,6 @@ export function ceditMenu(creature: Creature): MessageActionRow[] {
         return array;
       }())
     ]),
-    new MessageActionRow().addComponents([
-      new MessageButton()
-        .setCustomId(`cedit/${creature.$._id}/edit/weapon_switch`)
-        .setStyle("PRIMARY")
-        .setLabel("Switch Weapons"),
-      new MessageButton()
-        .setCustomId(`cedit/${creature.$._id}/edit/item/equip`)
-        .setStyle("SECONDARY")
-        .setLabel("Equip Item"),
-      new MessageButton()
-        .setCustomId(`cedit/${creature.$._id}/edit/item/unequip`)
-        .setStyle("SECONDARY")
-        .setLabel("Unequip Item")   
-    ])
   ];
 
   if (!creature.$.info.locked) {
@@ -764,6 +793,20 @@ export function gm_ceditMenu(creature_id: string): MessageActionRow[] {
         .setCustomId(`cedit/${creature_id}/edit/gm/item/remove`)
         .setStyle("SECONDARY")
         .setLabel("Remove Item"),
+    ]),
+    new MessageActionRow().setComponents([
+      new MessageButton()
+        .setCustomId(`cedit/${creature_id}/edit/gm/exp/lv/+`)
+        .setStyle("PRIMARY")
+        .setLabel("Increment Level"),
+      new MessageButton()
+        .setCustomId(`cedit/${creature_id}/edit/gm/exp/lv/-`)
+        .setStyle("SECONDARY")
+        .setLabel("Decrement Level"),
+      new MessageButton()
+        .setCustomId(`cedit/${creature_id}/edit/attr/!clear`)
+        .setStyle("DANGER")
+        .setLabel("Clear Attributes")
     ])
   ]
 }

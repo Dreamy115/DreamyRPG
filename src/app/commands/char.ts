@@ -9,6 +9,7 @@ import { textStat, ModifierType } from "../../game/Stats.js";
 import { SpeciesManager, ClassManager, capitalize, ItemManager, EffectManager, AbilitiesManager } from "../../index.js";
 import { ApplicationCommandHandler } from "../commands.js";
 import { ceditMenu } from "../component_commands/cedit.js";
+import { modifierDescriptor } from "./handbook.js";
 
 export default new ApplicationCommandHandler(
   {
@@ -55,6 +56,10 @@ export default new ApplicationCommandHandler(
               {
                 name: "Effects",
                 value: "effects"
+              },
+              {
+                name: "Attributes",
+                value: "attributes"
               },
               {
                 name: "All Active Modifiers",
@@ -146,7 +151,7 @@ export default new ApplicationCommandHandler(
   }
 )
 
-async function infoEmbed(creature: Creature, Bot: Client, page: string): Promise<MessageEmbed> {
+export async function infoEmbed(creature: Creature, Bot: Client, page: string): Promise<MessageEmbed> {
   const embed = new MessageEmbed();
 
   const owner = await Bot.users.fetch(creature.$._id).catch(() => null);
@@ -164,7 +169,8 @@ async function infoEmbed(creature: Creature, Bot: Client, page: string): Promise
       embed.addField(
         "Basic",
         `Race - **${SpeciesManager.map.get(creature.$.info.species ?? "")?.$.info.name ?? "Unknown"}**\n` +  
-        `Class - **${ClassManager.map.get(creature.$.info.class ?? "")?.$.info.name ?? "Unknown"}**`  
+        `Class - **${ClassManager.map.get(creature.$.info.class ?? "")?.$.info.name ?? "Unknown"}**\n` +
+        `Level **${creature.$.experience.level}**`  
       ).addFields([
         {
           name: "Vitals",
@@ -199,7 +205,7 @@ async function infoEmbed(creature: Creature, Bot: Client, page: string): Promise
       ])
     } break;
     case "passives": {
-      const passives = creature.findPassives();
+      const passives = creature.passives;
 
       for (var i = 0; i < passives.length && i < 20; i++) {
         const passive = passives[i];
@@ -233,7 +239,7 @@ async function infoEmbed(creature: Creature, Bot: Client, page: string): Promise
           let clothingAmount = 0;
           let weaponAmount = 0;
 
-          for (const i of creature.getAllItemIDs()) {
+          for (const i of creature.allItems) {
             const item = ItemManager.map.get(i);
             if (!item) continue;
 
@@ -264,7 +270,7 @@ async function infoEmbed(creature: Creature, Bot: Client, page: string): Promise
           value: function(creature: Creature) {
             var str = "";
 
-            for (const i of creature.getAllItemIDs()) {
+            for (const i of creature.allItems) {
               const item = ItemManager.map.get(i);
               if (!item) continue;
 
@@ -295,7 +301,7 @@ async function infoEmbed(creature: Creature, Bot: Client, page: string): Promise
       embed.addFields(function() {
         const array: EmbedFieldData[] = [];
 
-        for (const ability of creature.findAbilities()) {
+        for (const ability of creature.abilities) {
           array.push({
             name: ability.$.info.name,
             value: `${replaceLore(ability.$.info.lore, ability.$.info.lore_replacers, creature)}\n\n**${ability.$.haste ?? 1}** Haste`
@@ -435,6 +441,28 @@ async function infoEmbed(creature: Creature, Bot: Client, page: string): Promise
           }(),
           true
         )
+    } break;
+    case "attributes": {
+      embed
+      .setDescription(`Points used: **${creature.totalAttributePointsUsed}**/${creature.$.experience.level}`)
+      .addField(
+        "Attributes",
+        function () {
+          var str = "";
+
+          for (const a in creature.$.attributes) {
+            // @ts-expect-error
+            const attr = creature.$.attributes[a];
+            
+            // @ts-expect-error
+            str += `**${attr} ${a}**\n${Creature.ATTRIBUTE_DESCRIPTIONS[a]}  ${modifierDescriptor(Creature.ATTRIBUTE_MODS[a]).trim().replaceAll("\n", ", ") || ""}\n`
+          }
+
+          return str;
+        }()
+        +
+        `\n*All attribute modifiers add to BASE stats, not modify. Descriptions are per-point.*`
+      )
     } break;
   }
 

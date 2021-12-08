@@ -114,7 +114,7 @@ export class Fight {
       for (const cid of party) {
         const creature = await Creature.fetch(cid, db).catch(() => null);
 
-        if (creature?.isAbleToFight()) {
+        if (creature?.isAbleToFight) {
           ableToFight[p] = true;
           break;
         }

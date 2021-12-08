@@ -291,7 +291,7 @@ function attackDescriptor(attacks: AttackData[]) {
   return str;
 }
 
-function modifierDescriptor(modifiers: PassiveModifier[]) {
+export function modifierDescriptor(modifiers: PassiveModifier[]) {
   var str = "";
   if (modifiers.length > 0) {
     for (const mod of modifiers) {

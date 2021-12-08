@@ -379,7 +379,16 @@ export default new ComponentCommandHandler(
                 if (typeof creature.$.attributes[arg] === "number") {
                   if (IS_GM || creature.totalAttributePointsUsed < creature.$.experience.level) {
                     // @ts-expect-error
-                    creature.$.attributes[arg]++;
+                    if (creature.$.attributes[arg] >= Creature.ATTRIBUTE_MAX) {
+                      interaction.followUp({
+                        ephemeral: true,
+                        content: "Attribute is MAXED OUT!"
+                      })
+                      return;
+                    } else {
+                      // @ts-expect-error
+                      creature.$.attributes[arg]++;
+                    }
                   } else {
                     interaction.followUp({
                       ephemeral: true,
@@ -594,6 +603,78 @@ export default new ComponentCommandHandler(
                   }
                 }
               } break;
+              case "skill": {
+                interaction.followUp({
+                  ephemeral: true,
+                  content: "Not yet implemented"
+                })
+                return;
+                if (interaction.isButton()) {
+                  switch (args.shift()) {
+                    case "add": {
+                      await interaction.followUp({
+                        ephemeral: true,
+                        content: "Please input a comma separated list of item IDs, ex. \`starter_shield,starter_revolver\`"
+                      });
+
+                      let items = (await messageInput(channel, interaction.user.id)).split(/,/g);
+
+                      var invalid_count = 0;
+                      for (const i of items) {
+                        const item = ItemManager.map.get(i);
+                        if (!item?.$.id) {
+                          invalid_count++;
+                          continue;
+                        }
+
+                        creature.$.items.backpack.push(item.$.id);
+                      }
+
+                      if (invalid_count > 0)
+                        interaction.followUp(({
+                          ephemeral: true,
+                          content: `${invalid_count} items were invalid and have not been added!`
+                        }))
+                    } break;
+                    case "remove": {
+                      const items: MessageSelectOptionData[] = [];
+
+                      for (const i of creature.$.items.backpack) {
+                        const item = ItemManager.map.get(i);
+                        if (!item) continue;
+
+                        items.push({
+                          label: item.$.info.name,
+                          value: item.$.id ?? ""
+                        })
+                      }
+
+                      if (items.length == 0) {
+                        interaction.followUp({
+                          ephemeral: true,
+                          content: "Backpack is empty!"
+                        });
+                        return;
+                      }
+
+                      interaction.followUp({
+                        ephemeral: true,
+                        content: "Select items from backpack. (To remove equipped items de-equip them first)",
+                        components: backpackItemComponents(creature_id, items, `cedit/${creature_id}/edit/gm/item/remove`)
+                      })
+                      return;
+                    } break;
+                  }
+                } else if (interaction.isSelectMenu()) {
+                  switch (args.shift()) {
+                    case "remove": {
+                      for (const i of interaction.values) {
+                        creature.$.items.backpack.splice(creature.$.items.backpack.findIndex((v) => v === i),1);
+                      }
+                    } break;
+                  }
+                }
+              }
               case "effect": {
                 switch (args.shift()) {
                   case "apply": {
@@ -684,8 +765,38 @@ export default new ComponentCommandHandler(
                     }
                   } break;
                 }
-              }
-            }
+              } break;
+              case "exp": {
+                switch (args.shift()) {
+                  default: return;
+                  case "lv": {
+                    switch (args.shift()) {
+                      default: return;
+                      case "+": {
+                        creature.$.experience.level++;
+                      } break;
+                      case "-": {
+                        creature.$.experience.level--;
+                      } break;
+                      case "set": {
+                        interaction.followUp({
+                          content: "Please input a positive integer in chat",
+                          ephemeral: true
+                        })
+                        const input = Math.round(Number(await messageInput(channel, interaction.user.id)));
+                        if (isNaN(input) || input < 1) {
+                          interaction.editReply({
+                            content: "Invalid level. Must be a positive integer."
+                          })
+                          return;
+                        }
+                        creature.$.experience.level = input;
+                      } break;
+                    } break;
+                  } break;
+                }
+              } break;
+            } break;
           } break;
         }
 
@@ -831,8 +942,20 @@ export function gm_ceditMenu(creature_id: string): MessageActionRow[] {
         .setCustomId(`cedit/${creature_id}/edit/gm/item/remove`)
         .setStyle("SECONDARY")
         .setLabel("Remove Item"),
+      new MessageButton()
+        .setCustomId(`cedit/${creature_id}/edit/gm/skill/add`)
+        .setStyle("PRIMARY")
+        .setLabel("Add Skill"),
+      new MessageButton()
+        .setCustomId(`cedit/${creature_id}/edit/gm/skill/remove`)
+        .setStyle("SECONDARY")
+        .setLabel("Remove Skill"),
     ]),
     new MessageActionRow().setComponents([
+      new MessageButton()
+        .setCustomId(`cedit/${creature_id}/edit/gm/exp/lv/set`)
+        .setStyle("SECONDARY")
+        .setLabel("Set Level"),
       new MessageButton()
         .setCustomId(`cedit/${creature_id}/edit/gm/exp/lv/+`)
         .setStyle("PRIMARY")

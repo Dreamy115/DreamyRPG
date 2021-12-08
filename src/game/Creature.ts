@@ -98,25 +98,10 @@ export default class Creature {
       effectData.$.preload?.(this, effect);
     }
     
+    this.applyModifiersToBaseStats(Creature.LEVEL_MODS, this.$.experience.level - 1);
     for (const a in this.$.attributes) {
       // @ts-expect-error
-      const attr: number = Math.round(this.$.attributes[a]);
-      for (const mod of Creature.ATTRIBUTE_MODS[a]) {
-        switch (mod.type) {
-          case ModifierType.ADD:
-          default:
-            // @ts-expect-error
-            this.$.stats[mod.stat].base += mod.value * attr;
-            break;
-          case ModifierType.ADD_PERCENT:
-            // @ts-expect-error
-            this.$.stats[mod.stat].base += mod.value * this.$.stats[mod.stat].base * attr;
-            break;
-          case ModifierType.MULTIPLY:
-            // @ts-expect-error
-            this.$.stats[mod.stat].base *= Math.pow(mod.value, attr);
-        }
-      }
+      this.applyModifiersToBaseStats(Creature.ATTRIBUTE_MODS[a], Math.round(this.$.attributes[a]));
     }
 
     // CAPPING
@@ -162,6 +147,25 @@ export default class Creature {
     }
 
     this.vitalsIntegrity();
+  }
+
+  applyModifiersToBaseStats(list: PassiveModifier[], amount: number) {
+    for (const mod of list) {
+      switch (mod.type) {
+        case ModifierType.ADD:
+        default:
+          // @ts-expect-error
+          this.$.stats[mod.stat].base += mod.value * amount;
+          break;
+        case ModifierType.ADD_PERCENT:
+          // @ts-expect-error
+          this.$.stats[mod.stat].base += mod.value * this.$.stats[mod.stat].base * amount;
+          break;
+        case ModifierType.MULTIPLY:
+          // @ts-expect-error
+          this.$.stats[mod.stat].base *= Math.pow(mod.value, amount);
+      }
+    }
   }
 
   get defaultAttackSet(): AttackSet {
@@ -766,28 +770,95 @@ export default class Creature {
     DamageCause.Weak_Attack, DamageCause.Weak_Attack, DamageCause.Normal_Attack, DamageCause.Normal_Attack, DamageCause.Normal_Attack, DamageCause.Critical_Attack
   ]
 
+  static readonly LEVEL_MODS: PassiveModifier[] = [
+    {
+      type: ModifierType.ADD_PERCENT,
+      value: 0.15,
+      stat: "melee"
+    },
+    {
+      type: ModifierType.ADD_PERCENT,
+      value: 0.15,
+      stat: "ranged"
+    },
+    {
+      type: ModifierType.ADD_PERCENT,
+      value: 0.1,
+      stat: "armor"
+    },
+    {
+      type: ModifierType.ADD_PERCENT,
+      value: 0.1,
+      stat: "filter"
+    },
+    {
+      type: ModifierType.ADD_PERCENT,
+      value: 0.05,
+      stat: "health"
+    },
+    {
+      type: ModifierType.ADD_PERCENT,
+      value: 0.01,
+      stat: "mana"
+    },
+    {
+      type: ModifierType.ADD_PERCENT,
+      value: 0.0075,
+      stat: "mana_regen"
+    },
+    {
+      type: ModifierType.ADD_PERCENT,
+      value: 0.05,
+      stat: "shield_regen"
+    },
+    {
+      type: ModifierType.ADD_PERCENT,
+      value: 0.08,
+      stat: "shield"
+    },
+    {
+      type: ModifierType.ADD_PERCENT,
+      value: 0.05,
+      stat: "accuracy"
+    },
+    {
+      type: ModifierType.ADD_PERCENT,
+      value: 0.1,
+      stat: "parry"
+    },
+    {
+      type: ModifierType.ADD_PERCENT,
+      value: 0.1,
+      stat: "deflect"
+    },
+    {
+      type: ModifierType.ADD_PERCENT,
+      value: 0.135,
+      stat: "tech"
+    }
+  ]
   static readonly ATTRIBUTE_MODS: {[key: string]: PassiveModifier[]} = {
     STR: [
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.16,
+        value: 0.1,
         stat: "melee"
       },
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.15,
+        value: 0.1,
         stat: "ranged"
       }
     ],
     FOR: [
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.25,
+        value: 0.07,
         stat: "armor"
       },
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.24,
+        value: 0.065,
         stat: "filter"
       },
       {
@@ -799,7 +870,7 @@ export default class Creature {
     REJ: [
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.18,
+        value: 0.15,
         stat: "mana_regen"
       },
       {
@@ -809,14 +880,14 @@ export default class Creature {
       },
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.115,
+        value: 0.12,
         stat: "tenacity"
       }
     ],
     PER: [
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.115,
+        value: 0.04,
         stat: "accuracy"
       },
       {
@@ -828,24 +899,24 @@ export default class Creature {
     INT: [
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.3,
+        value: 0.25,
         stat: "tech"
       },
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.2,
+        value: 0.12,
         stat: "mana"
       }
     ],
     DEX: [
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.225,
+        value: 0.18,
         stat: "deflect"
       },
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.25,
+        value: 0.15,
         stat: "parry"
       }
     ],
@@ -862,6 +933,7 @@ export default class Creature {
     DEX: "Dexterity, agility, light as a feather.",
     CHA: "Charisma, looks, and wits. Negotiation skills. Strictly for IN-RP use."
   }
+  static readonly ATTRIBUTE_MAX = 8;
 
   static readonly COLLECTION_NAME = "Creatures";
 }

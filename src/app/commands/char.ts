@@ -460,6 +460,11 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string): 
         }()
         +
         `\n*All attribute modifiers add to BASE stats, not modify. Descriptions are per-point.*`
+      ).addField(
+        "Per Level",
+        "Regardless of attributes, each Level provides a creature with:\n" +
+        modifierDescriptor(Creature.LEVEL_MODS).trim().replaceAll("\n", ", ") +
+        "\non base stats."
       )
     } break;
     case "perks": {

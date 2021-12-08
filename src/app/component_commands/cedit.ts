@@ -674,7 +674,7 @@ export default new ComponentCommandHandler(
                     } break;
                   }
                 }
-              }
+              } break;
               case "effect": {
                 switch (args.shift()) {
                   case "apply": {

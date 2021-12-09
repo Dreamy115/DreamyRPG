@@ -168,6 +168,11 @@ export default class Creature {
     }
   }
 
+  get displayName() {
+    return this.$.info.display.name;
+  }
+
+
   get defaultAttackSet(): AttackSet {
     return {
       normal: [{

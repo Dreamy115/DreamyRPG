@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { capitalize } from "..";
 import Creature from "./Creature";
+import { DamageLog } from "./Damage";
 
 export default class CreatureAbilitiesManager {
   map = new Map<string, CreatureAbility>();
@@ -42,7 +43,8 @@ export class CreatureAbility {
     max_targets?: number // Min targets must be at least 1 to take effect, and must be more than min targets.
     unique?: string[]
     haste?: number
-    use: (caster: Creature, targets: Creature[]) => Promise<void>
+    cost: number
+    use: (caster: Creature, targets: Creature[]) => Promise<AbilityUseLog>
   }
 
   constructor(data: CreatureAbility["$"]) {
@@ -74,3 +76,8 @@ export function replaceLore(input: string, replacers: LoreReplacer[], creature?:
 
   return str;
 }
+
+export interface AbilityUseLog {
+  damageLogs?: DamageLog[]
+  text: string
+} 

@@ -153,7 +153,7 @@ export default new ApplicationCommandHandler(
         }
 
         await interaction.editReply({
-          content: `Editing menu for **${char.$.info.display.name}**`,
+          content: `Editing menu for **${char.displayName}**`,
           components: ceditMenu(char)
         })
         interaction.followUp({
@@ -234,13 +234,10 @@ export default new ApplicationCommandHandler(
             }
 
             await fight.delete(db);
-            interaction.editReply({
+            await interaction.editReply({
               content: "Deleted!"
             })
-            interaction.followUp({
-              ephemeral: false,
-              embeds: (await fight.announceEnd(db, Bot)).embeds
-            });
+            interaction.followUp(await fight.announceEnd(db, Bot));
           } break;
           case "reannounce": {
             const fid = interaction.options.getString("id", true);

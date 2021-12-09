@@ -1,5 +1,5 @@
 import { MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu, MessageSelectMenuOptions, MessageSelectOptionData } from "discord.js";
-import { CONFIG, sleep } from "../..";
+import { AbilitiesManager, CONFIG, sleep } from "../..";
 import Creature, { diceRoll } from "../../game/Creature";
 import { DamageCause, DamageLog, damageLogEmbed, DamageMedium, DamageSource, ShieldReaction } from "../../game/Damage";
 import { Fight } from "../../game/Fight";
@@ -49,7 +49,7 @@ export default new ComponentCommandHandler(
         if (!char) continue;
 
         target_choices.push({
-          label: `${char.$.info.display.name} - Party ${p}`,
+          label: `${char.displayName} - Party ${p}`,
           value: char.$._id,
           description: char.$._id === creature.$._id ? "You" : (char.$.info.npc ? "NPC" : "Player"),
         });
@@ -85,7 +85,7 @@ export default new ComponentCommandHandler(
             break;
           } else {
             interaction.followUp({
-              content: `**${char?.$.info.display.name}** is unable to fight.`
+              content: `**${char?.displayName}** is unable to fight.`
             });
             await sleep(1500);
           }
@@ -274,7 +274,132 @@ export default new ComponentCommandHandler(
         }
       } break;
       case "ability": {
+        if (interaction.isSelectMenu()) {
+          const arg = args.shift();
+          if (arg) {
+            const target_ids = interaction.values;
+            
+            if (!creature.$.abilities.hand.includes(arg)) {
+              interaction.followUp({
+                ephemeral: true,
+                content: "Ability not in hand."
+              });
+              return;
+            }
 
+            const ability = AbilitiesManager.map.get(arg);
+            if (!ability) {
+              interaction.followUp({
+                ephemeral: true,
+                content: "Invalid ability"
+              });
+              return;
+            }
+
+            const targets: Creature[] = []
+            for (const tid of target_ids) {
+              if (target_choices.findIndex((v) => v.value === tid) !== -1) {
+                targets.push(await Creature.fetch(tid, db))
+              } else {
+                interaction.followUp({
+                  ephemeral: true,
+                  content: "Invalid targets"
+                });
+                return;
+              }
+            }
+
+            if (creature.$.vitals.mana < ability.$.cost) {
+              interaction.followUp({
+                ephemeral: true,
+                content: "Not enough mana"
+              })
+              return;
+            }
+
+            try {
+              const uselog = await ability.$.use(creature, targets);
+              creature.$.vitals.mana -= ability.$.cost;
+              creature.$.abilities.hand.splice(creature.$.abilities.hand.findIndex((v) => v === ability.$.id), 1);
+
+              const damage_embeds = [];
+              for (const log of uselog.damageLogs ?? []) {
+                damage_embeds.push(damageLogEmbed(log));
+              }
+
+              interaction.editReply({
+                content: Math.round(Math.random() * 100) == 1 ? "200 OK" : "OK"
+              });
+              await interaction.followUp({
+                ephemeral: false,
+                content: uselog.text,
+                embeds: damage_embeds.length > 0 ? damage_embeds : undefined
+              })
+
+              var _promises: Promise<unknown>[] = [creature.put(db)];
+              for (const target of targets) {
+                _promises.push(target.put(db));
+              }
+
+              await Promise.all(_promises);
+              interaction.followUp(await fight.announceTurn(db, Bot));
+            } catch (e) {
+              console.error(e);
+              interaction.followUp({
+                ephemeral: true,
+                // @ts-expect-error
+                content: e?.message ?? e
+              });
+            }
+          } else {
+            const ability_id = interaction.values[0];
+
+            if (!creature.$.abilities.hand.includes(ability_id)) {
+              interaction.followUp({
+                ephemeral: true,
+                content: "Ability not in hand."
+              });
+              return;
+            }
+
+            const ability = AbilitiesManager.map.get(ability_id);
+            if (!ability) {
+              interaction.followUp({
+                ephemeral: true,
+                content: "Invalid ability"
+              });
+              return;
+            }
+
+            if (creature.$.vitals.mana < ability.$.cost) {
+              interaction.followUp({
+                ephemeral: true,
+                content: "Not enough mana"
+              })
+              return;
+            }
+
+            if (ability.$.min_targets > target_choices.length) {
+              interaction.followUp({
+                ephemeral: true,
+                content: `Not enough fighters to satisfy Ability minimum target requirement *(${target_choices.length}/${ability.$.min_targets})*`
+              })
+              return;
+            }
+
+            interaction.followUp({
+              ephemeral: true,
+              content: "Pick your targets",
+              components: [new MessageActionRow().setComponents([new MessageSelectMenu()
+                .setCustomId(`fight/${fight.$._id}/ability/${ability.$.id}`)
+                .setMinValues(ability.$.min_targets)
+                .setMaxValues(Math.min(ability.$.max_targets ?? ability.$.min_targets, target_choices.length))
+                .setPlaceholder("Creatures")
+                .setOptions(target_choices)
+              ])]
+            })
+          }
+        }
       } break;
     }
 

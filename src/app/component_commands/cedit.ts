@@ -80,7 +80,7 @@ export default new ComponentCommandHandler(
               return;
             }
 
-            creature.$.info.display.name = input; 
+            creature.displayName = input; 
           } break;
           case "avatar": {
             await interaction.followUp({

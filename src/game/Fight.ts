@@ -154,7 +154,7 @@ export class Fight {
 
     embed
       .setAuthor(`${!creature.$.info.npc ? owner?.username ?? "Unknown" : "NPC"}`)
-      .setTitle(`${creature.$.info.display.name}'s turn!`)
+      .setTitle(`${creature.displayName}'s turn!`)
       .setColor("AQUA")
       .setFooter(`Fight ID: ${this.$._id} | Creature ID: ${creature.$._id}`)
       .addFields(await async function(fight: Fight){
@@ -172,7 +172,7 @@ export class Fight {
                 if (!char) continue;
 
                 str += 
-                  `**${char.$.info.display.name}**\n` +
+                  `**${char.displayName}**\n` +
                   `Health **${char.$.vitals.health}**/**${char.$.stats.health.value - char.$.vitals.injuries}** (**${Math.round(100 * char.$.vitals.health / char.$.stats.health.value)}%**)\n` +
                   `Shield ` + (char.$.stats.shield.value > 0 ? `${textStat(char.$.vitals.shield, char.$.stats.shield.value)} **${char.$.stats.shield_regen.value}**/t` : "No **Shield**") + "\n" +
                   `Mana ${textStat(char.$.vitals.mana, char.$.stats.mana.value)} **${char.$.stats.mana_regen.value}**/t`
@@ -194,7 +194,7 @@ export class Fight {
             const char = await Creature.fetch(fight.$.queue[i], db).catch(() => null);
             if (!char) continue;
 
-            str += `\`${char.$._id}\` ${char.$.info.display.name}${char.$.info.npc ? " (NPC)" : ""}\n`;
+            str += `\`${char.$._id}\` ${char.displayName}${char.$.info.npc ? " (NPC)" : ""}\n`;
           }
 
           return str;
@@ -240,7 +240,7 @@ export class Fight {
               const index = array.findIndex((v) => v.value === ability.$.id)
               if (index === -1) {
                 array.push({
-                  label: ability.$.info.name + " []",
+                  label: `${ability.$.info.name} (${ability.$.cost} Mana) []`,
                   value: ability.$.id,
                   description: limitString(removeMarkdown(replaceLore(ability.$.info.lore, ability.$.info.lore_replacers)), 100)
                 })

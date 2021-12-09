@@ -147,7 +147,7 @@ export default new ApplicationCommandHandler(
         }
 
         interaction.editReply({
-          content: `Editing menu for **${char.$.info.display.name}**`,
+          content: `Editing menu for **${char.displayName}**`,
           components: ceditMenu(char)
         })
       } break;
@@ -161,7 +161,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string): 
   const owner = await Bot.users.fetch(creature.$._id).catch(() => null);
 
   embed
-    .setTitle(creature.$.info.display.name)
+    .setTitle(creature.displayName)
     .setAuthor(creature.$.info.npc ? "NPC" : (owner?.tag ?? "Unknown"))
     .setColor((creature.$.info.locked || creature.$.info.npc) ? "AQUA" : "GREY")
     .setThumbnail(creature.$.info.display.avatar ?? "")

@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 
 import { PassiveEffect } from "./PassiveEffects";
+import { CreaturePerk } from "./Perks";
 
 export default class CreatureClassManager {
   map = new Map<string, CreatureClass>();
@@ -39,6 +40,7 @@ export class CreatureClass {
     passives?: (string | PassiveEffect)[]
     abilities?: string[]
     items?: string[]
+    perks?: (string | CreaturePerk)[]
   }
 
   constructor(data: CreatureClass["$"]) {

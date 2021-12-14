@@ -1,11 +1,10 @@
 import fs from "fs";
 import path from "path";
-
 import { PassiveEffect } from "./PassiveEffects";
 import { CreaturePerk } from "./Perks";
 
-export default class CreatureSpeciesManager {
-  map = new Map<string, CreatureSpecies>();
+export default class CreatureSkillManager {
+  map = new Map<string, CreatureSkill>();
   async load(dir: fs.PathLike) {
     this.map.clear();
 
@@ -14,12 +13,12 @@ export default class CreatureSpeciesManager {
 
       const {default: loadedFile} = await import(path.join(dir.toString(), file));
 
-      if (loadedFile instanceof CreatureSpecies) {
+      if (loadedFile instanceof CreatureSkill) {
         this.map.set(loadedFile.$.id, loadedFile);
       } else {
         if (loadedFile instanceof Array) {
           for (const subfile of loadedFile) {
-            if (subfile instanceof CreatureSpecies) {
+            if (subfile instanceof CreatureSkill) {
               this.map.set(subfile.$.id, subfile);
             }
           }
@@ -29,21 +28,22 @@ export default class CreatureSpeciesManager {
   }
 }
 
-export class CreatureSpecies {
+export class CreatureSkill {
   $: {
     id: string
     info: {
       name: string
       lore: string
-      description: string
     }
-    playable: boolean
+    compatibleSpecies?: string[]
+    compatibleClasses?: string[]
     passives?: (string | PassiveEffect)[]
     abilities?: string[]
     perks?: (string | CreaturePerk)[]
+    unique?: string[]
   }
 
-  constructor(data: CreatureSpecies["$"]) {
+  constructor(data: CreatureSkill["$"]) {
     this.$ = data;
   }
 }

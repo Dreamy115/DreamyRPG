@@ -1,13 +1,14 @@
 import { Client, MessageEmbed } from "discord.js";
 import mongoose from "mongoose";
 import NodeCache from "node-cache";
-import { AbilitiesManager, capitalize, ClassManager, CONFIG, EffectManager, ItemManager, PassivesManager, PerkManager, shuffle, SpeciesManager } from "../index.js";
+import { AbilitiesManager, capitalize, ClassManager, CONFIG, EffectManager, ItemManager, PassivesManager, PerkManager, shuffle, SkillManager, SpeciesManager } from "../index.js";
 import { AppliedActiveEffect } from "./ActiveEffects.js";
 import { CreatureAbility } from "./CreatureAbilities.js";
 import { DamageCause, DamageGroup, DamageLog, DamageMedium, DamageType, DAMAGE_TO_INJURY_RATIO, reductionMultiplier, ShieldReaction } from "./Damage.js";
 import { AttackData, AttackSet, Item } from "./Items.js";
 import { PassiveEffect, PassiveModifier } from "./PassiveEffects.js";
 import { CreaturePerk } from "./Perks.js";
+import { CreatureSkill } from "./Skills.js";
 import { Modifier, ModifierType, textStat, TrackableStat } from "./Stats.js";
 
 export default class Creature {
@@ -70,7 +71,8 @@ export default class Creature {
       items: {
         equipped: data.items?.equipped ?? [],
         backpack: data.items?.backpack ?? [],
-        primary_weapon: data.items?.primary_weapon ?? null
+        primary_weapon: data.items?.primary_weapon ?? null,
+        skills: data.items?.skills ?? []
       },
       abilities: {
         deck: data.abilities?.deck ?? [],
@@ -412,6 +414,7 @@ export default class Creature {
 
     return array;
   }
+  
 
   applyNamedModifier(mod: PassiveModifier) {
     // @ts-ignore
@@ -683,27 +686,50 @@ export default class Creature {
   }
 
 
-  get perkIDs(): string[] {
-    const perks: string[] = [];
+  get perks(): CreaturePerk[] {
+    const perks: CreaturePerk[] = [];
 
-    const items = this.itemIDs;
-    for (const i of items) {
-      const item = ItemManager.map.get(i);
-      if (!item) continue;
+    const race = SpeciesManager.map.get(this.$.info.species);
+    globalOrLocalPusher(perks, race?.$.perks ?? [], PerkManager);
 
-      perks.push(...item.$.perks ?? [])
+    const kit = ClassManager.map.get(this.$.info.class ?? "");
+    globalOrLocalPusher(perks, kit?.$.perks ?? [], PerkManager);
+    
+    for (const skill of this.skills) {
+      globalOrLocalPusher(perks, skill.$.perks ?? [], PerkManager);
+    }
+
+    const items = this.items;
+    for (const item of items) {
+      globalOrLocalPusher(perks, item.$.perks ?? [], PerkManager)
     }
 
     return perks;
   }
-  get perks(): CreaturePerk[] {
-    const array: CreaturePerk[] = [];
 
-    const perks = this.perkIDs;
-    for (const p of perks) {
-      const perk = PerkManager.map.get(p);
-      if (perk)
-        array.push(perk);
+  get skills(): CreatureSkill[] {
+    const array: CreatureSkill[] = [];
+    
+    for (const s of this.$.items.skills) {
+      const skill = SkillManager.map.get(s);
+      if (skill)
+        array.push(skill);
+    }
+
+    const uniques: string[] = [];
+    for (var s = 0; s < array.length; s++) {
+      const skill = array[s];
+      if (!skill.$.unique || skill.$.unique.length === 0) continue;
+
+      for (const u of skill.$.unique) {
+        if (uniques.includes(u)) {
+          array.splice(s, 1);
+          s--;
+          break;
+        } else {
+          uniques.push(u);
+        }
+      }
     }
 
     return array;
@@ -999,6 +1025,7 @@ export interface CreatureData {
     primary_weapon: string | null
     backpack: string[]
     equipped: string[]
+    skills: string[]
   }
   abilities: {
     deck: string[]
@@ -1045,6 +1072,7 @@ export interface CreatureDump {
     primary_weapon?: string | null
     backpack?: string[]
     equipped?: string[]
+    skills?: string[]
   }
   abilities?: {
     deck?: string[]

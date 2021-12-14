@@ -1,5 +1,5 @@
 import { ApplicationCommandOptionChoice, Interaction } from "discord.js";
-import { ItemManager, SpeciesManager, ClassManager, PassivesManager, AbilitiesManager, EffectManager } from "../..";
+import { ItemManager, SpeciesManager, ClassManager, PassivesManager, AbilitiesManager, EffectManager, PerkManager, SkillManager } from "../..";
 import ActiveEffectManager, { ActiveEffect } from "../../game/ActiveEffects";
 import CreatureClassManager, { CreatureClass } from "../../game/Classes";
 import CreatureAbilitiesManager, { CreatureAbility } from "../../game/CreatureAbilities";
@@ -37,11 +37,17 @@ async function getAutocompleteListOfItems(value: string, type: string): Promise<
     case "effects":
       list = EffectManager.map;
       break;
+    case "perks":
+      list = PerkManager.map;
+      break;
+    case "skills":
+      list = SkillManager.map;
+      break;
   }
 
   const keys = Array.from(list.keys());
   // @ts-expect-error
-  const values: (Item[]|CreatureSpecies[]|ActiveEffect[]|CreatureClass[]|CreatureAbility[]|ActiveEffect[]) = Array.from(list.values());
+  const values: (ManagedItems[]) = Array.from(list.values());
   const input_regex = RegExp(value, "i");
 
   let choices: ApplicationCommandOptionChoice[] = []; 

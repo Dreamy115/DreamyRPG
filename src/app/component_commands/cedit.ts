@@ -1,5 +1,5 @@
 import { MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu, MessageSelectOptionData } from "discord.js";
-import { capitalize, ClassManager, CONFIG, ItemManager, limitString, messageInput, removeMarkdown, SpeciesManager } from "../..";
+import { capitalize, ClassManager, CONFIG, ItemManager, limitString, messageInput, removeMarkdown, SkillManager, SpeciesManager } from "../..";
 import Creature, { HealType } from "../../game/Creature";
 import { DamageCause, DamageGroup, damageLogEmbed, DamageMedium, DamageType, ShieldReaction } from "../../game/Damage";
 import { Item } from "../../game/Items";
@@ -80,7 +80,7 @@ export default new ComponentCommandHandler(
               return;
             }
 
-            creature.displayName = input; 
+            creature.$.info.display.name = input; 
           } break;
           case "avatar": {
             await interaction.followUp({
@@ -174,7 +174,7 @@ export default new ComponentCommandHandler(
               return;
             }
 
-            if (chosen_class.$.compatibleSpecies.length > 0 && chosen_class.$.compatibleSpecies.includes(creature.$.info.species)) {
+            if (chosen_class.$.compatibleSpecies.length > 0 && !chosen_class.$.compatibleSpecies.includes(creature.$.info.species)) {
               interaction.followUp({
                 ephemeral: true,
                 content: "Class incompatible with race"
@@ -604,63 +604,85 @@ export default new ComponentCommandHandler(
                 }
               } break;
               case "skill": {
-                interaction.followUp({
-                  ephemeral: true,
-                  content: "Not yet implemented"
-                })
-                return;
                 if (interaction.isButton()) {
                   switch (args.shift()) {
                     case "add": {
                       await interaction.followUp({
                         ephemeral: true,
-                        content: "Please input a comma separated list of item IDs, ex. \`starter_shield,starter_revolver\`"
+                        content: "Please input a comma separated list of item IDs, ex. \`some_skill,another_skill\`"
                       });
 
-                      let items = (await messageInput(channel, interaction.user.id)).split(/,/g);
+                      let skills = (await messageInput(channel, interaction.user.id)).split(/,/g);
 
                       var invalid_count = 0;
-                      for (const i of items) {
-                        const item = ItemManager.map.get(i);
-                        if (!item?.$.id) {
+                      for (const i of skills) {
+                        const skill = SkillManager.map.get(i);
+                        if (!skill?.$.id || creature.$.items.skills.includes(skill.$.id)) {
                           invalid_count++;
                           continue;
                         }
 
-                        creature.$.items.backpack.push(item.$.id);
+                        creature.$.items.skills.push(skill.$.id);
                       }
 
-                      if (invalid_count > 0)
-                        interaction.followUp(({
+                      const unique_collisions: string[] = [];
+                      const uniques: string[] = [];
+                      for (const s of creature.$.items.skills) {
+                        const skill = SkillManager.map.get(s);
+                        if (!skill) continue;
+
+                        for (const u of skill.$.unique ?? []) {
+                          if (uniques.includes(u)) {
+                            if (!unique_collisions.includes(u))
+                              unique_collisions.push(u);
+                          } else {
+                            uniques.push(u);
+                          }
+                        }
+                      }
+
+                      if (unique_collisions.length > 0) {
+                        interaction.followUp({
                           ephemeral: true,
-                          content: `${invalid_count} items were invalid and have not been added!`
-                        }))
-                    } break;
-                    case "remove": {
-                      const items: MessageSelectOptionData[] = [];
-
-                      for (const i of creature.$.items.backpack) {
-                        const item = ItemManager.map.get(i);
-                        if (!item) continue;
-
-                        items.push({
-                          label: item.$.info.name,
-                          value: item.$.id ?? ""
+                          content: 
+                            `**WARNING!** multiple skills have the same unique flags and therefore are violating __uniqueness__!` + 
+                            `These will not work together, and only one of them for each unique flag will work!\n` +
+                            `Remove one of the colliding skills if you want to avoid unexpected behavior\n` +
+                            `Violated uniques: **${unique_collisions.join("**, **")}**`
                         })
                       }
 
-                      if (items.length == 0) {
+                      if (invalid_count > 0)
                         interaction.followUp({
                           ephemeral: true,
-                          content: "Backpack is empty!"
+                          content: `${invalid_count} skills were invalid or the creature already has them and have not been added!`
+                        })
+                    } break;
+                    case "remove": {
+                      const skills: MessageSelectOptionData[] = [];
+
+                      for (const s of creature.$.items.skills) {
+                        const skill = SkillManager.map.get(s);
+                        if (!skill) continue;
+
+                        skills.push({
+                          label: skill.$.info.name,
+                          value: skill.$.id ?? ""
+                        })
+                      }
+
+                      if (skills.length == 0) {
+                        interaction.followUp({
+                          ephemeral: true,
+                          content: "Skill list is empty!"
                         });
                         return;
                       }
 
                       interaction.followUp({
                         ephemeral: true,
-                        content: "Select items from backpack. (To remove equipped items de-equip them first)",
-                        components: backpackItemComponents(creature_id, items, `cedit/${creature_id}/edit/gm/item/remove`)
+                        content: "Select skills from creature.",
+                        components: backpackItemComponents(creature_id, skills, `cedit/${creature_id}/edit/gm/skill/remove`)
                       })
                       return;
                     } break;
@@ -669,7 +691,7 @@ export default new ComponentCommandHandler(
                   switch (args.shift()) {
                     case "remove": {
                       for (const i of interaction.values) {
-                        creature.$.items.backpack.splice(creature.$.items.backpack.findIndex((v) => v === i),1);
+                        creature.$.items.skills.splice(creature.$.items.skills.findIndex((v) => v === i),1);
                       }
                     } break;
                   }
@@ -870,7 +892,7 @@ export function ceditMenu(creature: Creature): MessageActionRow[] {
         const array: MessageSelectOptionData[] = [];
 
         for (const itemclass of ClassManager.map.values()) {
-          if (itemclass.$.compatibleSpecies.length > 0 && itemclass.$.compatibleSpecies.includes(creature.$.info.species))
+          if (itemclass.$.compatibleSpecies.length == 0 || itemclass.$.compatibleSpecies.includes(creature.$.info.species))
             array.push({
               label: itemclass.$.info.name,
               value: itemclass.$.id,

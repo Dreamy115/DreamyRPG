@@ -1,11 +1,13 @@
 import { ApplicationCommandOptionData, MessageEmbed } from "discord.js";
-import { AbilitiesManager, capitalize, ClassManager, EffectManager, ItemManager, PassivesManager, PerkManager, SpeciesManager } from "../..";
+import { AbilitiesManager, capitalize, ClassManager, EffectManager, ItemManager, PassivesManager, PerkManager, SkillManager, SpeciesManager } from "../..";
 import { ActiveEffect } from "../../game/ActiveEffects";
 import { CreatureClass } from "../../game/Classes";
 import { CreatureAbility, replaceLore } from "../../game/CreatureAbilities";
 import { DamageMedium, DamageType } from "../../game/Damage";
 import { AttackData, AttackSet, Item } from "../../game/Items";
 import { PassiveEffect, PassiveModifier } from "../../game/PassiveEffects";
+import { CreaturePerk } from "../../game/Perks";
+import { CreatureSkill } from "../../game/Skills";
 import { CreatureSpecies } from "../../game/Species";
 import { Modifier, ModifierType } from "../../game/Stats";
 import { ApplicationCommandHandler } from "../commands";
@@ -45,6 +47,10 @@ const typeOption: ApplicationCommandOptionData = {
     {
       name: "Perks",
       value: "perks"
+    },
+    {
+      name: "Skills",
+      value: "skills"
     }
   ]
 }
@@ -119,6 +125,10 @@ export default new ApplicationCommandHandler(
       case "perks":
         list = PerkManager.map;
         title = "Perks";
+        break;
+      case "skills":
+        list = SkillManager.map;
+        title = "Skills";
         break;
     }
 
@@ -214,6 +224,10 @@ export default new ApplicationCommandHandler(
               { 
                 name: "Abilities",
                 value: abilitiesDescriptor(item.$.abilities ?? []) || "None"
+              },
+              {
+                name: "Perks",
+                value: perksDescriptor((item.$.perks ?? []) || "None")
               }
             ]);
           } else if (item instanceof CreatureSpecies) {
@@ -226,6 +240,10 @@ export default new ApplicationCommandHandler(
               { 
                 name: "Abilities",
                 value: abilitiesDescriptor(item.$.abilities ?? []) || "None"
+              },
+              {
+                name: "Perks",
+                value: perksDescriptor((item.$.perks ?? []) || "None")
               }
             ]);
           } else if (item instanceof CreatureClass) {
@@ -237,6 +255,10 @@ export default new ApplicationCommandHandler(
               { 
                 name: "Abilities",
                 value: abilitiesDescriptor(item.$.abilities ?? []) || "None"
+              },
+              {
+                name: "Perks",
+                value: perksDescriptor((item.$.perks ?? []) || "None")
               }
             ]);
 
@@ -265,6 +287,65 @@ export default new ApplicationCommandHandler(
               `\n\nHaste **${item.$.haste ?? 1}**\n`
           } else if (item instanceof ActiveEffect) {
             embed.description += `\nMax At Once **${item.$.consecutive_limit}**\n`;
+          } else if (item instanceof CreatureSkill) {
+            embed.addFields([
+              { 
+                name: "Passives",
+                value: passivesDescriptor(item.$.passives ?? []) || "None"
+              },
+              { 
+                name: "Abilities",
+                value: abilitiesDescriptor(item.$.abilities ?? []) || "None"
+              },
+              {
+                name: "Perks",
+                value: perksDescriptor(item.$.perks ?? []) || "None"
+              }
+            ]);
+
+            if (item.$.compatibleSpecies && item.$.compatibleSpecies.length > 0) {
+              const species: string[] = [];
+              for (const r of item.$.compatibleSpecies) {
+                const race = SpeciesManager.map.get(r);
+                if (!race) continue;
+
+                species.push(race.$.info.name);
+              }
+
+              embed.addField(
+                "Compatible Species",
+                species.join(", ")
+              )
+            }
+          } else if (item instanceof CreaturePerk) {
+            if (item.$.compatibleSpecies && item.$.compatibleSpecies.length > 0) {
+              const species: string[] = [];
+              for (const r of item.$.compatibleSpecies) {
+                const race = SpeciesManager.map.get(r);
+                if (!race) continue;
+
+                species.push(race.$.info.name);
+              }
+
+              embed.addField(
+                "Compatible Species",
+                species.join(", ")
+              )
+            }
+            if (item.$.compatibleClasses && item.$.compatibleClasses.length > 0) {
+              const classes: string[] = [];
+              for (const c of item.$.compatibleClasses) {
+                const kit = ClassManager.map.get(c);
+                if (!kit) continue;
+
+                classes.push(kit.$.info.name);
+              }
+
+              embed.addField(
+                "Compatible Classes",
+                classes.join(", ")
+              )
+            }
           }
       }
     }
@@ -317,7 +398,7 @@ export function modifierDescriptor(modifiers: PassiveModifier[]) {
   return str;
 }
 
-function abilitiesDescriptor(abilities: string[]) {
+export function abilitiesDescriptor(abilities: string[]) {
   var str = "";
   if (abilities.length > 0) {
     for (const ab of abilities) {
@@ -332,7 +413,7 @@ function abilitiesDescriptor(abilities: string[]) {
 }
 
 
-function passivesDescriptor(passives: (string | PassiveEffect)[]) {
+export function passivesDescriptor(passives: (string | PassiveEffect)[]) {
   var str = "";
   if (passives.length > 0) {
     for (const passive of passives) {
@@ -346,5 +427,19 @@ function passivesDescriptor(passives: (string | PassiveEffect)[]) {
   }
   return str;
 }
+export function perksDescriptor(perks: (string | CreaturePerk)[]) {
+  var str = "";
+  if (perks.length > 0) {
+    for (const perk of perks) {
+      if (typeof perk === "string") {
+        str += `[**G**] ${PassivesManager.map.get(perk)?.$.info.name} \`${perk}\`\n`;
+      } else {
+        str += `[**L**] ${perk.$.info.name}\n*${perk.$.info.lore}*\n`;
+      }
+    }
+    str += "\n"
+  }
+  return str;
+}
 
-type ManagedItems = Item | CreatureClass | CreatureSpecies | PassiveEffect | CreatureAbility | ActiveEffect;
+export type ManagedItems = Item | CreatureClass | CreatureSpecies | PassiveEffect | CreatureAbility | ActiveEffect | CreatureSkill | CreaturePerk;

@@ -68,6 +68,10 @@ export default new ApplicationCommandHandler(
               {
                 name: "Perks",
                 value: "perks"
+              },
+              {
+                name: "Skills",
+                value: "skills"
               }
             ]
           },
@@ -366,7 +370,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string): 
               case DisplaySeverity.ROMAN: return romanNumeral(effect.severity);
             }
           }()}`,
-          `*${effectData.$.info.lore}*\n\nfor **${effect.ticks}** Ticks`
+          `*${effectData.$.info.lore}*\n\nfor **${effect.ticks}** Ticks (\`${effect.id}\`)`
         )
       }
 
@@ -473,12 +477,23 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string): 
         var str = "";
 
         for (const perk of creature.perks) {
-          str += `**${perk.$.info.name}**\n${perk.$.info.lore}\n\n`
+          str += `\`${perk.$.id}\` - **${perk.$.info.name}**\n${perk.$.info.lore}\n\n`
         }
 
         return str;
       }())
-    }
+    } break;
+    case "skills": {
+      embed.setDescription(function() {
+        var str = "";
+
+        for (const skill of creature.skills) {
+          str += `\`${skill.$.id}\` - **${skill.$.info.name}**\n${skill.$.info.lore}\n\n`
+        }
+
+        return str;
+      }())
+    } break;
   }
 
   return embed;

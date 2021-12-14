@@ -3,6 +3,7 @@ import path from "path";
 
 import { PassiveEffect } from "./PassiveEffects";
 import { DamageMedium, DamageType } from "./Damage";
+import { CreaturePerk } from "./Perks";
 
 export default class ItemsManager {
   map = new Map<string, Item>();
@@ -45,7 +46,7 @@ export interface BaseItemData {
     lore: string
   }
   unique?: string[]
-  perks?: string[]
+  perks?: (string | CreaturePerk)[]
 }
 export interface WearableItemData extends BaseItemData {
   type: "wearable"

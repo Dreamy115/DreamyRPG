@@ -1,8 +1,6 @@
 import fs from "fs";
 import path from "path";
 
-import { PassiveEffect } from "./PassiveEffects";
-
 export default class CreaturePerkManager {
   map = new Map<string, CreaturePerk>();
   async load(dir: fs.PathLike) {
@@ -35,6 +33,8 @@ export class CreaturePerk {
       name: string
       lore: string
     }
+    compatibleSpecies?: string[]
+    compatibleClasses?: string[]
   }
 
   constructor(data: CreaturePerk["$"]) {

@@ -79,7 +79,8 @@ export default new ApplicationCommandHandler(
           {
             name: "id",
             description: "Find character by ID (For NPCs)",
-            type: "STRING"
+            type: "STRING",
+            autocomplete: true
           }
         ]
       },

@@ -1,6 +1,7 @@
 import { ApplicationCommandOptionChoice } from "discord.js";
 import { Fight } from "../../game/Fight";
 import { AutocompleteHandler } from "../autocomplete";
+import { autocompleteCreatures } from "./char";
 
 export default new AutocompleteHandler(
   "gm",
@@ -25,6 +26,20 @@ export default new AutocompleteHandler(
             }
 
             interaction.respond(autocomplete);
+          } break;
+        }
+      } break;
+      case "cclone": {
+        switch (focused.name) {
+          case "old_id": {
+            interaction.respond(await autocompleteCreatures(search, db))
+          } break;
+        }
+      } break;
+      case "cedit": {
+        switch (focused.name) {
+          case "id": {
+            interaction.respond(await autocompleteCreatures(search, db))
           } break;
         }
       } break;

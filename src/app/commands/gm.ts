@@ -32,7 +32,8 @@ export default new ApplicationCommandHandler(
             name: "old_id",
             description: "Source Creature",
             type: "STRING",
-            required: true
+            required: true,
+            autocomplete: true
           },
           {
             name: "new_id",
@@ -50,7 +51,8 @@ export default new ApplicationCommandHandler(
           {
             name: "id",
             description: "Find by ID",
-            type: "STRING"
+            type: "STRING",
+            autocomplete: true
           },
           {
             name: "user",

@@ -5,7 +5,7 @@ import { replaceLore } from "../../game/CreatureAbilities.js";
 import { reductionMultiplier, DAMAGE_TO_INJURY_RATIO, DamageMedium, DamageType } from "../../game/Damage.js";
 import { AttackData } from "../../game/Items.js";
 import { PassiveModifier } from "../../game/PassiveEffects.js";
-import { textStat, ModifierType } from "../../game/Stats.js";
+import { textStat, ModifierType, TrackableStat } from "../../game/Stats.js";
 import { SpeciesManager, ClassManager, capitalize, ItemManager, EffectManager, AbilitiesManager } from "../../index.js";
 import { ApplicationCommandHandler } from "../commands.js";
 import { ceditMenu } from "../component_commands/cedit.js";
@@ -128,7 +128,7 @@ export default new ApplicationCommandHandler(
       case "info": {
         await interaction.deferReply({});
 
-        const char = await Creature.fetch(interaction.options.getString("id") ?? interaction.options.getUser("user")?.id ?? interaction.user.id, db, false).catch(() => null);
+        const char = await Creature.fetch(interaction.options.getString("id", false)?.split(" ")[0] ?? interaction.options.getUser("user")?.id ?? interaction.user.id, db, false).catch(() => null);
         if (!char) {
           interaction.editReply({
             content: "Not found!"
@@ -388,7 +388,6 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string): 
           for (const s in creature.$.stats) {
             // @ts-ignore
             const stat = creature.$.stats[s];
-
             str += `**${Math.round(stat.base)}** ${capitalize(s.replaceAll(/_/g, " "))}\n`;
           }
 
@@ -408,6 +407,18 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string): 
             for (const mod of stat.modifiers) {
               array.push({
                 stat: s,
+                type: mod.type,
+                value: mod.value
+              });
+            }
+          }
+          for (const a in creature.$.attributes) {
+            // @ts-ignore
+            const attr = creature.$.attributes[a];
+            
+            for (const mod of attr.modifiers) {
+              array.push({
+                stat: a,
                 type: mod.type,
                 value: mod.value
               });
@@ -456,9 +467,10 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string): 
           for (const a in creature.$.attributes) {
             // @ts-expect-error
             const attr = creature.$.attributes[a];
+            const attr_bonus = attr.value - attr.base;
             
             // @ts-expect-error
-            str += `**${attr} ${a}**\n${Creature.ATTRIBUTE_DESCRIPTIONS[a]}  ${modifierDescriptor(Creature.ATTRIBUTE_MODS[a]).trim().replaceAll("\n", ", ") || ""}\n`
+            str += `**${attr.value} ${a}**${attr_bonus !== 0 ? ` [Modifiers] *(**${attr.base}** ${`${(attr_bonus < 0 ? "-" : "+")} ${(attr_bonus)}`})*` : ""}\n${Creature.ATTRIBUTE_DESCRIPTIONS[a]}  ${modifierDescriptor(Creature.ATTRIBUTE_MODS[a]).trim().replaceAll("\n", ", ") || ""}\n`
           }
 
           return str;

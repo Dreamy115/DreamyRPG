@@ -142,7 +142,7 @@ export default new ApplicationCommandHandler(
 
     switch (interaction.options.getSubcommandGroup(false) ?? interaction.options.getSubcommand()) {
       case "cedit": {
-        let creature_id = interaction.options.getString("id") ?? interaction.options.getUser("user")?.id ?? interaction.user.id;
+        let creature_id = interaction.options.getString("id")?.split(" ")[0] ?? interaction.options.getUser("user")?.id ?? interaction.user.id;
 
         await interaction.deferReply({});
 
@@ -265,6 +265,13 @@ export default new ApplicationCommandHandler(
         await interaction.deferReply({ephemeral: true});
 
         const cid = interaction.options.getString("id", true);
+        if (!Creature.ID_REGEX.test(cid)) {
+          interaction.followUp({
+            ephemeral: true,
+            content: Creature.ID_REGEX_ERR_MSG
+          })
+          return;
+        }
 
         let creature = await Creature.fetch(cid, db).catch(() => null);
         if (creature) {
@@ -292,8 +299,15 @@ export default new ApplicationCommandHandler(
       case "cclone": {
         await interaction.deferReply({ephemeral: true});
 
-        const old_cid = interaction.options.getString("old_id", true);
         const new_cid = interaction.options.getString("new_id", true);
+        if (!Creature.ID_REGEX.test(new_cid)) {
+          interaction.followUp({
+            ephemeral: true,
+            content: Creature.ID_REGEX_ERR_MSG
+          })
+          return;
+        }
+        const old_cid = interaction.options.getString("old_id", true);
 
         let creature = await Creature.fetch(old_cid, db).catch(() => null);
         if (!creature) {

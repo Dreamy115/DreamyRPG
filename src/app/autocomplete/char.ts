@@ -23,8 +23,8 @@ export async function autocompleteCreatures(search: RegExp, db: typeof Mongoose,
     ]
   }, {limit})) {
     array.push({
-      value: creature._id,
-      name: `${creature._id} - ${creature?.info?.display?.name ?? "Unknown"}${creature?.info?.npc ? " (NPC) " : ""}`
+      name: `${creature._id} - ${creature?.info?.display?.name ?? "Unknown"}${creature?.info?.npc ? " (NPC) " : ""}`,
+      value: creature._id
     })
   }
 

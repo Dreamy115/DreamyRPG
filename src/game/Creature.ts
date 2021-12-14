@@ -51,13 +51,13 @@ export default class Creature {
         initiative: new TrackableStat(10)
       },
       attributes: {
-        STR: Math.round(data.attributes?.STR ?? 0),
-        FOR: Math.round(data.attributes?.FOR ?? 0),
-        REJ: Math.round(data.attributes?.REJ ?? 0),
-        PER: Math.round(data.attributes?.PER ?? 0),
-        INT: Math.round(data.attributes?.INT ?? 0),
-        DEX: Math.round(data.attributes?.DEX ?? 0),
-        CHA:Math.round( data.attributes?.CHA ?? 0)
+        STR: new TrackableStat(data.attributes?.STR ?? 0),
+        FOR: new TrackableStat(data.attributes?.FOR ?? 0),
+        REJ: new TrackableStat(data.attributes?.REJ ?? 0),
+        PER: new TrackableStat(data.attributes?.PER ?? 0),
+        INT: new TrackableStat(data.attributes?.INT ?? 0),
+        DEX: new TrackableStat(data.attributes?.DEX ?? 0),
+        CHA: new TrackableStat( data.attributes?.CHA ?? 0)
       },
       experience: {
         level: Math.max(data.experience?.level ?? 1, 1)
@@ -103,7 +103,7 @@ export default class Creature {
     this.applyModifiersToBaseStats(Creature.LEVEL_MODS, this.$.experience.level - 1);
     for (const a in this.$.attributes) {
       // @ts-expect-error
-      this.applyModifiersToBaseStats(Creature.ATTRIBUTE_MODS[a], Math.round(this.$.attributes[a]));
+      this.applyModifiersToBaseStats(Creature.ATTRIBUTE_MODS[a], Math.round(this.$.attributes[a].value));
     }
 
     // CAPPING
@@ -153,19 +153,18 @@ export default class Creature {
 
   applyModifiersToBaseStats(list: PassiveModifier[], amount: number) {
     for (const mod of list) {
+      // @ts-expect-error
+      const stat: TrackableStat = this.$.stats[mod.stat];
       switch (mod.type) {
         case ModifierType.ADD:
         default:
-          // @ts-expect-error
-          this.$.stats[mod.stat].base += mod.value * amount;
+          stat.base += mod.value * amount;
           break;
         case ModifierType.ADD_PERCENT:
-          // @ts-expect-error
-          this.$.stats[mod.stat].base += mod.value * this.$.stats[mod.stat].base * amount;
+          stat.base += mod.value * stat.base * amount;
           break;
         case ModifierType.MULTIPLY:
-          // @ts-expect-error
-          this.$.stats[mod.stat].base *= Math.pow(mod.value, amount);
+          stat.base *= Math.pow(mod.value, amount);
       }
     }
   }
@@ -234,6 +233,19 @@ export default class Creature {
     this.$.vitals.health = Math.round(Math.min(Math.max(0, this.$.vitals.health), this.$.stats.health.value - this.$.vitals.injuries));
     this.$.vitals.mana = Math.round(Math.min(Math.max(0, this.$.vitals.mana), this.$.stats.mana.value));
     this.$.vitals.shield = Math.round(Math.min(Math.max(0, this.$.vitals.shield), this.$.stats.shield.value));
+
+    if (isNaN(this.$.vitals.shield))
+      this.$.vitals.shield = 0;
+
+    if (isNaN(this.$.vitals.health))
+      this.$.vitals.health = 1;
+
+    if (isNaN(this.$.vitals.injuries))
+      this.$.vitals.injuries = 0;
+
+    if (isNaN(this.$.vitals.mana))
+      this.$.vitals.mana = 0;
+
   }
 
   checkItemConflicts() {
@@ -418,7 +430,12 @@ export default class Creature {
 
   applyNamedModifier(mod: PassiveModifier) {
     // @ts-ignore
-    return this.$.stats[mod.stat].modifiers.push({type: mod.type, value: mod.value});
+    let stat = this.$.stats[mod.stat] ?? this.$.attributes[mod.stat];
+    if (stat) {
+      stat.modifiers.push({type: mod.type, value: mod.value});
+      return true;
+    }
+    return false;
   }
 
   applyDamage(original: DamageGroup): DamageLog {
@@ -670,7 +687,7 @@ export default class Creature {
   clearAttributes() {
     for (const a in this.$.attributes) {
       // @ts-expect-error
-      this.$.attributes[a] = 0;
+      this.$.attributes[a].base = 0;
     }
   }
 
@@ -679,7 +696,7 @@ export default class Creature {
 
     for (const a in this.$.attributes) {
       // @ts-expect-error
-      num += this.$.attributes[a] ?? 0;
+      num += this.$.attributes[a]?.base ?? 0;
     }
 
     return num;
@@ -746,12 +763,20 @@ export default class Creature {
         mana: this.$.vitals.mana / this.$.stats.mana.value,
         shield: this.$.vitals.shield / this.$.stats.shield.value
       },
-      attributes: this.$.attributes,
+      attributes: {},
       experience: this.$.experience,
       items: this.$.items,
       abilities: this.$.abilities,
       active_effects: this.$.active_effects,
       vars: this.$.vars
+    }
+
+    for (const a in this.$.attributes) {
+      // @ts-expect-error
+      const attr: TrackableStat = this.$.attributes[a];
+
+      // @ts-expect-error
+      dump.attributes[a] = attr.base;
     }
 
     return dump;
@@ -966,6 +991,9 @@ export default class Creature {
   }
   static readonly ATTRIBUTE_MAX = 8;
 
+  static readonly ID_REGEX = /^([A-Za-z0-9]|[_-]){3,96}$/
+  static readonly ID_REGEX_ERR_MSG = "Invalid ID. Must be between **3**-**96** in length, and contain only **A-Z**, **a-z**, **0-9** and **\_**, **-** characters.";
+
   static readonly COLLECTION_NAME = "Creatures";
 }
 
@@ -1004,13 +1032,13 @@ export interface CreatureData {
     initiative: TrackableStat
   }
   attributes: {
-    STR: number
-    FOR: number
-    REJ: number
-    PER: number
-    INT: number
-    DEX: number
-    CHA: number
+    STR: TrackableStat
+    FOR: TrackableStat
+    REJ: TrackableStat
+    PER: TrackableStat
+    INT: TrackableStat
+    DEX: TrackableStat
+    CHA: TrackableStat
   }
   experience: {
     level: number

@@ -155,10 +155,13 @@ export default new ComponentCommandHandler(
             })
             creature.$.abilities.stacks += rolled;
           } else {
-            interaction.editReply({
+            await interaction.editReply({
               content: `Rolled: **${rolled}** *(**${creature.$.abilities.stacks + rolled}**)*\n **~BUSTED~**`
             })
             creature.$.abilities.stacks = 0;
+            const msg = await fight.announceTurn(db, Bot);
+            msg.content = "**Busted an attack**";
+            interaction.followUp(msg)
           }
 
           creature.put(db);

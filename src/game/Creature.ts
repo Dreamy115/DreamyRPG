@@ -72,7 +72,13 @@ export default class Creature {
         equipped: data.items?.equipped ?? [],
         backpack: data.items?.backpack ?? [],
         primary_weapon: data.items?.primary_weapon ?? null,
-        skills: data.items?.skills ?? []
+        skills: data.items?.skills ?? [],
+        crafting_materials: {
+          scrap: data.items?.crafting_materials?.scrap ?? 0,
+          parts: data.items?.crafting_materials?.parts ?? 0, 
+          cells: data.items?.crafting_materials?.cells ?? 0,
+          cores: data.items?.crafting_materials?.cores ?? 0
+        }
       },
       abilities: {
         deck: data.abilities?.deck ?? [],
@@ -297,6 +303,21 @@ export default class Creature {
           }
         } break;
       }
+    }
+  }
+
+  wipeItems() {
+    this.$.items = {
+      backpack: [],
+      crafting_materials: {
+        scrap: 0,
+        parts: 0,
+        cells: 0,
+        cores: 0
+      },
+      equipped: [],
+      primary_weapon: null,
+      skills: []
     }
   }
 
@@ -1054,6 +1075,12 @@ export interface CreatureData {
     backpack: string[]
     equipped: string[]
     skills: string[]
+    crafting_materials: {
+      scrap: number
+      parts: number
+      cells: number
+      cores: number
+    }
   }
   abilities: {
     deck: string[]
@@ -1101,6 +1128,12 @@ export interface CreatureDump {
     backpack?: string[]
     equipped?: string[]
     skills?: string[]
+    crafting_materials?: {
+      scrap?: number
+      parts?: number
+      cells?: number
+      cores?: number
+    }
   }
   abilities?: {
     deck?: string[]

@@ -3,6 +3,7 @@ import { capitalize, ClassManager, CONFIG, ItemManager, limitString, messageInpu
 import Creature, { HealType } from "../../game/Creature";
 import { DamageCause, DamageGroup, damageLogEmbed, DamageMedium, DamageType, ShieldReaction } from "../../game/Damage";
 import { Item } from "../../game/Items";
+import { TrackableStat } from "../../game/Stats";
 import { infoEmbed } from "../commands/char";
 import { ComponentCommandHandler } from "../component_commands";
 
@@ -129,15 +130,21 @@ export default new ComponentCommandHandler(
               return;
             }
 
+            creature.wipeItems();
             let dump = creature.dump();
             // @ts-expect-error
             dump.info.species = interaction.values[0];
+            // @ts-expect-error
+            dump.info.class = undefined;
+
             creature = new Creature(dump);
           } break;
           case "lock": {
             if (args.shift() !== "confirm") {
               interaction.followUp({
-                content: "Are you sure? You will not be able to edit the Species or Class of your character anymore, but you'll gain the ability to use the character!",
+                content:
+                  "Are you sure? You will not be able to edit the Species or Class of your character anymore, but you'll gain the ability to use the character!\n" +
+                  "*This will also reset the progress on your character, but you shouldn't have any in the first place!*",
                 components: [new MessageActionRow().setComponents([new MessageButton()
                   .setCustomId(`cedit/${creature.$._id}/edit/lock/confirm`)
                   .setStyle("DANGER")
@@ -147,6 +154,36 @@ export default new ComponentCommandHandler(
               })
               return;
             } else {
+              const chosen_species = SpeciesManager.map.get(creature.$.info.species);
+              if (!chosen_species) {
+                interaction.followUp({
+                  ephemeral: true,
+                  content: "Invalid Species!"
+                })
+                return;
+              }
+
+              const chosen_class = ClassManager.map.get(creature.$.info.class ?? "");
+              if (!chosen_class) {
+                interaction.followUp({
+                  ephemeral: true,
+                  content: "Invalid class!"
+                })
+                return;
+              }
+              if (chosen_class.$.compatibleSpecies.length > 0 && !chosen_class.$.compatibleSpecies.includes(creature.$.info.species)) {
+                interaction.followUp({
+                  ephemeral: true,
+                  content: "Class incompatible with race"
+                })
+                return;
+              }
+
+              creature.$.experience = {
+                level: 1
+              }
+              creature.clearAttributes();
+
               creature.$.info.locked = true;
               interaction.followUp({
                 content: "Saved!",
@@ -182,14 +219,11 @@ export default new ComponentCommandHandler(
               return;
             }
 
+            creature.wipeItems();
+
             let dump = creature.dump();
             // @ts-expect-error
             dump.info.class = chosen_class.$.id;
-
-            // @ts-expect-error
-            dump.items.backpack = [];
-            // @ts-expect-error
-            dump.items.primary_weapon = null;
             // @ts-expect-error
             dump.items.equipped = chosen_class.$.items ?? [];
 

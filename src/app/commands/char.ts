@@ -72,6 +72,10 @@ export default new ApplicationCommandHandler(
               {
                 name: "Skills",
                 value: "skills"
+              },
+              {
+                name: "Raw Data (Debug)",
+                value: "debug"
               }
             ]
           },
@@ -174,6 +178,9 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string): 
 
   switch (page) {
     default:
+    case "debug": {
+      embed.setDescription("```json\n" + JSON.stringify(creature.$, undefined, "  ") + "```");
+    } break;
     case "stats": {
       embed.addField(
         "Basic",
@@ -281,7 +288,8 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string): 
             }
 
             return str.trim();
-          }(creature) || "Empty"
+          }(creature) || "Empty",
+          inline: true
         },
         {
           name: "Backpack",
@@ -296,9 +304,24 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string): 
             }
 
             return str;
-          }(creature) || "Empty"
+          }(creature) || "Empty",
+          inline: true
         }
-      ])
+      ]).addField(
+        "Crafting Materials",
+        function () {
+          var str = "";
+
+          for (const c in creature.$.items.crafting_materials) {
+            // @ts-expect-error
+            const mat: number = creature.$.items.crafting_materials[c];
+
+            str += `**${mat}** ${capitalize(c)}\n`;
+          }
+
+          return str;
+        }()
+      )
     } break;
     case "abilities": {
       embed.addFields(function() {

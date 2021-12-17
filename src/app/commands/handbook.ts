@@ -268,7 +268,7 @@ export default new ApplicationCommandHandler(
               },
               {
                 name: "Perks",
-                value: perksDescriptor((item.$.perks ?? []) || "None")
+                value: perksDescriptor(item.$.perks ?? []) || "None"
               }
             ]);
           } else if (item instanceof CreatureClass) {

@@ -18,9 +18,10 @@ export interface DamageGroup {
   attacker?: Creature | string
   victim?: Creature
   medium: DamageMedium
-  penetration: {
-    lethality: number
-    defiltering: number
+  penetration?: {
+    lethality?: number
+    defiltering?: number
+    severing?: number
   }
   chance: number
   useDodge: boolean
@@ -101,7 +102,7 @@ export function damageLogEmbed(log: DamageLog) {
 function damageGroupString(group: DamageGroup) {
   return `**${group.chance}%** Chance\n**${DamageMedium[group.medium]} ${DamageCause[group.cause]}**, Shield reaction: **${ShieldReaction[group.shieldReaction]}**\n` +
   `*${!group.useDodge ? "Not " : ""}Dodgeable*\n` +
-  `Lethality **${group.penetration.lethality}** | **${group.penetration.defiltering}** Defiltering\n\n` +
+  `Lethality **${group.penetration?.lethality ?? 0}** | **${group.penetration?.defiltering ?? 0}** Defiltering\n\n` +
   `**Sources**\n` +
   `${function() {
     var str = "";

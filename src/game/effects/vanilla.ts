@@ -17,10 +17,6 @@ export default [
         cause: DamageCause.DoT,
         chance: 100,
         medium: DamageMedium.Direct,
-        penetration: {
-          defiltering: 0,
-          lethality: 0
-        },
         shieldReaction: ShieldReaction.Ignore,
         useDodge: false,
         sources: [{
@@ -43,18 +39,6 @@ export default [
         type: ModifierType.CAP_MAX,
         value: 0
       })
-    },
-    onDelete: (creature) => {
-      const index = creature.$.stats.shield_regen.modifiers.findIndex((v) => v.type === ModifierType.CAP_MAX && v.value === 0);
-      if (index != -1)
-        creature.$.stats.shield_regen.modifiers.splice(index,1);
-    },
-    onTick: (creature, {ticks}) => {
-      if (ticks <= 0) {
-        const index = creature.$.stats.shield_regen.modifiers.findIndex((v) => v.type === ModifierType.CAP_MAX && v.value === 0);
-        if (index != -1)
-          creature.$.stats.shield_regen.modifiers.splice(index,1);
-      }
     }
   })
 ]

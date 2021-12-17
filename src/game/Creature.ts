@@ -40,8 +40,8 @@ export default class Creature {
         health: new TrackableStat(100),
         mana: new TrackableStat(25),
         mana_regen: new TrackableStat(10),
-        shield: new TrackableStat(0),
-        shield_regen: new TrackableStat(0),
+        shield: new TrackableStat(1),
+        shield_regen: new TrackableStat(1),
         parry: new TrackableStat(10),
         deflect: new TrackableStat(5),
         tenacity: new TrackableStat(42),
@@ -501,12 +501,12 @@ export default class Creature {
       for (const source of group.sources) {
         switch (source.type) {
           case DamageType.Physical: {
-            log.total_damage_mitigated += Math.round(source.value * (1 - reductionMultiplier(this.$.stats.armor.value - group.penetration.lethality)));
-            source.value *= reductionMultiplier(this.$.stats.armor.value - group.penetration.lethality);
+            log.total_damage_mitigated += Math.round(source.value * (1 - reductionMultiplier(this.$.stats.armor.value - (group.penetration?.lethality ?? 0))));
+            source.value *= reductionMultiplier(this.$.stats.armor.value - (group.penetration?.lethality ?? 0));
           } break;
           case DamageType.Energy: {
-            log.total_damage_mitigated += Math.round(source.value * (1 - reductionMultiplier(this.$.stats.filter.value - group.penetration.defiltering)));
-            source.value *= reductionMultiplier(this.$.stats.filter.value - group.penetration.defiltering);
+            log.total_damage_mitigated += Math.round(source.value * (1 - reductionMultiplier(this.$.stats.filter.value - (group.penetration?.defiltering ?? 0))));
+            source.value *= reductionMultiplier(this.$.stats.filter.value - (group.penetration?.defiltering ?? 0));
           } break;
         }
         source.value = Math.round(source.value);
@@ -521,8 +521,9 @@ export default class Creature {
             log.total_health_damage -= Math.min(0, this.$.vitals.shield);
             this.$.vitals.health += Math.min(0, this.$.vitals.shield);
 
-            this.$.vitals.injuries -= Math.round(reductionMultiplier(this.$.stats.tenacity.value) * DAMAGE_TO_INJURY_RATIO * Math.min(0, this.$.vitals.shield));
-            log.total_injuries -= Math.round(reductionMultiplier(this.$.stats.tenacity.value) * DAMAGE_TO_INJURY_RATIO * Math.min(0, this.$.vitals.shield));
+            const injuries = Math.round(reductionMultiplier(this.$.stats.tenacity.value - (group.penetration?.severing ?? 0)) * DAMAGE_TO_INJURY_RATIO * Math.min(0, this.$.vitals.shield));;
+            this.$.vitals.injuries -= injuries;
+            log.total_injuries -= injuries;
 
             this.$.vitals.injuries -= Math.min(0, this.$.vitals.health);
             log.total_injuries -= Math.min(0, this.$.vitals.health);
@@ -1008,7 +1009,7 @@ export default class Creature {
     PER: "Perception, all 6 senses. Know your enemy.",
     INT: "Intelligence, crafting, technological swiftness.",
     DEX: "Dexterity, agility, light as a feather.",
-    CHA: "Charisma, looks, and wits. Negotiation skills. Strictly for IN-RP use."
+    CHA: "Charisma, looks, and wits. Negotiation skills."
   }
   static readonly ATTRIBUTE_MAX = 8;
 

@@ -385,7 +385,7 @@ export default class Creature {
       }
     }
 
-    return abilities;
+    return [... new Set(abilities)];
   }
 
   get passives(): PassiveEffect[] {
@@ -420,7 +420,7 @@ export default class Creature {
       }
     }
 
-    return passives;
+    return [...new Set(passives)];
   }
 
   get items(): Item[] {
@@ -743,7 +743,7 @@ export default class Creature {
       globalOrLocalPusher(perks, item.$.perks ?? [], PerkManager)
     }
 
-    return perks;
+    return [...new Set(perks)];
   }
 
   get skills(): CreatureSkill[] {
@@ -771,7 +771,7 @@ export default class Creature {
       }
     }
 
-    return array;
+    return [...new Set(array)];
   }
 
 

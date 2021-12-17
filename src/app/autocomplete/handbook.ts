@@ -1,7 +1,8 @@
 import { ApplicationCommandOptionChoice, Interaction } from "discord.js";
-import { ItemManager, SpeciesManager, ClassManager, PassivesManager, AbilitiesManager, EffectManager, PerkManager, SkillManager } from "../..";
+import { ItemManager, SpeciesManager, ClassManager, PassivesManager, AbilitiesManager, EffectManager, PerkManager, SkillManager, RecipeManager } from "../..";
 import ActiveEffectManager, { ActiveEffect } from "../../game/ActiveEffects";
 import CreatureClassManager, { CreatureClass } from "../../game/Classes";
+import { CraftingRecipe } from "../../game/Crafting";
 import CreatureAbilitiesManager, { CreatureAbility } from "../../game/CreatureAbilities";
 import ItemsManager, { Item } from "../../game/Items";
 import PassiveEffectManager from "../../game/PassiveEffects";
@@ -43,6 +44,9 @@ async function getAutocompleteListOfItems(value: string, type: string): Promise<
     case "skills":
       list = SkillManager.map;
       break;
+    case "recipes":
+      list = RecipeManager.map;
+      break;
   }
 
   const keys = Array.from(list.keys());
@@ -51,16 +55,35 @@ async function getAutocompleteListOfItems(value: string, type: string): Promise<
   const input_regex = RegExp(value, "i");
 
   let choices: ApplicationCommandOptionChoice[] = []; 
-  for (var i = 0; choices.length < 25 && i < keys.length; i++) {
-    const item = values[i];
-    if (!item) continue;
+  if (values[0] instanceof CraftingRecipe) {
+    for (var i = 0; choices.length < MAX_RESULTS && i < keys.length; i++) {
+      const item = values[i];
+      if (!item) continue;
+  
+      if (input_regex.test(item.$.id) || input_regex.test(item.$.info.name)) {
+        const result = ItemManager.map.get(item.$.result);
+        if (!result) continue;
 
-    if (input_regex.test(item.$.id) || input_regex.test(item.$.info.name)) 
-      choices.push({
-        name: `${item.$.info.name} (${item.$.id})`,
-        value: item.$.id
-      })
+        choices.push({
+          name: `${item.$.id} - ${result.$.info.name} (${result.$.id})`,
+          value: item.$.id
+        })
+      }
+    }
+  } else {
+    for (var i = 0; choices.length < MAX_RESULTS && i < keys.length; i++) {
+      const item = values[i];
+      if (!item) continue;
+
+      if (input_regex.test(item.$.id) || input_regex.test(item.$.info.name)) 
+        choices.push({
+          name: `${item.$.info.name} (${item.$.id})`,
+          value: item.$.id
+        })
+    }
   }
 
   return choices;
 }
+
+const MAX_RESULTS = 25;

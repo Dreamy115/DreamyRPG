@@ -1,7 +1,8 @@
 import { ApplicationCommandOptionData, MessageEmbed } from "discord.js";
-import { AbilitiesManager, capitalize, ClassManager, EffectManager, ItemManager, PassivesManager, PerkManager, SkillManager, SpeciesManager } from "../..";
+import { AbilitiesManager, capitalize, ClassManager, EffectManager, ItemManager, PassivesManager, PerkManager, RecipeManager, SkillManager, SpeciesManager } from "../..";
 import { ActiveEffect } from "../../game/ActiveEffects";
 import { CreatureClass } from "../../game/Classes";
+import { CraftingRecipe } from "../../game/Crafting";
 import { CreatureAbility, replaceLore } from "../../game/CreatureAbilities";
 import { DamageMedium, DamageType } from "../../game/Damage";
 import { AttackData, AttackSet, Item } from "../../game/Items";
@@ -51,6 +52,10 @@ const typeOption: ApplicationCommandOptionData = {
     {
       name: "Skills",
       value: "skills"
+    },
+    {
+      name: "Crafting Recipes",
+      value: "recipes"
     }
   ]
 }
@@ -130,6 +135,9 @@ export default new ApplicationCommandHandler(
         list = SkillManager.map;
         title = "Skills";
         break;
+      case "recipes":
+        list = RecipeManager.map;
+        title = "Crafting Recipes";
     }
 
     const _defer = interaction.deferReply({ ephemeral: true });
@@ -151,8 +159,13 @@ export default new ApplicationCommandHandler(
         .setDescription("");
 
         for (const item of array) {
-          // @ts-expect-error
-          embed.description += `\`${item.$.id}\` **${item.$.info.name}**${item.$.type ? ` (${capitalize(item.$.type)})` : "" }\n`
+          if (item instanceof CraftingRecipe) {
+            const result = ItemManager.map.get(item.$.result);
+            embed.description += `\`${item.$.id}\` **${result?.$.info.name}** (\`${result?.$.id}\`)\n`;
+          } else {
+            // @ts-expect-error
+            embed.description += `\`${item.$.id}\` **${item.$.info.name}**${item.$.type ? ` (${capitalize(item.$.type)})` : "" }\n`
+          }
         }
       } break;
       case "item": {
@@ -165,23 +178,35 @@ export default new ApplicationCommandHandler(
           return;
         }
 
-        embed
-        .setTitle(item.$.info.name)
-        .setDescription(item.$.info.lore);
-          // @ts-expect-error
-          if ((item.$.unique ?? []).length > 0) {
-            embed.addField(
-              "Unique Flags",
-              function() {
-                var str = "";
-                // @ts-expect-error
-                for (const u of item.$.unique) {
-                  str += `${capitalize(u.replaceAll(/_/g, " "))}, `;
-                }
+        if (item instanceof CraftingRecipe) {
+          const thing = ItemManager.map.get(item.$.result);
+          if (thing) {
+            embed
+            .setTitle("A recipe for " + thing.$.info.name)
+            .setDescription(`*For more info on the item check the result item:* \`${thing.$.id}\``)
+          } else {
+            embed
+            .setTitle("Invalid Recipe")
+          }
+        } else {
+          embed
+          .setTitle(item.$.info.name)
+          .setDescription(item.$.info.lore);
+            // @ts-expect-error
+            if ((item.$.unique ?? []).length > 0) {
+              embed.addField(
+                "Unique Flags",
+                function() {
+                  var str = "";
+                  // @ts-expect-error
+                  for (const u of item.$.unique) {
+                    str += `${capitalize(u.replaceAll(/_/g, " "))}, `;
+                  }
 
-                return str.substr(0, str.length - 2);
-              }()
-            )
+                  return str.substr(0, str.length - 2);
+                }()
+              )
+            }
           }
 
           if (item instanceof Item) {
@@ -346,6 +371,55 @@ export default new ApplicationCommandHandler(
                 classes.join(", ")
               )
             }
+          } else if (item instanceof CraftingRecipe) {
+            if (item.$.requirements.perks && item.$.requirements.perks.length > 0)
+              embed.addField(
+                "Required Perks",
+                function () {
+                  var str = "";
+
+                  for (const p of item.$.requirements.perks) {
+                    const perk = PerkManager.map.get(p);
+                    if (!perk) continue;
+
+                    str += `\`${perk.$.id}\` **${perk.$.info.name}**\n`;
+                  }
+
+                  return str;
+                }() || "Invalid"
+              )
+
+            if (item.$.requirements.materials)
+              embed.addField(
+                "Materials",
+                function () {
+                  var str = "";
+
+                  for (const mat in item.$.requirements.materials) {
+                    // @ts-expect-error
+                    str += `**${item.$.requirements.materials[mat]}** ${capitalize(mat)}\n`;
+                  }
+
+                  return str;
+                }()
+              )
+            
+            if (item.$.requirements.items && item.$.requirements.items.length > 0)
+              embed.addField(
+                "Item Ingredients",
+                function () {
+                  var str = "";
+
+                  for (const i of item.$.requirements.items) {
+                    const thing = ItemManager.map.get(i);
+                    if (!thing) continue;
+
+                    str += `\`${thing.$.id}\` **${thing.$.info.name}**`;
+                  }
+
+                  return str;
+                }() || "Invalid"
+              )
           }
       }
     }
@@ -442,4 +516,4 @@ export function perksDescriptor(perks: (string | CreaturePerk)[]) {
   return str;
 }
 
-export type ManagedItems = Item | CreatureClass | CreatureSpecies | PassiveEffect | CreatureAbility | ActiveEffect | CreatureSkill | CreaturePerk;
+export type ManagedItems = Item | CreatureClass | CreatureSpecies | PassiveEffect | CreatureAbility | ActiveEffect | CreatureSkill | CreaturePerk | CraftingRecipe;

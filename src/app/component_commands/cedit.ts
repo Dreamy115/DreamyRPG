@@ -410,10 +410,10 @@ export default new ComponentCommandHandler(
                 }
               } else {
                 // @ts-expect-error
-                if (typeof creature.$.attributes[arg] === "number") {
+                if (creature.$.attributes[arg] instanceof TrackableStat) {
                   if (IS_GM || creature.totalAttributePointsUsed < creature.$.experience.level) {
                     // @ts-expect-error
-                    if (creature.$.attributes[arg] >= Creature.ATTRIBUTE_MAX) {
+                    if (creature.$.attributes[arg].base >= Creature.ATTRIBUTE_MAX) {
                       interaction.followUp({
                         ephemeral: true,
                         content: "Attribute is MAXED OUT!"
@@ -421,7 +421,7 @@ export default new ComponentCommandHandler(
                       return;
                     } else {
                       // @ts-expect-error
-                      creature.$.attributes[arg]++;
+                      creature.$.attributes[arg].base++;
                     }
                   } else {
                     interaction.followUp({
@@ -442,26 +442,7 @@ export default new ComponentCommandHandler(
                 ephemeral: true,
                 content: `Expendable points: **${creature.totalAttributePointsUsed}**/${creature.$.experience.level}\nPoint assignment is final!`,
                 embeds: [await infoEmbed(creature, Bot, "attributes")],
-                components: function () {
-                  const array: MessageActionRow[] = [];
-
-                  let row = new MessageActionRow();
-                  for (const a in creature.$.attributes) {
-                    row.addComponents(new MessageButton()
-                      .setCustomId(`cedit/${creature_id}/edit/attr/${a}`)
-                      .setLabel(`Add ${a}`)
-                      .setStyle("PRIMARY")
-                    )
-                    if (row.components.length >= 5) {
-                      array.push(new MessageActionRow().setComponents(JSON.parse(JSON.stringify(row.components))));
-                      row = new MessageActionRow();
-                    }
-                  }
-                  if (row.components.length != 0)
-                    array.push(row);
-
-                  return array;
-                }()
+                components: attributeComponents(creature, "Add ", "cedit/$ID/edit/attr/$ATTR")
               })
               return;
             }
@@ -1077,4 +1058,25 @@ export function backpackItemComponents(creature_id: string, items: MessageSelect
   }
 
   return array;
+}
+
+export function attributeComponents(creature: Creature, prefix: string, customid: string) {
+  const array: MessageActionRow[] = [];
+
+  let row = new MessageActionRow();
+  for (const a in creature.$.attributes) {
+    row.addComponents(new MessageButton()
+      .setCustomId(customid.replace("$ID", creature.$._id).replace("$ATTR", a))
+      .setLabel(`${prefix}${a}`)
+      .setStyle("PRIMARY")
+    )
+    if (row.components.length >= 5) {
+      array.push(new MessageActionRow().setComponents(JSON.parse(JSON.stringify(row.components))));
+      row = new MessageActionRow();
+    }
+  }
+  if (row.components.length != 0)
+    array.push(row);
+
+  return array;  
 }

@@ -8,7 +8,7 @@ import { PassiveModifier } from "../../game/PassiveEffects.js";
 import { textStat, ModifierType, TrackableStat } from "../../game/Stats.js";
 import { SpeciesManager, ClassManager, capitalize, ItemManager, EffectManager, AbilitiesManager, CONFIG } from "../../index.js";
 import { ApplicationCommandHandler } from "../commands.js";
-import { ceditMenu } from "../component_commands/cedit.js";
+import { attributeComponents, ceditMenu } from "../component_commands/cedit.js";
 import { modifierDescriptor } from "./handbook.js";
 
 export default new ApplicationCommandHandler(
@@ -17,6 +17,24 @@ export default new ApplicationCommandHandler(
     description: "Character management for players",
     type: "CHAT_INPUT",
     options: [
+      {
+        name: "rollfor",
+        description: "Roll for a stat check",
+        type: "SUB_COMMAND",
+        options: [
+          {
+            name: "id",
+            description: "Find character by ID",
+            type: "STRING",
+            autocomplete: true
+          },
+          {
+            name: "bonus",
+            description: "Modify the check",
+            type: "INTEGER"
+          }
+        ]
+      },
       {
         name: "create",
         description: "Create your character if you don't have one yet",
@@ -123,6 +141,24 @@ export default new ApplicationCommandHandler(
     if (!interaction.isCommand()) return;
 
     switch (interaction.options.getSubcommand(true)) {
+      case "rollfor": {
+        const [creature,] = await Promise.all([
+          Creature.fetch(interaction.options.getString("id", false) ?? interaction.user.id, db).catch(() => null),
+          interaction.deferReply({ephemeral: true})
+        ]);
+
+        if (!creature) {
+          interaction.editReply({
+            content: "Invalid creature"
+          })
+          return;
+        }
+
+        interaction.editReply({
+          content: `Select a stat (with **${interaction.options.getInteger("bonus", false) ?? 0}** bonus)`,
+          components: attributeComponents(creature, "", `rollstat/$ID/$ATTR/${interaction.options.getInteger("bonus", false) ?? 0}`)
+        })
+      } break;
       case "say": {
         const channel = await interaction.guild?.channels.fetch(interaction.channelId);
         if (!channel?.isText() || channel.isThread()) {

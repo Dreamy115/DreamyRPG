@@ -6,7 +6,7 @@ import { reductionMultiplier, DAMAGE_TO_INJURY_RATIO, DamageMedium, DamageType }
 import { AttackData } from "../../game/Items.js";
 import { PassiveModifier } from "../../game/PassiveEffects.js";
 import { textStat, ModifierType, TrackableStat } from "../../game/Stats.js";
-import { SpeciesManager, ClassManager, capitalize, ItemManager, EffectManager, AbilitiesManager } from "../../index.js";
+import { SpeciesManager, ClassManager, capitalize, ItemManager, EffectManager, AbilitiesManager, CONFIG } from "../../index.js";
 import { ApplicationCommandHandler } from "../commands.js";
 import { ceditMenu } from "../component_commands/cedit.js";
 import { modifierDescriptor } from "./handbook.js";
@@ -96,6 +96,26 @@ export default new ApplicationCommandHandler(
         name: "edit",
         description: "Editing",
         type: "SUB_COMMAND"
+      },
+      {
+        name: "say",
+        description: "Say as character",
+        type: "SUB_COMMAND",
+        options: [
+          {
+            name: "id",
+            description: "Find character by ID",
+            type: "STRING",
+            autocomplete: true,
+            required: true
+          },
+          {
+            name: "message",
+            description: "Say something!",
+            type: "STRING",
+            required: true
+          }
+        ]
       }
     ]
   },
@@ -103,6 +123,57 @@ export default new ApplicationCommandHandler(
     if (!interaction.isCommand()) return;
 
     switch (interaction.options.getSubcommand(true)) {
+      case "say": {
+        const channel = await interaction.guild?.channels.fetch(interaction.channelId);
+        if (!channel?.isText() || channel.isThread()) {
+          interaction.reply({
+            ephemeral: true,
+            content: "Channel does not support webhooks"
+          });
+          return;
+        }
+
+        const [creature, member] = await Promise.all([
+          Creature.fetch(interaction.options.getString("id", true), db).catch(() => null),
+          interaction.guild?.members.fetch(interaction.user).catch(() => null),
+          interaction.reply({content: `Awaiting dialogue...`})
+        ]);
+        
+        if (!member) {
+          interaction.editReply({
+            content: "Dialogue: Invalid guild member."
+          })
+          return;
+        }
+        if (!creature) {
+          interaction.editReply({
+            content: "Dialogue: Invalid character."
+          })
+          return;
+        }
+
+        if (creature.$._id !== interaction.user.id && !member.roles.cache.has(CONFIG.guild?.gm_role ?? "")) {
+          interaction.editReply({
+            content: "Dialogue: To use someone else's character, you must be a GM"
+          })
+          return;
+        }
+
+        const wh = await channel.createWebhook(
+          creature.displayName, {
+            reason: "DreamyRPG Proxy",
+            avatar: creature.$.info.display.avatar
+          }
+        )
+
+        wh.send({
+          content: interaction.options.getString("message", true)
+        }).finally(() => {
+          interaction.deleteReply();
+          wh.delete();
+        }).catch(console.error)
+
+      } break;
       case "create": {
         await interaction.deferReply({ ephemeral: true });
 

@@ -16,7 +16,7 @@ export default new AutocompleteHandler(
   }
 )
 
-async function getAutocompleteListOfItems(value: string, type: string): Promise<ApplicationCommandOptionChoice[]> {
+export async function getAutocompleteListOfItems(value: string, type: string): Promise<ApplicationCommandOptionChoice[]> {
   var list;
   switch (type) {
     default: return [];

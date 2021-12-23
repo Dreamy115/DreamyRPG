@@ -830,7 +830,7 @@ export default class Creature {
   }
 
   static readonly MAX_EQUIPPED_WEAPONS = 2;
-  static readonly MAX_EQUIPPED_UTILITY = 3;
+  static readonly MAX_EQUIPPED_UTILITY = 4;
   static readonly MAX_EQUIPPED_CLOTHING = 3;
 
   static readonly ATTACK_COST = 6;

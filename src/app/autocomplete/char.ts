@@ -2,14 +2,21 @@ import { ApplicationCommandOptionChoice } from "discord.js";
 import Mongoose from "mongoose";
 import Creature from "../../game/Creature";
 import { AutocompleteHandler } from "../autocomplete";
+import { getAutocompleteListOfItems } from "./handbook";
 
 export default new AutocompleteHandler(
   "char",
   async function(interaction, Bot, db) {
     const focused = interaction.options.getFocused(true);
-    if (focused.name !== "id") return;
 
-    interaction.respond(await autocompleteCreatures(new RegExp(String(focused.value), "ig"), db));
+    switch (focused.name) {
+      case "id": {
+        interaction.respond(await autocompleteCreatures(new RegExp(String(focused.value), "ig"), db));
+      } break;
+      case "recipe_id": {
+        interaction.respond(await getAutocompleteListOfItems(String(interaction.options.getFocused(true).value), "recipes"))
+      } break;
+    }
   }
 )
 

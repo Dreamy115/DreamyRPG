@@ -522,6 +522,7 @@ export default new ComponentCommandHandler(
                       }
                     }
 
+                    creature.$.items.backpack.splice(index, 1);
                     count++;
                   }
 

@@ -6,7 +6,7 @@ import { reductionMultiplier, DAMAGE_TO_INJURY_RATIO, DamageMedium, DamageType }
 import { AttackData } from "../../game/Items.js";
 import { PassiveModifier } from "../../game/PassiveEffects.js";
 import { textStat, ModifierType, TrackableStat } from "../../game/Stats.js";
-import { SpeciesManager, ClassManager, capitalize, ItemManager, EffectManager, AbilitiesManager, CONFIG } from "../../index.js";
+import { SpeciesManager, ClassManager, capitalize, ItemManager, EffectManager, AbilitiesManager, CONFIG, RecipeManager, PerkManager } from "../../index.js";
 import { ApplicationCommandHandler } from "../commands.js";
 import { attributeComponents, ceditMenu } from "../component_commands/cedit.js";
 import { modifierDescriptor } from "./handbook.js";
@@ -116,6 +116,20 @@ export default new ApplicationCommandHandler(
         type: "SUB_COMMAND"
       },
       {
+        name: "craft",
+        description: "Craft an item",
+        type: "SUB_COMMAND",
+        options: [
+          {
+            name: "recipe_id",
+            description: "The ID of the recipe to craft",
+            autocomplete: true,
+            required: true,
+            type: "STRING"
+          }
+        ]
+      },
+      {
         name: "say",
         description: "Say as character",
         type: "SUB_COMMAND",
@@ -157,6 +171,65 @@ export default new ApplicationCommandHandler(
         interaction.editReply({
           content: `Select a stat (with **${interaction.options.getInteger("bonus", false) ?? 0}** bonus)`,
           components: attributeComponents(creature, "", `rollstat/$ID/$ATTR/${interaction.options.getInteger("bonus", false) ?? 0}`)
+        })
+      } break;
+      case "craft": {
+        const recipe = RecipeManager.map.get(interaction.options.getString("recipe_id", true));
+        if (!recipe?.$.id) return;
+        
+        const result = ItemManager.map.get(recipe.$.result);
+        if (!result?.$.id) return;
+
+        const [creature,] = await Promise.all([
+          Creature.fetch(interaction.user.id, db),
+          interaction.deferReply({ephemeral: true})
+        ])
+
+        try {
+          var perks = creature.perks;
+          for (const p of recipe.$.requirements.perks ?? []) {
+            const perk = PerkManager.map.get(p);
+            if (!perk) continue;
+
+            if (!perks.find((v) => v.$.id === perk.$.id)) throw new Error(`Must have ${perk.$.info.name} (${perk.$.id}) perk`)
+          }
+          for (const mat in recipe.$.requirements.materials) {
+            // @ts-expect-error
+            const material: number = recipe.$.requirements.materials[mat];
+
+            // @ts-expect-error
+            if (creature.$.items.crafting_materials[mat] < material) throw new Error(`Not enough materials; need more ${capitalize(mat)}`)
+          }
+          for (const i of recipe.$.requirements.items ?? []) {
+            const item = ItemManager.map.get(i);
+            if (!item) continue;
+
+            if (!creature.$.items.backpack.includes(item.$.id ?? "")) throw new Error(`Item ${item.$.info.name} (${item.$.id}) is missing (must be unequipped to count)`)
+          }
+        } catch (e: any) {
+          interaction.editReply({
+            content: `Your character doesn't meet the requirements:\n*${e?.message}*`
+          });
+          return;
+        }
+
+        for (const i of recipe.$.requirements.items ?? []) {
+          const item = ItemManager.map.get(i);
+          if (!item) continue;
+
+          creature.$.items.backpack.splice(creature.$.items.backpack.findIndex(v => v === item.$.id), 1);
+        }
+        for (const mat in recipe.$.requirements.materials) {
+          // @ts-expect-error
+          creature.$.items.crafting_materials[mat] -= recipe.$.requirements.materials[mat];
+        }
+
+        creature.$.items.backpack.push(result.$.id);
+
+        await creature.put(db);
+
+        interaction.editReply({
+          content: `You got **${result.$.info.name}**!`
         })
       } break;
       case "say": {

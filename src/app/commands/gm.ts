@@ -174,6 +174,10 @@ export default new ApplicationCommandHandler(
                 .setStyle("PRIMARY")
                 .setLabel("Advance Time"),
               new MessageButton()
+                .setCustomId("gm/global/regen")
+                .setStyle("PRIMARY")
+                .setLabel("Regen After Mission"),
+              new MessageButton()
                 .setCustomId("gm/global/reload")
                 .setStyle("SECONDARY")
                 .setLabel("Reload Game")

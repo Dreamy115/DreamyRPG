@@ -1,3 +1,4 @@
+import { HealType } from "../Creature";
 import { DamageMedium, DamageType } from "../Damage";
 import { Item } from "../Items";
 import { PassiveEffect } from "../PassiveEffects";
@@ -181,15 +182,20 @@ export default [
     }
   }),
   new Item({
-    id: "debug_util",
-    type: "wearable",
-    subtype: "utility",
+    id: "rough_bandage",
+    type: "consumable",
     info: {
-      name: "Debug Utility",
-      lore: "Test Item"
+      name: "Makeshift Bandage",
+      lore: "A bandage to stop **Bleeding** and heal **10** Injuries"
     },
-    abilities: [
-      "debug_ability"
-    ]
+    onUse: async (creature) => {
+      creature.clearActiveEffect("bleeding", "delete");
+      creature.heal(10, HealType.Injuries);
+      creature.heal(10, HealType.Health);
+
+      return {
+        text: `**${creature.displayName}** used a Bandage; healed **10** Injuries and stopped bleeding, if any.`
+      }
+    }
   })
 ]

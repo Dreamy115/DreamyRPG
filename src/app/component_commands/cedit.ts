@@ -1,6 +1,7 @@
 import { MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu, MessageSelectOptionData } from "discord.js";
 import { capitalize, ClassManager, CONFIG, ItemManager, limitString, messageInput, removeMarkdown, SkillManager, SpeciesManager } from "../..";
 import Creature, { HealType } from "../../game/Creature";
+import { AbilityUseLog } from "../../game/CreatureAbilities";
 import { DamageCause, DamageGroup, damageLogEmbed, DamageMedium, DamageType, ShieldReaction } from "../../game/Damage";
 import { Item } from "../../game/Items";
 import { TrackableStat } from "../../game/Stats";
@@ -304,12 +305,40 @@ export default new ComponentCommandHandler(
           case "item": {
             if (interaction.isButton()) {
               switch (args.shift()) {
+                case "use": {
+                  const items: MessageSelectOptionData[] = [];
+
+                  for (const i of creature.$.items.backpack) {
+                    const item = ItemManager.map.get(i);
+                    if (item?.$.type !== "consumable") continue;
+
+                    items.push({
+                      label: item.$.info.name,
+                      value: item.$.id ?? ""
+                    })
+                  }
+
+                  if (items.length == 0) {
+                    interaction.followUp({
+                      ephemeral: true,
+                      content: "No consumables!"
+                    });
+                    return;
+                  }
+
+                  interaction.followUp({
+                    ephemeral: true,
+                    content: "Consumables...",
+                    components: backpackItemComponents(creature_id, items, `cedit/${creature_id}/edit/item/use`)
+                  });
+                  return;
+                } break;
                 case "equip": {
                   const items: MessageSelectOptionData[] = [];
 
                   for (const i of creature.$.items.backpack) {
                     const item = ItemManager.map.get(i);
-                    if (!item) continue;
+                    if (!item || item.$.type === "consumable") continue;
 
                     items.push({
                       label: item.$.info.name,
@@ -381,6 +410,55 @@ export default new ComponentCommandHandler(
               }
             } else if (interaction.isSelectMenu()) {
               switch (args.shift()) {
+                case "use": {
+                  const logs: AbilityUseLog[] = [];
+                  const errors: string[] = [];
+
+                  for (const i of interaction.values) {
+                    const item = ItemManager.map.get(i);
+                    
+                    try {
+                      if (item?.$.type !== "consumable") throw new Error(`Item ${i} isn't consumable or doesn't exist`);
+
+                      const index = creature.$.items.backpack.findIndex((v) => v === item.$.id);
+                      if (index === -1) throw new Error("Creature doesn't have item " + item.$.id);
+                    
+                      const log = await item.$.onUse(creature);
+                      creature.$.items.backpack.splice(index, 1);
+
+                      logs.push(log);
+                    } catch (e) {
+                      console.error(e);
+                      errors.push(item?.$.id ?? "unknown");
+                    }
+                  }
+
+                  await interaction.editReply({
+                    content: "OK"
+                  });
+
+
+                  for (const log of logs) {
+                    await interaction.followUp({
+                      ephemeral: false,
+                      content: log.text,
+                      embeds: (log.damageLogs?.length ?? 0 > 0) ? function () {
+                        const array: MessageEmbed[] = [];
+
+                        for (const dmglog of log.damageLogs ?? [])
+                          array.push(damageLogEmbed(dmglog));
+
+                        return array;
+                      }() : undefined
+                    })
+                  }
+
+                  if (errors.length > 0) 
+                    await interaction.followUp({
+                      ephemeral: true,
+                      content: `**${errors.length}** item(s) errored and have not been used: **${errors.join("**, **")}**`
+                    })
+                } break;
                 case "unequip": {
                   for (const i of interaction.values) {
                     creature.$.items.backpack.push(creature.$.items.equipped.splice(creature.$.items.equipped.findIndex(v => v === i),1)[0]);
@@ -876,6 +954,10 @@ export function ceditMenu(creature: Creature): MessageActionRow[] {
         .setCustomId(`cedit/${creature.$._id}/edit/item/unequip`)
         .setStyle("SECONDARY")
         .setLabel("Unequip Item"),
+      new MessageButton()
+        .setCustomId(`cedit/${creature.$._id}/edit/item/use`)
+        .setStyle("PRIMARY")
+        .setLabel("Consume Item"),
       new MessageButton()
         .setCustomId(`cedit/${creature.$._id}/edit/attr`)
         .setStyle("SUCCESS")

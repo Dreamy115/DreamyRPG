@@ -4,6 +4,8 @@ import path from "path";
 import { PassiveEffect } from "./PassiveEffects";
 import { DamageMedium, DamageType } from "./Damage";
 import { CreaturePerk } from "./Perks";
+import Creature from "./Creature";
+import { AbilityUseLog } from "./CreatureAbilities";
 
 export default class ItemsManager {
   map = new Map<string, Item>();
@@ -33,7 +35,7 @@ export default class ItemsManager {
 }
 
 export class Item {
-  $: WearableItemData | WeaponItemData
+  $: WearableItemData | WeaponItemData | ConsumableItemData
   constructor(data: Item["$"]) {
     this.$ = data;
   }
@@ -45,12 +47,12 @@ export interface BaseItemData {
     name: string
     lore: string
   }
-  unique?: string[]
-  perks?: (string | CreaturePerk)[]
 }
 export interface WearableItemData extends BaseItemData {
   type: "wearable"
   subtype: "utility" | "clothing"
+  perks?: (string | CreaturePerk)[]
+  unique?: string[]
   passives?: (PassiveEffect | string)[]
   abilities?: string[]
 }
@@ -58,7 +60,13 @@ export interface WeaponItemData extends BaseItemData {
   type: "weapon"
   passives?: (PassiveEffect | string)[]
   abilities?: string[]
+  perks?: (string | CreaturePerk)[]
+  unique?: string[]
   attack: AttackSet
+}
+export interface ConsumableItemData extends BaseItemData {
+  type: "consumable"
+  onUse: (creature: Creature) => Promise<AbilityUseLog>
 }
 
 

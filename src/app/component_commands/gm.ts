@@ -1,5 +1,5 @@
 import { CONFIG, gameLoad, messageInput } from "../..";
-import Creature from "../../game/Creature";
+import Creature, { HealType } from "../../game/Creature";
 import { ComponentCommandHandler } from "../component_commands";
 
 export default [
@@ -80,6 +80,30 @@ export default [
                 })
               }
 
+            } break;
+            case "regen": {
+              await interaction.deferReply({ephemeral: true});
+
+              /* SCOPE */ {
+                const cursor = db.connection.collection(Creature.COLLECTION_NAME).find();
+
+                var pre_date = new Date();
+                for await (let data of cursor) {
+                  // @ts-expect-error
+                  const creature = new Creature(data);
+
+                  creature.heal(creature.$.stats.health.value + creature.$.stats.shield.value, HealType.Overheal);
+                  creature.heal(creature.$.stats.mana.value, HealType.Mana);
+
+                  creature.put(db);
+                }
+                var post_date = new Date();
+                
+                interaction.followUp({
+                  ephemeral: true,
+                  content: `Done in ${(post_date.getMilliseconds() - pre_date.getMilliseconds()) / 1000}s `
+                })
+              }
             } break;
             case "reload": {
               var r = interaction.reply({

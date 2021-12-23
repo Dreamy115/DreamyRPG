@@ -269,6 +269,7 @@ export default class Creature {
       const item = ItemManager.map.get(this.$.items.equipped[i]);
       if (!item) continue;
 
+        // @ts-expect-error
         for (const u of item.$.unique ?? []) {
           if (uniques.includes(u)) {
             this.$.items.backpack.push(this.$.items.equipped.splice(i, 1)[0]);
@@ -368,6 +369,7 @@ export default class Creature {
 
 
     for (const item of this.items) {
+      // @ts-expect-error
       globalOrLocalPusher(abilities, item.$.abilities ?? [], AbilitiesManager);
     }
 
@@ -403,6 +405,7 @@ export default class Creature {
 
 
     for (const item of this.items) {
+      // @ts-expect-error
       globalOrLocalPusher(passives, item.$.passives ?? [], PassivesManager);
     }
 
@@ -740,6 +743,7 @@ export default class Creature {
 
     const items = this.items;
     for (const item of items) {
+      // @ts-expect-error
       globalOrLocalPusher(perks, item.$.perks ?? [], PerkManager)
     }
 

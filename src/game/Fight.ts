@@ -257,6 +257,12 @@ export class Fight {
 
             return array;
           }())
+      ]),
+      new MessageActionRow().setComponents([
+        new MessageButton()
+          .setCustomId(`cedit/${creature?.$._id}/edit/item/use`)
+          .setLabel("Consume Item")
+          .setStyle("PRIMARY")
       ])
     ];
 

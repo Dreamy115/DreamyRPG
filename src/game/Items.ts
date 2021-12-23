@@ -6,6 +6,7 @@ import { DamageMedium, DamageType } from "./Damage";
 import { CreaturePerk } from "./Perks";
 import Creature from "./Creature";
 import { AbilityUseLog } from "./CreatureAbilities";
+import { CraftingMaterials } from "./Crafting";
 
 export default class ItemsManager {
   map = new Map<string, Item>();
@@ -46,6 +47,9 @@ export interface BaseItemData {
   info: {
     name: string
     lore: string
+  }
+  scrap?: {
+    materials?: CraftingMaterials
   }
 }
 export interface WearableItemData extends BaseItemData {

@@ -33,16 +33,27 @@ export class CraftingRecipe {
     requirements: {
       perks?: string[]
       items?: string[]
-      materials?: {
-        scrap?: number
-        parts?: number
-        cells?: number
-        cores?: number
-      }
+      materials?: CraftingMaterials
     }
   }
 
   constructor(data: CraftingRecipe["$"]) {
     this.$ = data;
+  }
+}
+
+export class CraftingMaterials {
+  metal: number
+  fabric: number
+  plastic: number
+  cells: number
+  biomaterial: number
+
+  constructor(data: {[key: string]: number}) {
+    this.metal = data.metal ?? 0;
+    this.fabric = data.fabric ?? 0;
+    this.plastic = data.plastic ?? 0;
+    this.cells = data.cells ?? 0;
+    this.biomaterial = data.biomaterial ?? 0;
   }
 }

@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import NodeCache from "node-cache";
 import { AbilitiesManager, capitalize, ClassManager, CONFIG, EffectManager, ItemManager, PassivesManager, PerkManager, shuffle, SkillManager, SpeciesManager } from "../index.js";
 import { AppliedActiveEffect } from "./ActiveEffects.js";
+import { CraftingMaterials } from "./Crafting.js";
 import { CreatureAbility } from "./CreatureAbilities.js";
 import { DamageCause, DamageGroup, DamageLog, DamageMedium, DamageType, DAMAGE_TO_INJURY_RATIO, reductionMultiplier, ShieldReaction } from "./Damage.js";
 import { AttackData, AttackSet, Item } from "./Items.js";
@@ -26,7 +27,7 @@ export default class Creature {
           name: data.info?.display?.name ?? "Unnamed",
           avatar: data.info?.display?.avatar ?? null
         },
-        locked: false,
+        locked: data.info?.locked ?? false,
         species: data.info?.species ?? "default",
         class: data.info?.class ?? "default",
         npc: data.info?.npc ?? false,
@@ -73,12 +74,9 @@ export default class Creature {
         backpack: data.items?.backpack ?? [],
         primary_weapon: data.items?.primary_weapon ?? null,
         skills: data.items?.skills ?? [],
-        crafting_materials: {
-          scrap: data.items?.crafting_materials?.scrap ?? 0,
-          parts: data.items?.crafting_materials?.parts ?? 0, 
-          cells: data.items?.crafting_materials?.cells ?? 0,
-          cores: data.items?.crafting_materials?.cores ?? 0
-        }
+        crafting_materials: function () {
+          return new CraftingMaterials(data.items?.crafting_materials ?? {})
+        }()
       },
       abilities: {
         deck: data.abilities?.deck ?? [],
@@ -310,12 +308,7 @@ export default class Creature {
   wipeItems() {
     this.$.items = {
       backpack: [],
-      crafting_materials: {
-        scrap: 0,
-        parts: 0,
-        cells: 0,
-        cores: 0
-      },
+      crafting_materials: new CraftingMaterials({}),
       equipped: [],
       primary_weapon: null,
       skills: []
@@ -791,6 +784,7 @@ export default class Creature {
       },
       attributes: {},
       experience: this.$.experience,
+      // @ts-expect-error
       items: this.$.items,
       abilities: this.$.abilities,
       active_effects: this.$.active_effects,
@@ -1080,12 +1074,7 @@ export interface CreatureData {
     backpack: string[]
     equipped: string[]
     skills: string[]
-    crafting_materials: {
-      scrap: number
-      parts: number
-      cells: number
-      cores: number
-    }
+    crafting_materials: CraftingMaterials
   }
   abilities: {
     deck: string[]
@@ -1133,12 +1122,7 @@ export interface CreatureDump {
     backpack?: string[]
     equipped?: string[]
     skills?: string[]
-    crafting_materials?: {
-      scrap?: number
-      parts?: number
-      cells?: number
-      cores?: number
-    }
+    crafting_materials?: {[key: string]: number}
   }
   abilities?: {
     deck?: string[]

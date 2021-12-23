@@ -196,6 +196,15 @@ export default [
       return {
         text: `**${creature.displayName}** used a Bandage; healed **10** Injuries and stopped bleeding, if any.`
       }
+    },
+    scrap: {
+      materials: {
+        metal: 0,
+        fabric: 8,
+        biomaterial: 0,
+        cells: 0,
+        plastic: 0
+      }
     }
   })
 ]

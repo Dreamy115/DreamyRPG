@@ -1,5 +1,6 @@
 import { MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu, MessageSelectOptionData } from "discord.js";
 import { capitalize, ClassManager, CONFIG, ItemManager, limitString, messageInput, removeMarkdown, SkillManager, SpeciesManager } from "../..";
+import { CraftingMaterials } from "../../game/Crafting";
 import Creature, { HealType } from "../../game/Creature";
 import { AbilityUseLog } from "../../game/CreatureAbilities";
 import { DamageCause, DamageGroup, damageLogEmbed, DamageMedium, DamageType, ShieldReaction } from "../../game/Damage";
@@ -186,10 +187,6 @@ export default new ComponentCommandHandler(
               creature.clearAttributes();
 
               creature.$.info.locked = true;
-              interaction.followUp({
-                content: "Saved!",
-                ephemeral: true
-              })
             }
           } break;
           case "class": {
@@ -305,6 +302,41 @@ export default new ComponentCommandHandler(
           case "item": {
             if (interaction.isButton()) {
               switch (args.shift()) {
+                case "scrap": {
+                  if (!creature.$.info.locked && !creature.$.info.npc) {
+                    interaction.editReply({
+                      content: "You must lock in before scrapping or crafting items"
+                    })
+                    return;
+                  }
+
+                  const items: MessageSelectOptionData[] = [];
+
+                  for (const i of creature.$.items.backpack) {
+                    const item = ItemManager.map.get(i);
+                    if (!item) continue;
+
+                    items.push({
+                      label: item.$.info.name,
+                      value: item.$.id ?? ""
+                    })
+                  }
+
+                  if (items.length == 0) {
+                    interaction.followUp({
+                      ephemeral: true,
+                      content: "Backpack is empty!"
+                    });
+                    return;
+                  }
+
+                  interaction.followUp({
+                    ephemeral: true,
+                    content: "Items to scrap...",
+                    components: backpackItemComponents(creature_id, items, `cedit/${creature_id}/edit/item/scrap`)
+                  })
+                  return;
+                } break;
                 case "use": {
                   const items: MessageSelectOptionData[] = [];
 
@@ -458,6 +490,58 @@ export default new ComponentCommandHandler(
                       ephemeral: true,
                       content: `**${errors.length}** item(s) errored and have not been used: **${errors.join("**, **")}**`
                     })
+                } break;
+                case "scrap": {
+                  if (!creature.$.info.locked && !creature.$.info.npc) {
+                    interaction.editReply({
+                      content: "You must lock in before scrapping or crafting items"
+                    })
+                    return;
+                  }
+
+                  const gained = new CraftingMaterials({});
+                  let count = 0;
+
+                  for (const i of interaction.values) {
+                    const index = creature.$.items.backpack.findIndex(v => v === i);
+                    if (index === -1) continue;
+
+                    const item = ItemManager.map.get(i);
+                    if (!item?.$.scrap) continue;
+
+                    for (const mat in item.$.scrap.materials ?? {}) {
+                      // @ts-expect-error
+                      const material: number = item.$.scrap.materials[mat];
+
+                      // @ts-expect-error
+                      if (typeof creature.$.items.crafting_materials[mat] === "number") {
+                        // @ts-expect-error
+                        creature.$.items.crafting_materials[mat] += material;
+                        // @ts-expect-error
+                        gained[mat] += material;
+                      }
+                    }
+
+                    count++;
+                  }
+
+                  interaction.editReply({
+                    content: `Scrapped **${count}** items`,
+                    embeds: [new MessageEmbed()
+                      .setColor("AQUA")
+                      .setTitle("Materials Gained")
+                      .setDescription(function() {
+                        var str = "";
+
+                        for (const mat in gained) {
+                          // @ts-expect-error
+                          str += `**${gained[mat]}** ${capitalize(mat)}\n`;
+                        }
+
+                        return str;
+                      }() || "None")
+                    ]
+                  });
                 } break;
                 case "unequip": {
                   for (const i of interaction.values) {
@@ -937,9 +1021,9 @@ export function ceditMenu(creature: Creature): MessageActionRow[] {
         .setStyle("SECONDARY")
         .setLabel("Change Avatar"),
       new MessageButton()
-        .setCustomId(`cedit/${creature.$._id}/delete`)
-        .setStyle("DANGER")
-        .setLabel("Delete")
+        .setCustomId(`cedit/${creature.$._id}/edit/attr`)
+        .setStyle("SUCCESS")
+        .setLabel("Assign Attributes")
     ]),
     new MessageActionRow().addComponents([
       new MessageButton()
@@ -957,11 +1041,11 @@ export function ceditMenu(creature: Creature): MessageActionRow[] {
       new MessageButton()
         .setCustomId(`cedit/${creature.$._id}/edit/item/use`)
         .setStyle("PRIMARY")
-        .setLabel("Consume Item"),
+        .setLabel("Consume Items"),
       new MessageButton()
-        .setCustomId(`cedit/${creature.$._id}/edit/attr`)
-        .setStyle("SUCCESS")
-        .setLabel("Assign Attributes")
+        .setCustomId(`cedit/${creature.$._id}/edit/item/scrap`)
+        .setStyle("DANGER")
+        .setLabel("Scrap Items")
     ]),
     new MessageActionRow().addComponents([
       new MessageSelectMenu()
@@ -1015,7 +1099,18 @@ export function ceditMenu(creature: Creature): MessageActionRow[] {
       new MessageButton()
         .setCustomId(`cedit/${creature.$._id}/edit/lock`)
         .setStyle("SUCCESS")
-        .setLabel("Lock n Load")
+        .setLabel("Lock n Load"),
+      new MessageButton()
+        .setCustomId(`cedit/${creature.$._id}/delete`)
+        .setStyle("DANGER")
+        .setLabel("Delete")
+    ]))
+  } else {
+    array.push(new MessageActionRow().setComponents([
+      new MessageButton()
+        .setCustomId(`cedit/${creature.$._id}/delete`)
+        .setStyle("DANGER")
+        .setLabel("Delete")
     ]))
   }
 

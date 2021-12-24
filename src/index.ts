@@ -17,6 +17,7 @@ import AutocompleteManager from "./app/autocomplete.js";
 import CreaturePerkManager from "./game/Perks.js";
 import CreatureSkillManager from "./game/Skills.js";
 import CraftingManager from "./game/Crafting.js";
+import GameLocationManager from "./game/Locations.js";
 
 process.on("uncaughtException", (e) => {
   console.error(e);
@@ -63,6 +64,7 @@ export const EffectManager = new ActiveEffectManager();
 export const SkillManager = new CreatureSkillManager();
 export const PerkManager = new CreaturePerkManager();
 
+export const LocationManager = new GameLocationManager();
 export const RecipeManager = new CraftingManager();
 ///
 
@@ -179,6 +181,7 @@ export function gameLoad() {
   SkillManager.load(path.join(__dirname, "game/skills"));
   PerkManager.load(path.join(__dirname, "game/perks"));
 
+  LocationManager.load(path.join(__dirname, "game/locations"));
   RecipeManager.load(path.join(__dirname, "game/recipes"));
 
   console.log("Loading complete");

@@ -244,14 +244,17 @@ export default new ApplicationCommandHandler(
             embed.addFields([
               { 
                 name: "Passives",
+                // @ts-expect-error
                 value: passivesDescriptor(item.$.passives ?? []) || "None"
               },
               { 
                 name: "Abilities",
+                // @ts-expect-error
                 value: abilitiesDescriptor(item.$.abilities ?? []) || "None"
               },
               {
                 name: "Perks",
+                // @ts-expect-error
                 value: perksDescriptor((item.$.perks ?? []) || "None")
               }
             ]);

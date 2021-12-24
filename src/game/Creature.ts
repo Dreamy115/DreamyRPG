@@ -1,7 +1,7 @@
 import { Client, MessageEmbed } from "discord.js";
 import mongoose from "mongoose";
 import NodeCache from "node-cache";
-import { AbilitiesManager, capitalize, ClassManager, CONFIG, EffectManager, ItemManager, PassivesManager, PerkManager, shuffle, SkillManager, SpeciesManager } from "../index.js";
+import { AbilitiesManager, capitalize, ClassManager, CONFIG, EffectManager, ItemManager, LocationManager, PassivesManager, PerkManager, shuffle, SkillManager, SpeciesManager } from "../index.js";
 import { AppliedActiveEffect } from "./ActiveEffects.js";
 import { CraftingMaterials } from "./Crafting.js";
 import { CreatureAbility } from "./CreatureAbilities.js";
@@ -27,6 +27,7 @@ export default class Creature {
           name: data.info?.display?.name ?? "Unnamed",
           avatar: data.info?.display?.avatar ?? null
         },
+        location: data.info?.location ?? "default",
         locked: data.info?.locked ?? false,
         species: data.info?.species ?? "default",
         class: data.info?.class ?? "default",
@@ -97,7 +98,7 @@ export default class Creature {
         this.applyNamedModifier(mod);
       }
     }
-    for (const effect of this.$.active_effects) {
+    for (const effect of this.active_effects) {
       const effectData = EffectManager.map.get(effect.id);
       if (!effectData) continue;
       
@@ -145,7 +146,7 @@ export default class Creature {
     for (const passive of passives) {
       passive.$.postload?.(this);
     }
-    for (const effect of this.$.active_effects) {
+    for (const effect of this.active_effects) {
       const effectData = EffectManager.map.get(effect.id);
       if (!effectData) continue;
       
@@ -620,22 +621,35 @@ export default class Creature {
     this.vitalsIntegrity();
   }
 
+  get active_effects() {
+    const location_effects: AppliedActiveEffect[] = [];
+    for (const e of this.location?.$.area_effects ?? []) {
+      location_effects.push({
+        id: e.id,
+        severity: e.severity,
+        ticks: -1
+      });
+    }
+
+    return this.$.active_effects.concat(location_effects);
+  }
+
   applyActiveEffect(effect: AppliedActiveEffect, override_existing = false): boolean {
     let effectData = EffectManager.map.get(effect.id);
     if (!effectData) return false;
 
     let count = 0;
     if (effectData.$.consecutive_limit > 0)
-      for (const e of this.$.active_effects) {
+      for (const e of this.active_effects) {
         if (e.id === effect.id) count++;
       }
 
     if (effectData.$.consecutive_limit > 0 && count > effectData.$.consecutive_limit) {
       if (override_existing) {
-        this.$.active_effects[this.$.active_effects.findIndex((v) => v.id === effect.id)] = effect;
+        this.active_effects[this.active_effects.findIndex((v) => v.id === effect.id)] = effect;
       } else return false;
     } else {
-      this.$.active_effects.push(effect);
+      this.active_effects.push(effect);
     }
 
     effectData.$.onApply?.(this, effect);
@@ -643,10 +657,10 @@ export default class Creature {
     return true;
   }
   clearActiveEffect(id: string, type: "expire" | "delete"): boolean {
-    const index = this.$.active_effects.findIndex((v) => v.id === id);
+    const index = this.active_effects.findIndex((v) => v.id === id);
     if (index === -1) return false;
 
-    const effect = this.$.active_effects.splice(index, 1)[0];
+    const effect = this.active_effects.splice(index, 1)[0];
     const effectData = EffectManager.map.get(effect.id);
 
     switch (type) {
@@ -662,13 +676,13 @@ export default class Creature {
     return true;
   }
   clearAllEffects(type: "expire" | "delete") {
-    for (const effect of this.$.active_effects) {
+    for (const effect of this.active_effects) {
       this.clearActiveEffect(effect.id, type);
     }
   }
 
   tickEffects() {
-    for (const effect of this.$.active_effects) {
+    for (const effect of this.active_effects) {
       const effectData = EffectManager.map.get(effect.id);
       if (!effectData) {
         this.clearActiveEffect(effect.id, "delete");
@@ -771,6 +785,9 @@ export default class Creature {
     return [...new Set(array)];
   }
 
+  get location() {
+    return LocationManager.map.get(this.$.info.location);
+  }
 
   dump(): CreatureDump {
     let dump: CreatureDump = {
@@ -787,7 +804,7 @@ export default class Creature {
       // @ts-expect-error
       items: this.$.items,
       abilities: this.$.abilities,
-      active_effects: this.$.active_effects,
+      active_effects: this.active_effects,
       vars: this.$.vars
     }
 
@@ -1027,6 +1044,7 @@ export interface CreatureData {
       name: string
       avatar: string | null
     }
+    location: string
     locked: boolean
     species: string
     class?: string
@@ -1094,6 +1112,7 @@ export interface CreatureDump {
       name?: string
       avatar?: string | null
     }
+    location?: string
     locked?: boolean
     species?: string
     class?: string

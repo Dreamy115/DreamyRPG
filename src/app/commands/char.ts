@@ -6,7 +6,7 @@ import { reductionMultiplier, DAMAGE_TO_INJURY_RATIO, DamageMedium, DamageType }
 import { AttackData } from "../../game/Items.js";
 import { PassiveModifier } from "../../game/PassiveEffects.js";
 import { textStat, ModifierType, TrackableStat } from "../../game/Stats.js";
-import { SpeciesManager, ClassManager, capitalize, ItemManager, EffectManager, AbilitiesManager, CONFIG, RecipeManager, PerkManager } from "../../index.js";
+import { SpeciesManager, ClassManager, capitalize, ItemManager, EffectManager, AbilitiesManager, CONFIG, RecipeManager, PerkManager, LocationManager } from "../../index.js";
 import { ApplicationCommandHandler } from "../commands.js";
 import { attributeComponents, ceditMenu } from "../component_commands/cedit.js";
 import { modifierDescriptor } from "./handbook.js";
@@ -90,6 +90,10 @@ export default new ApplicationCommandHandler(
               {
                 name: "Skills",
                 value: "skills"
+              },
+              {
+                name: "Location",
+                value: "location"
               },
               {
                 name: "Raw Data (Debug)",
@@ -561,7 +565,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string): 
       ])
     } break;
     case "effects": {
-      for (const effect of creature.$.active_effects) {
+      for (const effect of creature.active_effects) {
         const effectData = EffectManager.map.get(effect.id);
         if (!effectData) continue;
     
@@ -708,6 +712,46 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string): 
 
         return str;
       }())
+    } break;
+    case "location": {
+      const location = creature.location;
+      if (!location) {
+        embed.setDescription("Invalid location; ***v o i d***");
+      } else {
+        embed.setDescription(`**${location.$.info.name}** \`${location.$.id}\`\n${location.$.info.lore}`)
+
+        if (location.$.shop) {
+          embed.addField(
+            "Shop",
+            "Looks like you can buy stuff here! Check out `/char shop`"
+          )
+        }
+
+        if (location.$.area_effects) {
+          embed.addField(
+            "Area Effects",
+            function () {
+              var str = "";
+
+              for (const active_effect of location.$.area_effects) {
+                const effect_data = EffectManager.map.get(active_effect.id);
+                if (!effect_data) continue;
+
+                str += `\`${effect_data.$.id}\` **${effect_data.$.info.name}${function(){
+                  switch (effect_data.$.display_severity) {
+                    case DisplaySeverity.NONE:
+                    default: return "";
+                    case DisplaySeverity.ARABIC: return " " + active_effect.severity;
+                    case DisplaySeverity.ROMAN: return " " + romanNumeral(active_effect.severity);
+                  }
+                }()}**\n`;
+              }
+
+              return str;
+            }() || "None"
+          )
+        }
+      }
     } break;
   }
 

@@ -38,6 +38,7 @@ export class GameLocation {
     }
     shop?: ShopContent[]
     area_effects?: LocationEffect[]
+    hasEnhancedCrafting: boolean
   }
 
   constructor(data: GameLocation["$"]) {

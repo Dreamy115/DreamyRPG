@@ -4,6 +4,7 @@ export default [
   new CraftingRecipe({
     id: "rough_bandage",
     requirements: {
+      enhancedCrafting: false,
       materials: {
         biomaterial: 0,
         cells: 0,

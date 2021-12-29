@@ -52,25 +52,26 @@ export interface BaseItemData {
     materials?: CraftingMaterials
   }
 }
-export interface WearableItemData extends BaseItemData {
+
+interface PassiveItemData extends BaseItemData {
+  passives?: (PassiveEffect | string)[]
+  abilities?: string[]
+  perks?: (string | CreaturePerk)[]
+  unique?: string[]
+}
+export interface WearableItemData extends PassiveItemData {
   type: "wearable"
   subtype: "utility" | "clothing"
-  perks?: (string | CreaturePerk)[]
-  unique?: string[]
-  passives?: (PassiveEffect | string)[]
-  abilities?: string[]
 }
-export interface WeaponItemData extends BaseItemData {
+export interface WeaponItemData extends PassiveItemData {
   type: "weapon"
-  passives?: (PassiveEffect | string)[]
-  abilities?: string[]
-  perks?: (string | CreaturePerk)[]
-  unique?: string[]
   attack: AttackSet
 }
+
 export interface ConsumableItemData extends BaseItemData {
   type: "consumable"
   onUse: (creature: Creature) => Promise<AbilityUseLog>
+  returnItems?: string[]
 }
 
 

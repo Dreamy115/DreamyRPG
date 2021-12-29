@@ -195,6 +195,7 @@ export default new ApplicationCommandHandler(
 
         try {
           if (!creature.schematics.has(recipe.$.id)) throw new Error("Doesn't have the schematic");
+          if (recipe.$.requirements.enhancedCrafting && !creature.location?.$.hasEnhancedCrafting) throw new Error("You cannot craft this item in this location. Go to an area with Enhanced Crafting");
 
           var perks = creature.perks;
           for (const p of recipe.$.requirements.perks ?? []) {
@@ -742,12 +743,11 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string): 
       } else {
         embed.setDescription(`**${location.$.info.name}** \`${location.$.id}\`\n${location.$.info.lore}`)
 
-        if (location.$.shop) {
-          embed.addField(
-            "Shop",
-            "Looks like you can buy stuff here! Check out `/char shop`"
-          )
-        }
+        embed.addField(
+          "Additions",
+          `${location.$.shop !== undefined ? "⬜" : "🔳"} - \`/char shop\` ${location.$.shop !== undefined ? "available" : "unavailable"}\n` + 
+          `${location.$.hasEnhancedCrafting !== undefined ? "⬜" : "🔳"} - ${location.$.hasEnhancedCrafting !== undefined ? "Enhanced Crafting" : "Limited Crafting"}\n`
+        )
 
         if (location.$.area_effects) {
           embed.addField(

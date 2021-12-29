@@ -31,6 +31,7 @@ export class CraftingRecipe {
     id: string
     result: string
     requirements: {
+      enhancedCrafting: boolean
       perks?: string[]
       items?: string[]
       materials?: CraftingMaterials

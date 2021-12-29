@@ -792,7 +792,7 @@ export default class Creature {
   }
 
   get schematics() {
-    return new Set(...new Set(this.species?.$.schematics ?? []), ...new Set(this.itemClass?.$.schematics ?? []), ...this.$.items.schematics)
+    return new Set([...(this.species?.$.schematics ?? []), ...(this.itemClass?.$.schematics ?? []), ...this.$.items.schematics])
   }
 
   get itemClass () {

@@ -194,6 +194,8 @@ export default new ApplicationCommandHandler(
         ])
 
         try {
+          if (!creature.schematics.has(recipe.$.id)) throw new Error("Doesn't have the schematic");
+
           var perks = creature.perks;
           for (const p of recipe.$.requirements.perks ?? []) {
             const perk = PerkManager.map.get(p);

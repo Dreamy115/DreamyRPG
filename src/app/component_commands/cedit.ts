@@ -610,6 +610,95 @@ export default new ComponentCommandHandler(
               return;
             }
           } break;
+          case "buy": {
+            const location = creature.location;
+            if (!location?.shop?.$.content) {
+              interaction.editReply({
+                content: "No shop content available here."
+              })
+              return;
+            }
+
+            if (interaction.isSelectMenu()) {
+              const cart: number[] = [];
+              for (const want of interaction.values) {
+                if (!isNaN(Number(want)) && location.shop.$.content.length > Number(want))
+                  cart.push(Math.abs(Number(want)))
+              }
+              console.log(cart)
+              for (const id of cart) {
+                const thing = location.shop.$.content[id];
+                if (!thing) {
+                  await interaction.followUp({
+                    content: `[**${id}**] Errored`
+                  });
+                  continue;
+                }
+
+                try {
+                  for (const mat in thing.cost) {
+                    // @ts-expect-error
+                    const material: number = thing.cost[mat];
+        
+                    // @ts-expect-error
+                    if (creature.$.items.crafting_materials[mat] < material) throw new Error(`${capitalize(mat)}`)
+                  }
+                } catch (e: any) {
+                  interaction.followUp({
+                    content: `[**${id}**] Cannot afford; ${e?.message}`,
+                    ephemeral: true
+                  });
+                  continue;
+                }
+
+                var log: AbilityUseLog;
+                switch (thing.type) {
+                  default: await interaction.followUp({
+                    content: `[**${id}**] Errored`
+                  }); continue;
+                  case "item": {
+                    const item = ItemManager.map.get(thing.id);
+
+                    log = {
+                      text: `Received **${item?.$.info.name}** item`
+                    }
+                    creature.$.items.backpack.push(thing.id);
+                  } break;
+                  case "service": {
+                    try {
+                      log = await thing.onBuy(creature);
+                    } catch (e) {
+                      console.error(e);
+                      await interaction.followUp({
+                        content: `[**${id}**] Errored`,
+                        ephemeral: true
+                      }); continue;
+                    }
+                  } break;
+                }
+
+                for (const mat in thing.cost) {
+                  // @ts-expect-error
+                  creature.$.items.crafting_materials[mat] -= thing.cost[mat];
+                }
+
+                await interaction.followUp({
+                  content: `[**${id}**] ${log.text}`,
+                  embeds: function() {
+                    const array: MessageEmbed[] = [];
+
+                    for (const dmg of log.damageLogs ?? []) {
+                      array.push(damageLogEmbed(dmg));
+                    }
+
+                    return array;
+                  }() || undefined,
+                  ephemeral: true
+                }); continue;
+
+              }
+            }            
+          } break;
           case "gm": {
             if (!IS_GM) {
               interaction.followUp({

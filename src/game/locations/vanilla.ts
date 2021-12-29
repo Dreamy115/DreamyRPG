@@ -7,6 +7,7 @@ export default [
       name: "Default Location",
       lore: "As a GM, you should already move your creatures elsewhere and make your own."
     },
-    hasEnhancedCrafting: false
+    hasEnhancedCrafting: false,
+    shop: "default"
   })
 ]

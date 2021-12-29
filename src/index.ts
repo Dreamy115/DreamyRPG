@@ -18,6 +18,7 @@ import CreaturePerkManager from "./game/Perks.js";
 import CreatureSkillManager from "./game/Skills.js";
 import CraftingManager from "./game/Crafting.js";
 import GameLocationManager from "./game/Locations.js";
+import LocationShopsManager from "./game/Shops.js";
 
 process.on("uncaughtException", (e) => {
   console.error(e);
@@ -65,6 +66,7 @@ export const SkillManager = new CreatureSkillManager();
 export const PerkManager = new CreaturePerkManager();
 
 export const LocationManager = new GameLocationManager();
+export const ShopManager = new LocationShopsManager();
 export const RecipeManager = new CraftingManager();
 ///
 
@@ -182,6 +184,7 @@ export function gameLoad() {
   PerkManager.load(path.join(__dirname, "game/perks"));
 
   LocationManager.load(path.join(__dirname, "game/locations"));
+  ShopManager.load(path.join(__dirname, "game/shops"));
   RecipeManager.load(path.join(__dirname, "game/recipes"));
 
   console.log("Loading complete");

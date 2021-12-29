@@ -1,12 +1,12 @@
 import fs from "fs";
 import path from "path";
-import { ShopManager } from "..";
 import { AppliedActiveEffect } from "./ActiveEffects";
 import { CraftingMaterials } from "./Crafting";
 import Creature from "./Creature";
+import { AbilityUseLog } from "./CreatureAbilities";
 
-export default class GameLocationManager {
-  map = new Map<string, GameLocation>();
+export default class LocationShopsManager {
+  map = new Map<string, Shop>();
   async load(dir: fs.PathLike) {
     this.map.clear();
 
@@ -15,12 +15,12 @@ export default class GameLocationManager {
 
       const {default: loadedFile} = await import(path.join(dir.toString(), file));
 
-      if (loadedFile instanceof GameLocation) {
+      if (loadedFile instanceof Shop) {
         this.map.set(loadedFile.$.id, loadedFile);
       } else {
         if (loadedFile instanceof Array) {
           for (const subfile of loadedFile) {
-            if (subfile instanceof GameLocation) {
+            if (subfile instanceof Shop) {
               this.map.set(subfile.$.id, subfile);
             }
           }
@@ -30,28 +30,34 @@ export default class GameLocationManager {
   }
 }
 
-export class GameLocation {
+export class Shop {
   $: {
     id: string
     info: {
       name: string
       lore: string
     }
-    shop?: string
-    area_effects?: LocationEffect[]
-    hasEnhancedCrafting: boolean
+    content?: ShopContent[]
   }
 
-  constructor(data: GameLocation["$"]) {
+  constructor(data: Shop["$"]) {
     this.$ = data;
-  }
-
-  get shop() {
-    return ShopManager.map.get(this.$.shop ?? "")
   }
 }
 
-export interface LocationEffect {
+export type ShopContent = ShopContentItem | ShopContentService; 
+interface ShopContentBase {
+  cost: CraftingMaterials
+}
+interface ShopContentItem extends ShopContentBase {
+  type: "item"
   id: string
-  severity: number
+}
+interface ShopContentService extends ShopContentBase {
+  type: "service"
+  info: {
+    name: string
+    lore: string
+  }
+  onBuy: (creature: Creature) => Promise<AbilityUseLog>
 }

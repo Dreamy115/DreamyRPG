@@ -225,8 +225,8 @@ export default new ApplicationCommandHandler(
                     str += `${capitalize(u.replaceAll(/_/g, " "))}, `;
                   }
 
-                  return str.substr(0, str.length - 2);
-                }()
+                  return str.substring(0, str.length - 2);
+                }() || "None"
               )
             }
           }
@@ -262,24 +262,44 @@ export default new ApplicationCommandHandler(
                   }
                 ])
               } break;
-            }
-            embed.addFields([
-              { 
-                name: "Passives",
-                // @ts-expect-error
-                value: passivesDescriptor(item.$.passives ?? []) || "None"
-              },
-              { 
-                name: "Abilities",
-                // @ts-expect-error
-                value: abilitiesDescriptor(item.$.abilities ?? []) || "None"
-              },
-              {
-                name: "Perks",
-                // @ts-expect-error
-                value: perksDescriptor((item.$.perks ?? []) || "None")
+              case "consumable": {
+                embed.addField(
+                  "Type",
+                  "Consumable"
+                )
+                if (item.$.returnItems) {
+                  embed.addField(
+                    "Return After Use",
+                    function (){
+                      const array: string[] = [];
+
+                      for (const i of item.$.returnItems) {
+                        const ret = ItemManager.map.get(i);
+                        
+                        array.push(`**${ret?.$.info.name}** \`${i}\``)
+                      }
+
+                      return array.join(", ");
+                    }()
+                  )
+                }
               }
-            ]);
+            }
+            if (item.$.type !== "consumable")
+              embed.addFields([
+                { 
+                  name: "Passives",
+                  value: passivesDescriptor(item.$.passives ?? []) || "None"
+                },
+                { 
+                  name: "Abilities",
+                  value: abilitiesDescriptor(item.$.abilities ?? []) || "None"
+                },
+                {
+                  name: "Perks",
+                  value: perksDescriptor(item.$.perks ?? []) || "None"
+                }
+              ]);
           } else if (item instanceof CreatureSpecies) {
             embed.description += "\n" + (item.$.playable ? "**✅ Playable**" : "**❎ Unplayable**");
             embed.addFields([

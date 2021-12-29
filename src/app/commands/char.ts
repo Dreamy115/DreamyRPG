@@ -1,4 +1,4 @@
-import { Client, EmbedFieldData, MessageEmbed } from "discord.js";
+import { Client, EmbedFieldData, MessageActionRow, MessageEmbed, MessageSelectMenu } from "discord.js";
 import { DisplaySeverity, romanNumeral } from "../../game/ActiveEffects.js";
 import Creature from "../../game/Creature.js";
 import { replaceLore } from "../../game/CreatureAbilities.js";
@@ -6,7 +6,7 @@ import { reductionMultiplier, DAMAGE_TO_INJURY_RATIO, DamageMedium, DamageType }
 import { AttackData } from "../../game/Items.js";
 import { PassiveModifier } from "../../game/PassiveEffects.js";
 import { textStat, ModifierType, TrackableStat } from "../../game/Stats.js";
-import { SpeciesManager, ClassManager, capitalize, ItemManager, EffectManager, AbilitiesManager, CONFIG, RecipeManager, PerkManager, LocationManager } from "../../index.js";
+import { SpeciesManager, ClassManager, capitalize, ItemManager, EffectManager, AbilitiesManager, CONFIG, RecipeManager, PerkManager, LocationManager, limitString } from "../../index.js";
 import { ApplicationCommandHandler } from "../commands.js";
 import { attributeComponents, ceditMenu } from "../component_commands/cedit.js";
 import { modifierDescriptor } from "./handbook.js";
@@ -138,6 +138,18 @@ export default new ApplicationCommandHandler(
         ]
       },
       {
+        name: "shop",
+        description: "Buy menu!",
+        type: "SUB_COMMAND",
+        options: [
+          {
+            name: "page",
+            description: "Which page to display?",
+            type: "INTEGER"
+          }
+        ]
+      },
+      {
         name: "say",
         description: "Say as character",
         type: "SUB_COMMAND",
@@ -179,6 +191,98 @@ export default new ApplicationCommandHandler(
         interaction.editReply({
           content: `Select a stat (with **${interaction.options.getInteger("bonus", false) ?? 0}** bonus)`,
           components: attributeComponents(creature, "", `rollstat/$ID/$ATTR/${interaction.options.getInteger("bonus", false) ?? 0}`)
+        })
+      } break;
+      case "shop": {
+        const [creature,] = await Promise.all([
+          Creature.fetch(interaction.user.id, db),
+          interaction.deferReply({ephemeral: true})
+        ])
+
+        const location = creature.location;
+        if (!location?.shop) {
+          interaction.editReply({
+            content: "No shop available here."
+          })
+          return;
+        }
+
+        const embed = new MessageEmbed()
+          .setTitle(location.shop.$.info.name)
+          .setDescription(location.shop.$.info.lore)
+          .setFooter(location.shop.$.id)
+          .setColor("AQUA")
+
+        const components: MessageActionRow[] = [
+          new MessageActionRow().setComponents([
+            new MessageSelectMenu()
+              .setCustomId(`cedit/${creature.$._id}/edit/buy`)
+              .setPlaceholder("Buy something...")
+          ])
+        ]; 
+
+        for (var i = 25 * Math.abs((interaction.options.getInteger("page", false) ?? 1) - 1); i < 25; i++) {
+          // @ts-expect-error
+          const content = location.shop.$.content[i];
+          if (!content) break;
+
+          switch (content.type) {
+            default: continue;
+            case "item": {
+              const item = ItemManager.map.get(content.id);
+              if (!item) continue;
+              // @ts-expect-error
+              components[0].components[0]?.addOptions({
+                label: item.$.info.name,
+                value: String(i),
+                description: `[${i}] Item`
+              })
+
+              embed.addField(
+                `[${i}] Item - ${item.$.info.name} \`${item.$.id}\``,
+                `*${item.$.info.lore}*\n\n${function(){
+                  var arr: string[] = [];
+                  for (const mat in content.cost) {
+                    // @ts-expect-error
+                    arr.push(`**${content.cost[mat]}** ${capitalize(mat)}`)
+                  }
+
+                  return arr.join(", ");
+                }()}`
+              )
+            } break;
+            case "service": {
+              // @ts-expect-error
+              components[0].components[0]?.addOptions({
+                label: content.info.name,
+                value: String(i),
+                description: `[${i}] Service`
+              })
+
+              embed.addField(
+                `[${i}] Service - ${content.info.name}`,
+                `*${content.info.lore}*\n\n${function(){
+                  var arr: string[] = [];
+                  for (const mat in content.cost) {
+                    // @ts-expect-error
+                    arr.push(`**${content.cost[mat]}** ${capitalize(mat)}`)
+                  }
+
+                  return arr.join(", ");
+                }()}`
+              )
+            }
+          }
+        }
+
+        components[0].components[0]
+          // @ts-expect-error
+          .setMaxValues(components[0].components[0].options.length)
+          .setMinValues(1)
+
+        interaction.editReply({
+          components,
+          embeds: [embed]
         })
       } break;
       case "craft": {

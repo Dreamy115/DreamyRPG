@@ -456,7 +456,7 @@ export default new ComponentCommandHandler(
                       if (index === -1) throw new Error("Creature doesn't have item " + item.$.id);
                     
                       const log = await item.$.onUse(creature);
-                      creature.$.items.backpack.splice(index, 1);
+                      creature.$.items.backpack.splice(index, 1, ...item.$.returnItems ?? []);
 
                       logs.push(log);
                     } catch (e) {

@@ -1,5 +1,5 @@
 import { ApplicationCommandOptionData, MessageEmbed } from "discord.js";
-import { AbilitiesManager, capitalize, ClassManager, EffectManager, ItemManager, PassivesManager, PerkManager, RecipeManager, SkillManager, SpeciesManager } from "../..";
+import { AbilitiesManager, capitalize, ClassManager, CONFIG, EffectManager, ItemManager, LocationManager, PassivesManager, PerkManager, RecipeManager, SkillManager, SpeciesManager } from "../..";
 import { ActiveEffect } from "../../game/ActiveEffects";
 import { CreatureClass } from "../../game/Classes";
 import { CraftingRecipe } from "../../game/Crafting";
@@ -56,6 +56,10 @@ const typeOption: ApplicationCommandOptionData = {
     {
       name: "Crafting Recipes",
       value: "recipes"
+    },
+    {
+      name: "Locations",
+      value: "locations"
     }
   ]
 }
@@ -101,6 +105,8 @@ export default new ApplicationCommandHandler(
 
     let list: Map<string, ManagedItems>;
     let title: string;
+
+    let confidential = false;
     switch (interaction.options.getString("type")) {
       default: return;
       case "items":
@@ -138,9 +144,25 @@ export default new ApplicationCommandHandler(
       case "recipes":
         list = RecipeManager.map;
         title = "Crafting Recipes";
+        break;
+      case "locations":
+        list = LocationManager.map;
+        title = "Locations (Confidential)";
+        confidential = true;
+        break;
     }
-
+    
     const _defer = interaction.deferReply({ ephemeral: true });
+
+    if (confidential) {
+      const member = await (await Bot.guilds.fetch(CONFIG.guild?.id ?? ""))?.members.fetch(interaction.user).catch(() => undefined)
+      if (!member?.roles.cache.has(CONFIG.guild?.gm_role ?? "")) {
+        interaction.editReply({
+          content: "You cannot access details about Locations"
+        })
+        return;
+      }
+    }
     
     const embed = new MessageEmbed()
     .setColor("AQUA")

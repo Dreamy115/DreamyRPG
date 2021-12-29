@@ -74,7 +74,8 @@ export default class Creature {
         equipped: data.items?.equipped ?? [],
         backpack: data.items?.backpack ?? [],
         primary_weapon: data.items?.primary_weapon ?? null,
-        skills: data.items?.skills ?? [],
+        skills: new Set(data.items?.skills ?? []),
+        schematics: new Set(data.items?.schematics ?? []),
         crafting_materials: function () {
           return new CraftingMaterials(data.items?.crafting_materials ?? {})
         }()
@@ -312,7 +313,8 @@ export default class Creature {
       crafting_materials: new CraftingMaterials({}),
       equipped: [],
       primary_weapon: null,
-      skills: []
+      skills: new Set(),
+      schematics: new Set()
     }
   }
 
@@ -789,6 +791,17 @@ export default class Creature {
     return LocationManager.map.get(this.$.info.location);
   }
 
+  get schematics() {
+    return new Set(...new Set(this.species?.$.schematics ?? []), ...new Set(this.itemClass?.$.schematics ?? []), ...this.$.items.schematics)
+  }
+
+  get itemClass () {
+    return ClassManager.map.get(this.$.info.class ?? "")
+  }
+  get species() {
+    return SpeciesManager.map.get(this.$.info.species)
+  }
+
   dump(): CreatureDump {
     let dump: CreatureDump = {
       _id: this.$._id,
@@ -801,8 +814,15 @@ export default class Creature {
       },
       attributes: {},
       experience: this.$.experience,
-      // @ts-expect-error
-      items: this.$.items,
+      items: {
+        backpack: this.$.items.backpack,
+        // @ts-expect-error
+        crafting_materials: this.$.items.crafting_materials,
+        equipped: this.$.items.equipped,
+        primary_weapon: this.$.items.primary_weapon,
+        schematics: [...this.$.items.schematics],
+        skills: [...this.$.items.skills]
+      },
       abilities: this.$.abilities,
       active_effects: this.active_effects,
       vars: this.$.vars
@@ -1091,7 +1111,8 @@ export interface CreatureData {
     primary_weapon: string | null
     backpack: string[]
     equipped: string[]
-    skills: string[]
+    skills: Set<string>
+    schematics: Set<string>
     crafting_materials: CraftingMaterials
   }
   abilities: {
@@ -1141,6 +1162,7 @@ export interface CreatureDump {
     backpack?: string[]
     equipped?: string[]
     skills?: string[]
+    schematics?: string[]
     crafting_materials?: {[key: string]: number}
   }
   abilities?: {

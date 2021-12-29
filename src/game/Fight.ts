@@ -262,7 +262,11 @@ export class Fight {
         new MessageButton()
           .setCustomId(`cedit/${creature?.$._id}/edit/item/use`)
           .setLabel("Consume Item")
-          .setStyle("PRIMARY")
+          .setStyle("PRIMARY"),
+        new MessageButton()
+          .setCustomId(`fight/${this.$._id}/refresh`)
+          .setLabel("Refresh")
+          .setStyle("SECONDARY")
       ])
     ];
 

@@ -60,6 +60,10 @@ export default new ApplicationCommandHandler(
                 value: "items"
               },
               {
+                name: "Schematics",
+                value: "schematics"
+              },
+              {
                 name: "Passives",
                 value: "passives"
               },
@@ -708,6 +712,22 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string): 
 
         for (const skill of creature.skills) {
           str += `\`${skill.$.id}\` - **${skill.$.info.name}**\n${skill.$.info.lore}\n\n`
+        }
+
+        return str;
+      }())
+    } break;
+    case "schematics": {
+      embed.setDescription(function() {
+        var str = "";
+
+        for (const schem of creature.schematics) {
+          const recipe = RecipeManager.map.get(schem);
+          if (!recipe) continue;
+
+          const result = ItemManager.map.get(recipe.$.result);
+
+          str += `\`${recipe.$.id}\` >> ${result?.$.info.name} (\`${recipe.$.result}\`)\n`;
         }
 
         return str;

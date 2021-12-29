@@ -39,6 +39,7 @@ export class CreatureSpecies {
     }
     playable: boolean
     passives?: (string | PassiveEffect)[]
+    schematics?: string[]
     abilities?: string[]
     perks?: (string | CreaturePerk)[]
   }

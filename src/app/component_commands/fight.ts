@@ -31,6 +31,7 @@ export default new ComponentCommandHandler(
 
     const member = await guild.members.fetch(interaction.user.id).catch(() => null);
     let IS_GM = true;
+
     if (!member || !member.roles.cache.has(CONFIG.guild?.gm_role ?? "")) {
       IS_GM = false;
       if (creature?.$._id !== interaction.user.id) {
@@ -57,6 +58,9 @@ export default new ComponentCommandHandler(
     }
 
     switch (args.shift()) {
+      case "refresh": {
+        interaction.editReply(await fight.announceTurn(db, Bot))
+      } break;
       case "endturn": {
         if (creature.$.abilities.stacks > 0) {
           interaction.editReply({

@@ -795,12 +795,12 @@ export default new ComponentCommandHandler(
                       var invalid_count = 0;
                       for (const i of skills) {
                         const skill = SkillManager.map.get(i);
-                        if (!skill?.$.id || creature.$.items.skills.includes(skill.$.id)) {
+                        if (!skill?.$.id) {
                           invalid_count++;
                           continue;
                         }
 
-                        creature.$.items.skills.push(skill.$.id);
+                        creature.$.items.skills.add(skill.$.id);
                       }
 
                       const unique_collisions: string[] = [];
@@ -869,7 +869,7 @@ export default new ComponentCommandHandler(
                   switch (args.shift()) {
                     case "remove": {
                       for (const i of interaction.values) {
-                        creature.$.items.skills.splice(creature.$.items.skills.findIndex((v) => v === i),1);
+                        creature.$.items.skills.delete(i);
                       }
                     } break;
                   }

@@ -5,7 +5,7 @@ import { AbilitiesManager, capitalize, ClassManager, CONFIG, EffectManager, Item
 import { AppliedActiveEffect } from "./ActiveEffects.js";
 import { CraftingMaterials } from "./Crafting.js";
 import { CreatureAbility } from "./CreatureAbilities.js";
-import { DamageCause, DamageGroup, DamageLog, DamageMedium, DamageType, DAMAGE_TO_INJURY_RATIO, reductionMultiplier, ShieldReaction } from "./Damage.js";
+import { DamageCause, DamageGroup, DamageLog, DamageMedium as DamageMethod, DamageType, DAMAGE_TO_INJURY_RATIO, reductionMultiplier, ShieldReaction } from "./Damage.js";
 import { AttackData, AttackSet, Item } from "./Items.js";
 import { PassiveEffect, PassiveModifier } from "./PassiveEffects.js";
 import { CreaturePerk } from "./Perks.js";
@@ -182,6 +182,7 @@ export default class Creature {
 
   get defaultAttackSet(): AttackSet {
     return {
+      type: DamageMethod.Melee,
       normal: [{
         modifiers: {
           accuracy: 0,
@@ -193,7 +194,6 @@ export default class Creature {
           flat_bonus: 7,
           from_skill: 0.5
         }],
-        type: DamageMedium.Melee
       }],
       crit: [{
         modifiers: {
@@ -206,7 +206,6 @@ export default class Creature {
           flat_bonus: 8,
           from_skill: 0.75
         }],
-        type: DamageMedium.Melee
       }],
       weak: [{
         modifiers: {
@@ -219,7 +218,6 @@ export default class Creature {
           flat_bonus: 3,
           from_skill: 0.3
         }],
-        type: DamageMedium.Melee
       }]
     }
   }
@@ -487,7 +485,7 @@ export default class Creature {
     }
 
     if (group.useDodge) {
-      group.chance -= group.medium === DamageMedium.Direct ? 0 : group.medium === DamageMedium.Melee ? this.$.stats.parry.value : this.$.stats.deflect.value;
+      group.chance -= group.medium === DamageMethod.Direct ? 0 : group.medium === DamageMethod.Melee ? this.$.stats.parry.value : this.$.stats.deflect.value;
     }
 
 

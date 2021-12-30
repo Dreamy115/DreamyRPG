@@ -2,7 +2,7 @@ import { MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu, Messa
 import { AbilitiesManager, CONFIG, sleep } from "../..";
 import Creature, { diceRoll } from "../../game/Creature";
 import { DamageCause, DamageLog, damageLogEmbed, DamageMedium, DamageSource, ShieldReaction } from "../../game/Damage";
-import { Fight } from "../../game/Fight";
+import { Combatant, CombatPosition, Fight } from "../../game/Fight";
 import { ComponentCommandHandler } from "../component_commands";
 
 export default new ComponentCommandHandler(
@@ -42,6 +42,15 @@ export default new ComponentCommandHandler(
       }
     } 
 
+    const combatants = await fight.getCombatantInfo(db);
+    const self_combatant = combatants.get(creature.$._id); 
+    if (!self_combatant) {
+      interaction.editReply({
+        content: "Invalid combatant."
+      })
+      return;
+    }
+
     const target_choices: MessageSelectOptionData[] = [];
     for (const p in fight.$.parties) {
       const party = fight.$.parties[p];
@@ -52,7 +61,27 @@ export default new ComponentCommandHandler(
         target_choices.push({
           label: `${char.displayName} - Party ${p}`,
           value: char.$._id,
-          description: char.$._id === creature.$._id ? "You" : (char.$.info.npc ? "NPC" : "Player"),
+          description: 
+            `(${char.$._id === creature.$._id ? "You" : (char.$.info.npc ? "NPC" : "Player")}) ` +
+            function() {
+              const combatant = combatants.get(char.$._id);
+              if (!combatant) return "Unknown Position";
+
+              switch (combatant.position) {
+                case CombatPosition["No Position"]:
+                default: return "No Position";
+                case CombatPosition.Frontline: {
+                  return "Frontline (No Modifiers)";
+                }
+                case CombatPosition.Support: {
+                  return `Support (x${
+                    self_combatant?.position === CombatPosition.Frontline
+                    ? `${Math.round(1000 * FRONTLINE_TO_SUPPORT_MOD) / 10}`
+                    : `${Math.round(1000 * ELSE_TO_SUPPORT_MOD) / 10}`
+                  }% Accuracy)`
+                }
+              }
+            }(),
         });
       }
     }
@@ -153,7 +182,7 @@ export default new ComponentCommandHandler(
                   new MessageSelectMenu()
                     .setCustomId(`fight/${fight.$._id}/attack_out`)
                     .setPlaceholder("Cash-out Attack")
-                    .setOptions(target_choices)
+                    .setOptions([... new Set(target_choices)])
                 ])
               ]
             })
@@ -197,6 +226,12 @@ export default new ComponentCommandHandler(
             return;
           }
 
+          const combatant = combatants.get(target.$._id);
+
+          let accuracy_mod = combatant
+          ? getAccuracyMod(self_combatant, combatant)
+          : 1;
+
           let type: "normal"|"weak"|"crit";
           switch (attack_type) {
             default: return;
@@ -215,7 +250,7 @@ export default new ComponentCommandHandler(
           for (const set of creature.attackSet[type]) {
             let dodge_value: number;
             let skill_value: number;
-            switch (set.type) {
+            switch (creature.attackSet.type) {
               case DamageMedium.Direct:
               default:
                 dodge_value = 0;
@@ -233,11 +268,12 @@ export default new ComponentCommandHandler(
 
             logs.push(target.applyDamage({
               cause: attack_type,
-              chance: creature.$.stats.accuracy.value + set.modifiers.accuracy - dodge_value,
-              medium: set.type,
+              chance: accuracy_mod * (creature.$.stats.accuracy.value + (set.modifiers?.accuracy ?? 0)),
+              medium: creature.attackSet.type,
               penetration: {
-                lethality: set.modifiers.lethality,
-                defiltering: set.modifiers.defiltering
+                lethality: set.modifiers?.lethality ?? 0,
+                defiltering: set.modifiers?.defiltering ?? 0,
+                severing: set.modifiers?.severing ?? 0
               },
               shieldReaction: ShieldReaction.Normal,
               useDodge: true,
@@ -324,8 +360,23 @@ export default new ComponentCommandHandler(
               return;
             }
 
+            const accuracy_mods: number[] = [];
+            for (const target of targets) {
+              const combatant = combatants.get(target.$._id);
+
+              if (ability.$.attackLike) {
+                accuracy_mods.push(
+                  combatant
+                  ? getAccuracyMod(self_combatant, combatant)
+                  : 1
+                )
+              } else {
+                accuracy_mods.push(1);
+              }
+            }
+
             try {
-              const uselog = await ability.$.use(creature, targets);
+              const uselog = await ability.$.use(creature, targets, accuracy_mods);
               creature.$.vitals.mana -= ability.$.cost;
               creature.$.abilities.hand.splice(creature.$.abilities.hand.findIndex((v) => v === ability.$.id), 1);
 
@@ -413,3 +464,21 @@ export default new ComponentCommandHandler(
     fight.put(db);
   }
 )
+
+function getAccuracyMod(self: Combatant, combatant: Combatant) {
+  switch (combatant?.position) {
+    case CombatPosition["No Position"]:
+    default: return 1;
+    case CombatPosition.Frontline: {
+      return 1;
+    }
+    case CombatPosition.Support: {
+      return self?.position === CombatPosition.Frontline
+      ? FRONTLINE_TO_SUPPORT_MOD
+      : ELSE_TO_SUPPORT_MOD
+    }
+  }
+}
+
+export const FRONTLINE_TO_SUPPORT_MOD = 0.125;
+export const ELSE_TO_SUPPORT_MOD = 0.5;

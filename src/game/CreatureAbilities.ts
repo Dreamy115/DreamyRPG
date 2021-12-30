@@ -39,12 +39,13 @@ export class CreatureAbility {
       lore: string
       lore_replacers: LoreReplacer[]
     }
+    attackLike: boolean // Should this ability have Positioned Accuracy Modifiers like attacks?
     min_targets: number // If this is 0, only caster is provided and targets is empty
     max_targets?: number // Min targets must be at least 1 to take effect, and must be more than min targets.
     unique?: string[]
     haste?: number
     cost: number
-    use: (caster: Creature, targets: Creature[]) => Promise<AbilityUseLog>
+    use: (caster: Creature, targets: Creature[], accuracy_mods: number[]) => Promise<AbilityUseLog>
   }
 
   constructor(data: CreatureAbility["$"]) {
@@ -80,4 +81,4 @@ export function replaceLore(input: string, replacers: LoreReplacer[], creature?:
 export interface AbilityUseLog {
   damageLogs?: DamageLog[]
   text: string
-} 
+}

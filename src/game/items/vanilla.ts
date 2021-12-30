@@ -34,9 +34,9 @@ export default [
       lore: "You found this laying around! You can make use of it!"
     },
     attack: {
+      type: DamageMedium.Melee,
       weak: [
         {
-          type: DamageMedium.Melee,
           modifiers: {
             accuracy: -5,
             defiltering: 0,
@@ -53,7 +53,6 @@ export default [
       ],
       normal: [
         {
-          type: DamageMedium.Melee,
           modifiers: {
             accuracy: 0,
             defiltering: 0,
@@ -70,7 +69,6 @@ export default [
       ],
       crit: [
         {
-          type: DamageMedium.Melee,
           modifiers: {
             accuracy: 10,
             defiltering: 0,
@@ -95,9 +93,9 @@ export default [
       lore: "Nothing special. This outdated revolver still uses .45 ACP.\n**Revolver Perk** - Damage group count increases with attack stability!"
     },
     attack: {
+      type: DamageMedium.Ranged,
       weak: [
-        {
-          type: DamageMedium.Ranged,
+        { 
           modifiers: {
             accuracy: -5,
             defiltering: 0,
@@ -112,7 +110,6 @@ export default [
       ], 
       normal: [
         {
-          type: DamageMedium.Ranged,
           modifiers: {
             accuracy: -5,
             defiltering: 0,
@@ -125,7 +122,6 @@ export default [
           }]
         },
         {
-          type: DamageMedium.Ranged,
           modifiers: {
             accuracy: -5,
             defiltering: 0,
@@ -140,7 +136,6 @@ export default [
       ],
       crit: [
         {
-          type: DamageMedium.Ranged,
           modifiers: {
             accuracy: -5,
             defiltering: 0,
@@ -153,7 +148,6 @@ export default [
           }]
         },
         {
-          type: DamageMedium.Ranged,
           modifiers: {
             accuracy: -5,
             defiltering: 0,
@@ -166,7 +160,6 @@ export default [
           }]
         },
         {
-          type: DamageMedium.Ranged,
           modifiers: {
             accuracy: -5,
             defiltering: 0,

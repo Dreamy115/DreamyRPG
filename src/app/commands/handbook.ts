@@ -243,7 +243,7 @@ export default new ApplicationCommandHandler(
                 embed
                 .addField(
                   "Type",
-                  "Weapon"
+                  `${DamageMedium[item.$.attack.type]} Weapon`
                 ).addFields([
                   {
                     name: "Crit",
@@ -354,7 +354,7 @@ export default new ApplicationCommandHandler(
           } else if (item instanceof CreatureAbility) {
             embed.description =
               replaceLore(embed.description ?? "", item.$.info.lore_replacers) +
-              `\n\nHaste **${item.$.haste ?? 1}**\n`
+              `\n\nHaste **${item.$.haste ?? 1}**\n${item.$.attackLike ? `**Attack-Like** *(Affected by Positioning)*\n` : ""}`
           } else if (item instanceof ActiveEffect) {
             embed.description += `\nMax At Once **${item.$.consecutive_limit}**\n`;
           } else if (item instanceof CreatureSkill) {
@@ -480,8 +480,7 @@ function attackDescriptor(attacks: AttackData[]) {
   var str = "";
 
   for (const attackdata of attacks) {
-    str += `- ${attackdata.type === DamageMedium.Melee ? "Melee" : "Ranged"}
-    Sources:
+    str += `Sources:
     ${function () {
       var str = "";
 
@@ -491,9 +490,9 @@ function attackDescriptor(attacks: AttackData[]) {
 
       return str;
     }()}
-    **${attackdata.modifiers.accuracy}** Accuracy
-    **${attackdata.modifiers.lethality}** Lethality
-    **${attackdata.modifiers.defiltering}** Defiltering\n\n`;
+    **${attackdata.modifiers?.accuracy ?? 0}** Accuracy
+    **${attackdata.modifiers?.lethality ?? 0}** Lethality
+    **${attackdata.modifiers?.defiltering ?? 0}** Defiltering\n\n`;
   }
 
   return str;

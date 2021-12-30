@@ -3,6 +3,7 @@ import { DisplaySeverity, romanNumeral } from "../../game/ActiveEffects.js";
 import Creature from "../../game/Creature.js";
 import { replaceLore } from "../../game/CreatureAbilities.js";
 import { reductionMultiplier, DAMAGE_TO_INJURY_RATIO, DamageMedium, DamageType } from "../../game/Damage.js";
+import { CombatPosition } from "../../game/Fight.js";
 import { AttackData } from "../../game/Items.js";
 import { PassiveModifier } from "../../game/PassiveEffects.js";
 import { textStat, ModifierType, TrackableStat } from "../../game/Stats.js";
@@ -633,24 +634,23 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string): 
       }())
     } break;
     case "attack": {
-      function attackInfo(creature: Creature, attacks: AttackData[]) {
+      function attackInfo(creature: Creature, attacks: AttackData[], type: DamageMedium) {
         var str = "";
 
         for (const attackdata of attacks) {
-          str += `- ${attackdata.type === DamageMedium.Melee ? "Melee" : "Ranged"}
-          Sources:
+          str += `Sources:
           ${function () {
             var str = "";
 
             for (const source of attackdata.sources) {
-              str += `[**${Math.round(source.flat_bonus + (source.from_skill * (attackdata.type === DamageMedium.Melee ? creature.$.stats.melee.value : creature.$.stats.ranged.value)))} *(${source.flat_bonus} + ${Math.round(100 * source.from_skill) / 100}x)* ${DamageType[source.type]}**]\n`
+              str += `[**${Math.round(source.flat_bonus + (source.from_skill * (type === DamageMedium.Melee ? creature.$.stats.melee.value : creature.$.stats.ranged.value)))} *(${source.flat_bonus} + ${Math.round(100 * source.from_skill) / 100}x)* ${DamageType[source.type]}**]\n`
             }
 
             return str;
           }()}
-          **${attackdata.modifiers.accuracy + creature.$.stats.accuracy.value} *(${creature.$.stats.accuracy.value} ${attackdata.modifiers.accuracy >= 0 ? "+" : "-"}${Math.abs(attackdata.modifiers.accuracy)})*** Accuracy
-          **${attackdata.modifiers.lethality}** Lethality
-          **${attackdata.modifiers.defiltering}** Defiltering\n\n`;
+          **${(attackdata.modifiers?.accuracy ?? 0) + creature.$.stats.accuracy.value} *(${creature.$.stats.accuracy.value} ${(attackdata.modifiers?.accuracy ?? 0) >= 0 ? "+" : "-"}${Math.abs(attackdata.modifiers?.accuracy ?? 0)})*** Accuracy
+          **${attackdata.modifiers?.lethality ?? 0}** Lethality
+          **${attackdata.modifiers?.defiltering ?? 0}** Defiltering\n\n`;
         }
 
         return str;
@@ -659,18 +659,22 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string): 
       const attack = creature.attackSet;
       embed.addFields([
         {
+          name: "Position",
+          value: `${CombatPosition[attack.type]} - ${DamageMedium[attack.type]}`
+        },
+        {
           name: "Crit",
-          value: attackInfo(creature, attack.crit),
+          value: attackInfo(creature, attack.crit, attack.type),
           inline: true
         },
         {
           name: "Normal",
-          value: attackInfo(creature, attack.normal),
+          value: attackInfo(creature, attack.normal, attack.type),
           inline: true
         },
         {
           name: "Weak",
-          value: attackInfo(creature, attack.weak),
+          value: attackInfo(creature, attack.weak, attack.type),
           inline: true
         }
       ])

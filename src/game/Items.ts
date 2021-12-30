@@ -79,14 +79,15 @@ export interface AttackSet {
   crit: AttackData[]
   normal: AttackData[]
   weak: AttackData[]
+  type: DamageMedium
 }
 export interface AttackData {
-  modifiers: {
-    lethality: number
-    defiltering: number
-    accuracy: number
+  modifiers?: {
+    lethality?: number
+    defiltering?: number
+    accuracy?: number
+    severing?: number
   }
-  type: DamageMedium
   sources: {
     type: DamageType
     from_skill: number

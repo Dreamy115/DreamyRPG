@@ -152,6 +152,8 @@ export class Fight {
 
     const owner: null | User = await Bot.users.fetch(creature.$._id).catch(() => null);
 
+    const combatants = await this.getCombatantInfo(db);
+
     embed
       .setAuthor(`${!creature.$.info.npc ? owner?.username ?? "Unknown" : "NPC"}`)
       .setTitle(`${creature.displayName}'s turn!`)
@@ -172,10 +174,10 @@ export class Fight {
                 if (!char) continue;
 
                 str += 
-                  `**${char.displayName}**\n` +
+                  `**${char.displayName}** (${CombatPosition[combatants.get(char.$._id)?.position ?? 0]})\n` +
                   `Health **${char.$.vitals.health}**/**${char.$.stats.health.value - char.$.vitals.injuries}** (**${Math.round(100 * char.$.vitals.health / char.$.stats.health.value)}%**)\n` +
                   `Shield ` + (char.$.stats.shield.value > 0 ? `${textStat(char.$.vitals.shield, char.$.stats.shield.value)} **${char.$.stats.shield_regen.value}**/t` : "No **Shield**") + "\n" +
-                  `Mana ${textStat(char.$.vitals.mana, char.$.stats.mana.value)} **${char.$.stats.mana_regen.value}**/t`
+                  `Mana ${textStat(char.$.vitals.mana, char.$.stats.mana.value)} **${char.$.stats.mana_regen.value}**/t\n\n`
               }
 
               return str;
@@ -273,6 +275,47 @@ export class Fight {
     return components;
   }
 
+  async getCombatantInfo(db: typeof Mongoose) {
+    const combatants: Map<string, Combatant> = new Map<string, Combatant>();
+    for (const party of this.$.parties) {
+
+      const creatures: Promise<Creature>[] = [];
+      for (const c of party) {
+        creatures.push(Creature.fetch(c, db))
+      }
+      for await (const creature of creatures) {
+        combatants.set(
+          creature.$._id, {
+          // @ts-expect-error
+          position: 
+            party.length > 1
+            ? creature.attackSet.type
+            : CombatPosition["No Position"],
+          down: !creature.isAbleToFight
+        })
+      }
+
+      // I have no idea how else to do this so I'm doing it the hard way
+      const usedTypes: Set<CombatPosition> = new Set();
+      for await (const creature of creatures) {
+        const combatant = combatants.get(creature.$._id);
+        if (!combatant || combatant.down) continue;
+        
+        usedTypes.add(combatant.position);
+      }
+      if (usedTypes.size < 2) 
+        for await (const creature of creatures) {
+          combatants.set(
+            creature.$._id, {
+              position: 0,
+              down: !creature.isAbleToFight
+            }
+          )
+        }
+    }
+    return combatants;
+  }
+
   static async fetch(id: string, db: typeof Mongoose, cache = true): Promise<Fight> {
     if (cache) {
       if (this.cache.has(id)) {
@@ -301,4 +344,13 @@ export class Fight {
   }
 
   static readonly COLLECTION_NAME = "Fights";
+}
+
+export enum CombatPosition {
+  "No Position", "Frontline", "Support"
+}
+
+export interface Combatant {
+  position: CombatPosition
+  down: boolean
 }

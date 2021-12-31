@@ -1,11 +1,12 @@
-import { ApplicationCommandOptionData, MessageEmbed } from "discord.js";
+import { ApplicationCommandOptionData, MessageActionRow, MessageButton, MessageEmbed } from "discord.js";
 import { AbilitiesManager, capitalize, ClassManager, CONFIG, EffectManager, ItemManager, LocationManager, PassivesManager, PerkManager, RecipeManager, SkillManager, SpeciesManager } from "../..";
-import { ActiveEffect } from "../../game/ActiveEffects";
+import { ActiveEffect, DisplaySeverity, romanNumeral } from "../../game/ActiveEffects";
 import { CreatureClass } from "../../game/Classes";
 import { CraftingRecipe } from "../../game/Crafting";
 import { CreatureAbility, replaceLore } from "../../game/CreatureAbilities";
 import { DamageMedium, DamageType } from "../../game/Damage";
 import { AttackData, AttackSet, Item } from "../../game/Items";
+import { GameLocation } from "../../game/Locations";
 import { PassiveEffect, PassiveModifier } from "../../game/PassiveEffects";
 import { CreaturePerk } from "../../game/Perks";
 import { CreatureSkill } from "../../game/Skills";
@@ -71,6 +72,11 @@ export default new ApplicationCommandHandler(
     type: "CHAT_INPUT",
     options: [
       {
+        name: "rulesets",
+        description: "The inner workings of the game explained",
+        type: "SUB_COMMAND"
+      },
+      {
         name: "list",
         description: "List pages of items",
         type: "SUB_COMMAND",
@@ -102,6 +108,22 @@ export default new ApplicationCommandHandler(
   },
   async function (interaction, Bot, db) {
     if (!interaction.isCommand()) return;
+
+    if (interaction.options.getSubcommand() === "rulesets") {
+      interaction.reply({
+        content: "Links here",
+        ephemeral: true,
+        components: [
+          new MessageActionRow().setComponents([
+            new MessageButton()
+              .setURL(CONFIG.documentation?.link ?? "")
+              .setStyle("LINK")
+              .setLabel("Documentation")
+          ])
+        ]
+      })
+      return;
+    }
 
     let list: Map<string, ManagedItems>;
     let title: string;
@@ -152,13 +174,15 @@ export default new ApplicationCommandHandler(
         break;
     }
     
-    const _defer = interaction.deferReply({ ephemeral: true });
+    const _defer = await interaction.deferReply({ ephemeral: true });
 
     if (confidential) {
       const member = await (await Bot.guilds.fetch(CONFIG.guild?.id ?? ""))?.members.fetch(interaction.user).catch(() => undefined)
       if (!member?.roles.cache.has(CONFIG.guild?.gm_role ?? "")) {
         interaction.editReply({
-          content: "You cannot access details about Locations"
+          content: 
+            "You cannot access details about Locations.\n" +
+            "If you want to know about the Location your character is in, check out `/char info page:location`"
         })
         return;
       }
@@ -465,6 +489,37 @@ export default new ApplicationCommandHandler(
                   return str;
                 }() || "Invalid"
               )
+          } else if (item instanceof GameLocation) {
+            embed.addField(
+              "Flags",
+              `${item.$.shop !== undefined ? "⬜" : "🔳"} - \`/char shop\` ${item.$.shop !== undefined ? "available" : "unavailable"}\n` + 
+              `${item.$.hasEnhancedCrafting ? "⬜" : "🔳"} - ${item.$.hasEnhancedCrafting ? "Enhanced Crafting" : "Limited Crafting"}\n`
+            )
+    
+            if (item.$.area_effects) {
+              embed.addField(
+                "Area Effects",
+                function () {
+                  var str = "";
+    
+                  for (const active_effect of item.$.area_effects) {
+                    const effect_data = EffectManager.map.get(active_effect.id);
+                    if (!effect_data) continue;
+    
+                    str += `\`${effect_data.$.id}\` **${effect_data.$.info.name}${function(){
+                      switch (effect_data.$.display_severity) {
+                        case DisplaySeverity.NONE:
+                        default: return "";
+                        case DisplaySeverity.ARABIC: return " " + active_effect.severity;
+                        case DisplaySeverity.ROMAN: return " " + romanNumeral(active_effect.severity);
+                      }
+                    }()}**\n`;
+                  }
+    
+                  return str;
+                }() || "None"
+              )
+            }
           }
       }
     }
@@ -560,4 +615,4 @@ export function perksDescriptor(perks: (string | CreaturePerk)[]) {
   return str;
 }
 
-export type ManagedItems = Item | CreatureClass | CreatureSpecies | PassiveEffect | CreatureAbility | ActiveEffect | CreatureSkill | CreaturePerk | CraftingRecipe;
+export type ManagedItems = Item | CreatureClass | CreatureSpecies | PassiveEffect | CreatureAbility | ActiveEffect | CreatureSkill | CreaturePerk | CraftingRecipe | GameLocation;

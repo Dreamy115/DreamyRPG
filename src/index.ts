@@ -42,6 +42,9 @@ export const CONFIG: {
     fightTTL?: number
     fightCheckPeriod?: number
   }
+  documentation?: {
+    link?: string
+  }
 } = YAML.parse(fs.readFileSync(path.join(__dirname, "../config.yml")).toString());
 
 if (!CONFIG.client?.token) throw new Error("client/token not defined in configuration file");

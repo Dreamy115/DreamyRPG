@@ -200,6 +200,13 @@ export default new ApplicationCommandHandler(
           interaction.deferReply({ephemeral: true})
         ])
 
+        if (!creature.$.info.locked) {
+          interaction.editReply({
+            content: "Need to lock in before using shops."
+          })
+          return;
+        }
+
         const location = creature.location;
         if (!location?.shop) {
           interaction.editReply({
@@ -366,21 +373,30 @@ export default new ApplicationCommandHandler(
         
         if (!member) {
           interaction.editReply({
-            content: "Dialogue: Invalid guild member."
+            content: "Dialogue: Invalid guild member. (4s)"
           })
+          setTimeout(() => {
+            interaction.deleteReply().catch();
+          }, 4000)
           return;
         }
         if (!creature) {
           interaction.editReply({
-            content: "Dialogue: Invalid character."
+            content: "Dialogue: Invalid character. (4s)"
           })
+          setTimeout(() => {
+            interaction.deleteReply().catch();
+          }, 4000)
           return;
         }
 
         if (creature.$._id !== interaction.user.id && !member.roles.cache.has(CONFIG.guild?.gm_role ?? "")) {
           interaction.editReply({
-            content: "Dialogue: To use someone else's character, you must be a GM"
+            content: "Dialogue: To use someone else's character, you must be a GM (4s)"
           })
+          setTimeout(() => {
+            interaction.deleteReply().catch();
+          }, 4000)
           return;
         }
 
@@ -436,8 +452,23 @@ export default new ApplicationCommandHandler(
           return;
         }
 
+        const page = interaction.options.getString("page", true);
+
+        if (page === "location" && char.$.info.npc) {
+          const guild = await Bot.guilds.fetch(CONFIG.guild?.id ?? "");
+          await guild.roles.fetch();
+      
+          const member = await guild.members.fetch(interaction.user.id).catch(() => null);
+          if (!member || !member.roles.cache.has(CONFIG.guild?.gm_role ?? "")) {
+            interaction.editReply({
+              content: "Only GMs can access NPC location information"
+            })
+            return;
+          } 
+        }
+
         interaction.editReply({
-          embeds: [await infoEmbed(char, Bot, interaction.options.getString("page", true))]
+          embeds: [await infoEmbed(char, Bot, page)]
         })
       } break;
       case "edit": {
@@ -792,7 +823,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string): 
             const attr_bonus = attr.value - attr.base;
             
             // @ts-expect-error
-            str += `**${attr.value} ${a}**${attr_bonus !== 0 ? ` [Modifiers] *(**${attr.base}** ${`${(attr_bonus < 0 ? "-" : "+")} ${(attr_bonus)}`})*` : ""}\n${Creature.ATTRIBUTE_DESCRIPTIONS[a]}  ${modifierDescriptor(Creature.ATTRIBUTE_MODS[a]).trim().replaceAll("\n", ", ") || ""}\n`
+            str += `**${attr.value} ${a}**${attr_bonus !== 0 ? ` [Modifiers] *(**${attr.base}** ${`${(attr_bonus < 0 ? "-" : "+")} ${Math.abs(attr_bonus)}`})*` : ""}\n${Creature.ATTRIBUTE_DESCRIPTIONS[a]}  ${modifierDescriptor(Creature.ATTRIBUTE_MODS[a]).trim().replaceAll("\n", ", ") || ""}\n`
           }
 
           return str;
@@ -852,9 +883,9 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string): 
         embed.setDescription(`**${location.$.info.name}** \`${location.$.id}\`\n${location.$.info.lore}`)
 
         embed.addField(
-          "Additions",
+          "Flags",
           `${location.$.shop !== undefined ? "⬜" : "🔳"} - \`/char shop\` ${location.$.shop !== undefined ? "available" : "unavailable"}\n` + 
-          `${location.$.hasEnhancedCrafting !== undefined ? "⬜" : "🔳"} - ${location.$.hasEnhancedCrafting !== undefined ? "Enhanced Crafting" : "Limited Crafting"}\n`
+          `${location.$.hasEnhancedCrafting ? "⬜" : "🔳"} - ${location.$.hasEnhancedCrafting ? "Enhanced Crafting" : "Limited Crafting"}\n`
         )
 
         if (location.$.area_effects) {

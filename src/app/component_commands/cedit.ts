@@ -45,18 +45,36 @@ export default new ComponentCommandHandler(
 
     switch(args.shift()) {
       case "delete": {
-        const creature = await Creature.fetch(creature_id, db).catch(() => null);
-        if (!creature) {
-          interaction.editReply({
-            content: "Invalid character"
-          })
-          return;
-        }
+        if (args.shift() === "confirm") {
+          const creature = await Creature.fetch(creature_id, db).catch(() => null);
+          if (!creature) {
+            interaction.editReply({
+              content: "Invalid character"
+            })
+            return;
+          }
 
-        await creature.delete(db);
-        interaction.editReply({
-          content: "Deleted!"
-        })
+          await creature.delete(db);
+          interaction.editReply({
+            content: "Deleted!"
+          })
+        } else {
+          interaction.editReply({
+            content: 
+              "Are you **100%** sure you want to delete this Creature? " +
+              "You will not be able to recover them once this operation is final, " +
+              "But you may create another one.\n" +
+              "You can safely dismiss this message.",
+            components: [
+              new MessageActionRow().setComponents([
+                new MessageButton()
+                  .setCustomId(`cedit/${creature_id}/delete/confirm`)
+                  .setStyle("DANGER")
+                  .setLabel("Delete PERMANENTLY")
+              ])
+            ]
+          })
+        }
       } break;
       case "edit": {
         let creature = await Creature.fetch(creature_id, db).catch(() => null);
@@ -286,7 +304,7 @@ export default new ComponentCommandHandler(
                         if (array.length == 0) {
                           array.push({
                             label: "None",
-                            value: "",
+                            value: "null",
                             description: "No weapons found"
                           })
                         }
@@ -572,6 +590,14 @@ export default new ComponentCommandHandler(
                   return;
                 }
               } else {
+                if (!IS_GM && !creature.$.info.locked) {
+                  interaction.followUp({
+                    content: "Cannot assign points if you have not locked in",
+                    ephemeral: true
+                  })
+                  return;
+                }
+
                 // @ts-expect-error
                 if (creature.$.attributes[arg] instanceof TrackableStat) {
                   if (IS_GM || creature.totalAttributePointsUsed < creature.$.experience.level) {
@@ -591,6 +617,7 @@ export default new ComponentCommandHandler(
                       ephemeral: true,
                       content: "Not enough points!"
                     })
+                    return;
                   }
                 } else {
                   interaction.followUp({
@@ -611,6 +638,13 @@ export default new ComponentCommandHandler(
             }
           } break;
           case "buy": {
+            if (!creature.$.info.locked) {
+              interaction.editReply({
+                content: "Need to lock in before using shops."
+              })
+              return;
+            }
+
             const location = creature.location;
             if (!location?.shop?.$.content) {
               interaction.editReply({

@@ -13,3 +13,5 @@ cache:
   fightCheckPeriod: 120
 # PLEASE NOTE!
 # You need to encapsulate each ID in ""s to make them strings. Discord does NOT like them in numerical form!
+documentation:
+  link: "https://docs.google.com/document/d/1cNnL3Wp8mPGfnySoXoFcGMe2D4s0uQKZqPUZmyrW82k/edit?usp=sharing"

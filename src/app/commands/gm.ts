@@ -228,7 +228,10 @@ export default new ApplicationCommandHandler(
 
             creature.$.info.location = location.$.id;
 
-            creature.put(db);
+            await creature.put(db);
+            interaction.editReply({
+              content: "Moved!"
+            })
           } break;
           case "everyone": {
             await interaction.deferReply({ephemeral: true});

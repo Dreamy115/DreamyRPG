@@ -2,6 +2,7 @@ import { ApplicationCommandOptionChoice } from "discord.js";
 import { Fight } from "../../game/Fight";
 import { AutocompleteHandler } from "../autocomplete";
 import { autocompleteCreatures } from "./char";
+import { getAutocompleteListOfItems } from "./handbook";
 
 export default new AutocompleteHandler(
   "gm",
@@ -26,6 +27,16 @@ export default new AutocompleteHandler(
             }
 
             interaction.respond(autocomplete);
+          } break;
+        }
+      } break;
+      case "cmove": {
+        switch (focused.name) {
+          case "location_id": {
+            interaction.respond(await getAutocompleteListOfItems(String(focused.value), "locations"))
+          } break;
+          case "creature_id": {
+            interaction.respond(await autocompleteCreatures(search, db))
           } break;
         }
       } break;

@@ -1,5 +1,5 @@
 import { MessageActionRow, MessageButton } from "discord.js";
-import { CONFIG } from "../..";
+import { CONFIG, LocationManager } from "../..";
 import Creature from "../../game/Creature";
 import { Fight } from "../../game/Fight";
 import { ApplicationCommandHandler } from "../commands";
@@ -113,6 +113,68 @@ export default new ApplicationCommandHandler(
             ]
           }
         ]
+      },
+      {
+        name: "cmove",
+        description: "Move characters to Locations",
+        type: "SUB_COMMAND_GROUP",
+        options: [
+          {
+            name: "everyone",
+            description: "Move everyone to a Location",
+            type: "SUB_COMMAND",
+            options: [
+              {
+                name: "location_id",
+                description: "ID of the location",
+                type: "STRING",
+                autocomplete: true,
+                required: true
+              }
+            ]
+          },
+          {
+            name: "bulk",
+            description: "Move characters in bulk",
+            type: "SUB_COMMAND",
+            options: [
+              {
+                name: "location_id",
+                description: "ID of the location",
+                type: "STRING",
+                autocomplete: true,
+                required: true
+              },
+              {
+                name: "creatures",
+                description: "Comma separate Creature IDs",
+                type: "STRING",
+                required: true
+              }
+            ]
+          },
+          {
+            name: "single",
+            description: "Move a single character (easiest, with autocomplete)",
+            type: "SUB_COMMAND",
+            options: [
+              {
+                name: "location_id",
+                description: "ID of the location",
+                type: "STRING",
+                autocomplete: true,
+                required: true
+              },
+              {
+                name: "creature_id",
+                description: "The Creature you want to move",
+                type: "STRING",
+                autocomplete: true,
+                required: true
+              }
+            ]
+          }
+        ]
       }
     ]
   },
@@ -141,6 +203,91 @@ export default new ApplicationCommandHandler(
     }
 
     switch (interaction.options.getSubcommandGroup(false) ?? interaction.options.getSubcommand()) {
+      case "cmove": {
+        const location = LocationManager.map.get(interaction.options.getString("location_id", true));
+        if (!location) {
+          interaction.reply({
+            content: "Invalid location"
+          })
+          return;
+        }
+
+        switch (interaction.options.getSubcommand(true)) {
+          case "single": {
+            const [creature,] = await Promise.all([
+              Creature.fetch(interaction.options.getString("creature_id", true), db),
+              interaction.deferReply({ephemeral: true})
+            ]);
+
+            if (!creature) {
+              interaction.editReply({
+                content: "Invalid Creature"
+              });
+              return;
+            }
+
+            creature.$.info.location = location.$.id;
+
+            creature.put(db);
+          } break;
+          case "everyone": {
+            await interaction.deferReply({ephemeral: true});
+
+            const cursor = db.connection.collection(Creature.COLLECTION_NAME).find();
+
+            var pre_date = new Date();
+            for await (let data of cursor) {
+              // @ts-expect-error
+              const creature = new Creature(data);
+
+              creature.$.info.location = location.$.id;
+
+              creature.put(db);
+            }
+            var post_date = new Date();
+            
+            interaction.followUp({
+              ephemeral: true,
+              content: `Done in ${(post_date.getMilliseconds() - pre_date.getMilliseconds()) / 1000}s `
+            }) 
+          } break;
+          case "bulk": {
+            interaction.deferReply({ephemeral: true})
+
+            const creatures: Promise<Creature|null>[] = [];
+            for (const cid of interaction.options.getString("creatures", true).split(/ *, */g)) {
+              creatures.push(Creature.fetch(cid, db).catch(() => null));
+            }
+
+            let errors = 0;
+
+            var pre_date = new Date();
+            for await (const creature of creatures) {
+              if (!creature) {
+                errors++;
+                continue;
+              }
+
+              creature.$.info.location = location.$.id;
+
+              creature.put(db);
+            }
+            var post_date = new Date();
+
+            if (errors) {
+              await interaction.followUp({
+                ephemeral: true,
+                content: `**${errors}**/${creatures.length} Creatures errored`
+              })
+            }
+
+            interaction.followUp({
+              ephemeral: true,
+              content: `Done in ${(post_date.getMilliseconds() - pre_date.getMilliseconds()) / 1000}s `
+            }) 
+          } break;
+        }
+      } break;
       case "cedit": {
         let creature_id = interaction.options.getString("id")?.split(" ")[0] ?? interaction.options.getUser("user")?.id ?? interaction.user.id;
 
@@ -168,7 +315,7 @@ export default new ApplicationCommandHandler(
           ephemeral: true,
           content: "Global editing",
           components: [
-            new MessageActionRow().addComponents([
+            new MessageActionRow().setComponents([
               new MessageButton()
                 .setCustomId("gm/global/advance_time")
                 .setStyle("PRIMARY")
@@ -190,10 +337,10 @@ export default new ApplicationCommandHandler(
           case "start": {
             await interaction.deferReply({ ephemeral: true });
 
-            const full: string[] = interaction.options.getString("creatures", true).split(";"); 
+            const full: string[] = interaction.options.getString("creatures", true).split(/ *; */g); 
             const parties: string[][] = [];
             for (const p of full) {
-              parties.push(p.split(/,/g))
+              parties.push(p.split(/ *, */g))
             }
 
             const fight = new Fight({

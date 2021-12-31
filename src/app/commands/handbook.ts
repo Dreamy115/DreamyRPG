@@ -521,10 +521,16 @@ export default new ApplicationCommandHandler(
               )
             }
           }
+          // @ts-expect-error
+          if (item.$.info?.description)
+            embed.addField(
+              "Detailed Description",
+              // @ts-expect-error
+              item.$.info?.description
+            )
       }
     }
 
-    await _defer;
     interaction.editReply({
       embeds: [embed]
     })

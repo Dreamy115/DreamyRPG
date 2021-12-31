@@ -86,7 +86,7 @@ export interface AttackData {
     lethality?: number
     defiltering?: number
     accuracy?: number
-    severing?: number
+    cutting?: number
   }
   sources: {
     type: DamageType

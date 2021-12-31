@@ -36,6 +36,9 @@ export default class Creature {
       stats: {
         accuracy: new TrackableStat(95),
         armor: new TrackableStat(24),
+        lethality: new TrackableStat(0),
+        defiltering: new TrackableStat(0),
+        cutting: new TrackableStat(0),
         filter: new TrackableStat(16),
         melee: new TrackableStat(14),
         ranged: new TrackableStat(14),
@@ -525,7 +528,7 @@ export default class Creature {
             log.total_health_damage -= Math.min(0, this.$.vitals.shield);
             this.$.vitals.health += Math.min(0, this.$.vitals.shield);
 
-            const injuries = Math.round(reductionMultiplier(this.$.stats.tenacity.value - (group.penetration?.severing ?? 0)) * DAMAGE_TO_INJURY_RATIO * Math.min(0, this.$.vitals.shield));;
+            const injuries = Math.round(reductionMultiplier(this.$.stats.tenacity.value - (group.penetration?.cutting ?? 0)) * DAMAGE_TO_INJURY_RATIO * Math.min(0, this.$.vitals.shield));;
             this.$.vitals.injuries -= injuries;
             log.total_injuries -= injuries;
 
@@ -562,8 +565,8 @@ export default class Creature {
             log.total_health_damage += source.value;
             this.$.vitals.health -= source.value;
 
-            log.total_injuries += Math.round(source.value * DAMAGE_TO_INJURY_RATIO * reductionMultiplier(this.$.stats.tenacity.value));
-            this.$.vitals.injuries -= Math.round(source.value * DAMAGE_TO_INJURY_RATIO * reductionMultiplier(this.$.stats.tenacity.value));
+            log.total_injuries += Math.round(source.value * DAMAGE_TO_INJURY_RATIO * reductionMultiplier(this.$.stats.tenacity.value - (group.penetration?.cutting ?? 0)));
+            this.$.vitals.injuries -= Math.round(source.value * DAMAGE_TO_INJURY_RATIO * reductionMultiplier(this.$.stats.tenacity.value - (group.penetration?.cutting ?? 0)));
 
             this.$.vitals.injuries -= Math.min(0, this.$.vitals.health);
             log.total_injuries -= Math.min(0, this.$.vitals.health);
@@ -1083,6 +1086,9 @@ export interface CreatureData {
     accuracy: TrackableStat
     armor: TrackableStat
     filter: TrackableStat
+    lethality: TrackableStat
+    defiltering: TrackableStat
+    cutting: TrackableStat
     melee: TrackableStat
     ranged: TrackableStat
     health: TrackableStat

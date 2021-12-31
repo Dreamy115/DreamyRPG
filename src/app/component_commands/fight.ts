@@ -267,9 +267,9 @@ export default new ComponentCommandHandler(
               chance: accuracy_mod * (creature.$.stats.accuracy.value + (set.modifiers?.accuracy ?? 0)),
               medium: creature.attackSet.type,
               penetration: {
-                lethality: set.modifiers?.lethality ?? 0,
-                defiltering: set.modifiers?.defiltering ?? 0,
-                severing: set.modifiers?.severing ?? 0
+                lethality: (set.modifiers?.lethality ?? 0) + creature.$.stats.lethality.value,
+                defiltering: (set.modifiers?.defiltering ?? 0) + creature.$.stats.defiltering.value,
+                cutting: (set.modifiers?.cutting ?? 0) + creature.$.stats.cutting.value
               },
               shieldReaction: ShieldReaction.Normal,
               useDodge: true,

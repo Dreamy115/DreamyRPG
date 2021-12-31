@@ -522,18 +522,19 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string): 
           value: 
           `**Health** **${creature.$.vitals.health}**/**${creature.$.stats.health.value - creature.$.vitals.injuries}** (**${Math.round(100 * creature.$.vitals.health / creature.$.stats.health.value)}%**)  *(**${creature.$.stats.health.value}** Health - **${creature.$.vitals.injuries}** Injuries)*\n` +
           (creature.$.stats.shield.value > 0 ? `**Shield** ${textStat(creature.$.vitals.shield, creature.$.stats.shield.value)} **${creature.$.stats.shield_regen.value}**/t` : "No **Shield**") + "\n" +
-          `**Mana** ${textStat(creature.$.vitals.mana, creature.$.stats.mana.value)} **${creature.$.stats.mana_regen.value}**/t\n` +
-          `\n**${creature.$.stats.insulation.value}** Insulation (**${creature.deltaHeat}** Delta Heat - ${deltaHeatInfo(creature.deltaHeat)})`
+          `**Mana** ${textStat(creature.$.vitals.mana, creature.$.stats.mana.value)} **${creature.$.stats.mana_regen.value}**/t\n`
         },
         {
           name: "Offense",
           value: 
             `**${creature.$.stats.accuracy.value}%** Accuracy *(Hit Chance)*\n` +
             `Melee **${creature.$.stats.melee.value}** | **${creature.$.stats.ranged.value}** Ranged *(Attack Power)*\n` +
-            "\n" +
-            `Vamp **${creature.$.stats.vamp.value}%** | **${creature.$.stats.siphon.value}%** Siphon *(Regenerates **health** | **shields** by **%** of damage dealt when dealing **physical** | **energy** damage)*\n` +
-            "\n" +
             `**${creature.$.stats.tech.value}** Tech *(Ability Power)*\n` +
+            "\n" +
+            `**${creature.$.stats.lethality.value}** Lethality | **${creature.$.stats.defiltering.value}** Defiltering | **${creature.$.stats.cutting.value}** Cutting\n` +
+            `*(Reduces effectivenes of enemy **Armor**, **Filter**, and **Tenacity** respectively)*` +
+            "\n" +
+            `Vamp **${creature.$.stats.vamp.value}%** | **${creature.$.stats.siphon.value}%** Siphon *(Regenerates **health** | **shields** by **%** of damage dealt when dealing **Physical** | **Energy** Damage)*\n` +
             "\n" +
             `**${creature.$.stats.initiative.value}** Initiative` 
         },
@@ -542,10 +543,11 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string): 
           value:
           `**${creature.$.stats.armor.value}** Armor *(**${Math.round(100 * (1 - reductionMultiplier(creature.$.stats.armor.value)))}%** Reduced Physical Damage)*\n` +
           `**${creature.$.stats.filter.value}** Filter *(**${Math.round(100 * (1 - reductionMultiplier(creature.$.stats.filter.value)))}%** Reduced Energy Damage)*\n` +
+          `Parry **${creature.$.stats.parry.value}%** | **${creature.$.stats.deflect.value}%** Deflect *(Reduces hit chance from **Melee** | **Ranged**)*\n` +
           "\n" +
           `**${creature.$.stats.tenacity.value}** Tenacity *(Taking **${Math.round(100 * reductionMultiplier(creature.$.stats.tenacity.value) * DAMAGE_TO_INJURY_RATIO)}%** health damage as **Injuries**)*` +
           "\n" +
-          `Parry **${creature.$.stats.parry.value}%** | **${creature.$.stats.deflect.value}%** Deflect *(Reduces hit chance from **Melee** | **Ranged**)*\n`
+          `**${creature.$.stats.insulation.value}** Insulation (**${creature.deltaHeat}** Delta Heat - ${deltaHeatInfo(creature.deltaHeat)})`
         }
       ])
     } break;

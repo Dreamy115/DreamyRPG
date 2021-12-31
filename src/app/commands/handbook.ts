@@ -553,7 +553,8 @@ function attackDescriptor(attacks: AttackData[]) {
     }()}
     **${attackdata.modifiers?.accuracy ?? 0}** Accuracy
     **${attackdata.modifiers?.lethality ?? 0}** Lethality
-    **${attackdata.modifiers?.defiltering ?? 0}** Defiltering\n\n`;
+    **${attackdata.modifiers?.defiltering ?? 0}** Defiltering
+    **${attackdata.modifiers?.cutting ?? 0}** Cutting\n\n`;
   }
 
   return str;

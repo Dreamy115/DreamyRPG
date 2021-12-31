@@ -50,7 +50,8 @@ export default class Creature {
         tech: new TrackableStat(0),
         vamp: new TrackableStat(0),
         siphon: new TrackableStat(0),
-        initiative: new TrackableStat(10)
+        initiative: new TrackableStat(10),
+        insulation: new TrackableStat(0)
       },
       attributes: {
         STR: new TrackableStat(data.attributes?.STR ?? 0),
@@ -175,8 +176,14 @@ export default class Creature {
     }
   }
 
+  get id() {
+    return this.$._id;
+  }
   get displayName() {
     return this.$.info.display.name;
+  }
+  get class() {
+    return ClassManager.map.get(this.$.info.class ?? "");
   }
 
 
@@ -837,6 +844,10 @@ export default class Creature {
     return dump;
   }
 
+  get deltaHeat() {
+    return (this.location?.$.temperature ?? 0) + this.$.stats.insulation.value;
+  }
+
   static async fetch(id: string, db: typeof mongoose, cache = true): Promise<Creature> {
     if (cache) {
       if (this.cache.has(id)) {
@@ -1086,6 +1097,7 @@ export interface CreatureData {
     vamp: TrackableStat
     siphon: TrackableStat
     initiative: TrackableStat
+    insulation: TrackableStat
   }
   attributes: {
     STR: TrackableStat

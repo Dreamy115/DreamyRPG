@@ -8,6 +8,7 @@ export default [
       lore: "As a GM, you should already move your creatures elsewhere and make your own."
     },
     hasEnhancedCrafting: true,
-    shop: "default"
+    shop: "default",
+    temperature: 1
   })
 ]

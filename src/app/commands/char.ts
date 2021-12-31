@@ -5,6 +5,7 @@ import { replaceLore } from "../../game/CreatureAbilities.js";
 import { reductionMultiplier, DAMAGE_TO_INJURY_RATIO, DamageMedium, DamageType } from "../../game/Damage.js";
 import { CombatPosition } from "../../game/Fight.js";
 import { AttackData } from "../../game/Items.js";
+import { deltaHeatInfo } from "../../game/Locations.js";
 import { PassiveModifier } from "../../game/PassiveEffects.js";
 import { textStat, ModifierType, TrackableStat } from "../../game/Stats.js";
 import { SpeciesManager, ClassManager, capitalize, ItemManager, EffectManager, AbilitiesManager, CONFIG, RecipeManager, PerkManager, LocationManager, limitString } from "../../index.js";
@@ -521,7 +522,8 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string): 
           value: 
           `**Health** **${creature.$.vitals.health}**/**${creature.$.stats.health.value - creature.$.vitals.injuries}** (**${Math.round(100 * creature.$.vitals.health / creature.$.stats.health.value)}%**)  *(**${creature.$.stats.health.value}** Health - **${creature.$.vitals.injuries}** Injuries)*\n` +
           (creature.$.stats.shield.value > 0 ? `**Shield** ${textStat(creature.$.vitals.shield, creature.$.stats.shield.value)} **${creature.$.stats.shield_regen.value}**/t` : "No **Shield**") + "\n" +
-          `**Mana** ${textStat(creature.$.vitals.mana, creature.$.stats.mana.value)} **${creature.$.stats.mana_regen.value}**/t\n`
+          `**Mana** ${textStat(creature.$.vitals.mana, creature.$.stats.mana.value)} **${creature.$.stats.mana_regen.value}**/t\n` +
+          `\n**${creature.$.stats.insulation.value}** Insulation (**${creature.deltaHeat}** Delta Heat - ${deltaHeatInfo(creature.deltaHeat)})`
         },
         {
           name: "Offense",
@@ -884,6 +886,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string): 
 
         embed.addField(
           "Flags",
+          `**${location.$.temperature}** Temperature\n` +
           `${location.$.shop !== undefined ? "⬜" : "🔳"} - \`/char shop\` ${location.$.shop !== undefined ? "available" : "unavailable"}\n` + 
           `${location.$.hasEnhancedCrafting ? "⬜" : "🔳"} - ${location.$.hasEnhancedCrafting ? "Enhanced Crafting" : "Limited Crafting"}\n`
         )

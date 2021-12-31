@@ -1180,13 +1180,13 @@ export function ceditMenu(creature: Creature): MessageActionRow[] {
 
         for (const species of SpeciesManager.map.values()) {
           array.push({
-            label: species.$.info.name,
+            label: species.$.info.name + (species.$.playable ? "" : " (Unplayable)"),
             value: species.$.id,
             description: removeMarkdown(species.$.info.lore)
           })
         }
 
-        return array;
+        return [...new Set(array)];
       }())
     ]),
     new MessageActionRow().addComponents([

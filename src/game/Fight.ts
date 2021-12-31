@@ -15,17 +15,20 @@ export class Fight {
     _id: string
     queue: string[]
     parties: string[][]
+    round: number
   }
   
   constructor(data: {
     _id?: string,
     queue?: string[]
     parties?: string[][]
+    round?: number
   }) {
     this.$ = {
       _id: data._id ?? SnowflakeUtil.generate(),
       parties: data.parties ?? [],
-      queue: data.queue ?? []
+      queue: data.queue ?? [],
+      round: data.round ?? 1
     }
   }
 
@@ -45,7 +48,7 @@ export class Fight {
         }
 
         creature.$.vitals.shield = creature.$.stats.shield.value;
-        creature.$.vitals.mana = creature.$.stats.mana_regen.value;
+        creature.$.vitals.mana = 0;
         creature.$.abilities.hand = [];
         creature.$.abilities.stacks = 0;
 
@@ -156,7 +159,7 @@ export class Fight {
 
     embed
       .setAuthor(`${!creature.$.info.npc ? owner?.username ?? "Unknown" : "NPC"}`)
-      .setTitle(`${creature.displayName}'s turn!`)
+      .setTitle(`${creature.displayName}'s turn! (Round ${this.$.round})`)
       .setColor("AQUA")
       .setFooter(`Fight ID: ${this.$._id} | Creature ID: ${creature.$._id}`)
       .addFields(await async function(fight: Fight){

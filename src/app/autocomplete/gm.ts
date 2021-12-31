@@ -21,7 +21,7 @@ export default new AutocompleteHandler(
               if (autocomplete.length > 20) break;
 
               autocomplete.push({
-                name: `${fight.$._id} - ${fight.$.parties.length} Parties`,
+                name: `${fight.$._id} - ${fight.$.parties.length} Parties, Round ${fight.$.round}`,
                 value: fight.$._id
               })
             }

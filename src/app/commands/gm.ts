@@ -360,8 +360,15 @@ export default new ApplicationCommandHandler(
               }));
               await fight.constructQueue(db).then(() => interaction.editReply({
                 content: "Done!"
-              }));;
+              }));
               await fight.put(db);
+
+              const first = await Creature.fetch(fight.$.queue[0], db);
+
+              first.$.vitals.mana += first.$.stats.mana_regen.value;
+
+              await first.put(db);
+
             } catch (e: any) {
               console.error(e);
               interaction.editReply({

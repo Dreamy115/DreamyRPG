@@ -248,20 +248,16 @@ export default new ComponentCommandHandler(
 
           const logs: DamageLog[] = [];
           for (const set of creature.attackSet[type]) {
-            let dodge_value: number;
             let skill_value: number;
             switch (creature.attackSet.type) {
               case DamageMedium.Direct:
               default:
-                dodge_value = 0;
                 skill_value = Math.round((creature.$.stats.melee.value + creature.$.stats.ranged.value) / 2)
                 break;
               case DamageMedium.Melee:
-                dodge_value = target.$.stats.parry.value;
                 skill_value = creature.$.stats.melee.value;
                 break;
               case DamageMedium.Ranged:
-                dodge_value = target.$.stats.deflect.value;
                 skill_value = creature.$.stats.ranged.value;
                 break;
             }
@@ -285,7 +281,7 @@ export default new ComponentCommandHandler(
                 for (const src of set.sources) {
                   array.push({
                     type: src.type,
-                    value: src.flat_bonus + skill_value
+                    value: Math.round(src.flat_bonus + (skill_value * src.from_skill))
                   })
                 }
 

@@ -84,7 +84,7 @@ export function damageLogEmbed(log: DamageLog) {
   } else {
     embed.addField(
       "Failed",
-      "-",
+      `**${log.final.chance}%** Chance`,
       true
     )
   }

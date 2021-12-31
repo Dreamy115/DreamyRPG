@@ -1038,7 +1038,7 @@ export default class Creature {
   static readonly ATTRIBUTE_DESCRIPTIONS = {
     STR: "Physical Strength and brute force.",
     FOR: "Fortitude, resilience, and physical resistance.",
-    REJ: "Rejuvination, the quickness of regaining ground.",
+    REJ: "Rejuvenation, the quickness of regaining ground.",
     PER: "Perception, all 6 senses. Know your enemy.",
     INT: "Intelligence, crafting, technological swiftness.",
     DEX: "Dexterity, agility, light as a feather.",

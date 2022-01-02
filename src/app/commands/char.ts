@@ -1,5 +1,5 @@
 import { Client, EmbedFieldData, MessageActionRow, MessageEmbed, MessageSelectMenu } from "discord.js";
-import { DisplaySeverity, romanNumeral } from "../../game/ActiveEffects.js";
+import { DisplaySeverity, replaceEffectLore, romanNumeral } from "../../game/ActiveEffects.js";
 import Creature from "../../game/Creature.js";
 import { replaceLore } from "../../game/CreatureAbilities.js";
 import { reductionMultiplier, DAMAGE_TO_INJURY_RATIO, DamageMedium, DamageType } from "../../game/Damage.js";
@@ -754,7 +754,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string): 
               case DisplaySeverity.ROMAN: return romanNumeral(effect.severity);
             }
           }()}`,
-          `*${effectData.$.info.lore}*\n\nfor **${effect.ticks}** Ticks (\`${effect.id}\`)`
+          `*${replaceEffectLore(effectData.$.info.lore, effectData.$.info.replacers, effect)}*\n\nfor **${effect.ticks}** Ticks (\`${effect.id}\`)`
         )
       }
 

@@ -380,6 +380,16 @@ export default new ApplicationCommandHandler(
               replaceLore(embed.description ?? "", item.$.info.lore_replacers) +
               `\n\nHaste **${item.$.haste ?? 1}**\n${item.$.attackLike ? `**Attack-Like** *(Affected by Positioning)*\n` : ""}`
           } else if (item instanceof ActiveEffect) {
+            embed.setDescription(function () {
+              var str = item.$.info.lore;
+
+              for (const r in item.$.info.replacers) {
+                const rep = item.$.info.replacers[r];
+                str = str.replaceAll(`{${r}}`, `**${rep.multiply}** x **${capitalize(rep.type)}**`);
+              }
+
+              return str;
+            }());
             embed.description += `\nMax At Once **${item.$.consecutive_limit}**\n`;
           } else if (item instanceof CreatureSkill) {
             embed.addFields([

@@ -35,6 +35,7 @@ export class ActiveEffect {
     info: {
       name: string
       lore: string
+      replacers: EffectLoreReplacer[]
     }
     display_severity?: DisplaySeverity
     passives?: (PassiveEffect | string)[]
@@ -61,6 +62,27 @@ export enum DisplaySeverity {
   "NONE", "ROMAN", "ARABIC"
 }
 
+export interface EffectLoreReplacer {
+  type: "severity" | "ticks"
+  multiply: number
+}
+
+export function replaceEffectLore(input: string, replacers: EffectLoreReplacer[], {ticks, severity}: {ticks: number, severity: number}) {
+  var str = input;
+
+  for (const r in replacers) {
+    const rep = replacers[r];
+    str = str.replaceAll(`{${r}}`, String(Number(function() {
+      switch (rep.type) {
+        default: return 0;
+        case "ticks": return ticks;
+        case "severity": return severity;
+      }
+    }()) * rep.multiply));
+  }
+
+  return str;
+}
 
 export function romanNumeral(number: number): string {
   number = Math.round(number);

@@ -833,7 +833,7 @@ export default class Creature {
         skills: [...this.$.items.skills]
       },
       abilities: this.$.abilities,
-      active_effects: this.active_effects,
+      active_effects: this.$.active_effects,
       vars: this.$.vars
     }
 

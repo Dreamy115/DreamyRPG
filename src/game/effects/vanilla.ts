@@ -10,7 +10,13 @@ export default [
     display_severity: DisplaySeverity.ROMAN,
     info: {
       name: "Bleeding",
-      lore: "Receive **1 Direct True Damage** on **Health** for each point of Severity until expired"
+      lore: "Receive {0} **Direct True Damage** on **Health**",
+      replacers: [
+        {
+          type: "severity",
+          multiply: 1
+        }
+      ]
     },
     onTick: (creature, {ticks, severity}) => {
       creature.applyDamage({
@@ -32,7 +38,8 @@ export default [
     display_severity: DisplaySeverity.NONE,
     info: {
       name: "EMP",
-      lore: "This Creature will not be able to regenerate shields until this expires"
+      lore: "This Creature will not be able to regenerate shields until this expires",
+      replacers: []
     },
     preload: (creature) => {
       creature.$.stats.shield_regen.modifiers.push({

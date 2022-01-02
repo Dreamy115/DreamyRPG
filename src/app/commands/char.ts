@@ -754,7 +754,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string): 
               case DisplaySeverity.ROMAN: return romanNumeral(effect.severity);
             }
           }()}`,
-          `*${replaceEffectLore(effectData.$.info.lore, effectData.$.info.replacers, effect)}*\n\nfor **${effect.ticks}** Ticks (\`${effect.id}\`)`
+          `*${replaceEffectLore(effectData.$.info.lore, effectData.$.info.replacers, effect)}*\n\n${effect.ticks === -1 ? "**Location Dependent**" : `for **${effect.ticks}** Ticks`} (\`${effect.id}\`)`
         )
       }
 

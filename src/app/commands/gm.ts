@@ -44,7 +44,7 @@ export default new ApplicationCommandHandler(
         ]
       },
       {
-        name: "cedit",
+        name: "ceditmenu",
         description: "Edit a Creature",
         type: "SUB_COMMAND",
         options: [
@@ -62,7 +62,7 @@ export default new ApplicationCommandHandler(
         ]
       },
       {
-        name: "global",
+        name: "globalmenu",
         description: "Global World management",
         type: "SUB_COMMAND"
       },
@@ -291,7 +291,7 @@ export default new ApplicationCommandHandler(
           } break;
         }
       } break;
-      case "cedit": {
+      case "ceditmenu": {
         let creature_id = interaction.options.getString("id")?.split(" ")[0] ?? interaction.options.getUser("user")?.id ?? interaction.user.id;
 
         await interaction.deferReply({});
@@ -313,7 +313,7 @@ export default new ApplicationCommandHandler(
           components: gm_ceditMenu(char.$._id)
         })
       } break;
-      case "global": {
+      case "globalmenu": {
         interaction.reply({
           ephemeral: true,
           content: "Global editing",

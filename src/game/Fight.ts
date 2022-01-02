@@ -5,6 +5,7 @@ import { Client, EmbedFieldData, InteractionReplyOptions, MessageActionRow, Mess
 import Creature, { HealType } from "./Creature";
 import { textStat } from "./Stats";
 import { replaceLore } from "./CreatureAbilities";
+import { bar_styles, make_bar } from "../app/Bars";
 
 export class Fight {
   static cache = new NodeCache({
@@ -87,8 +88,10 @@ export class Fight {
 
   async advanceTurn(db: typeof Mongoose) {
     this.$.queue.shift()
-    if (this.$.queue.length === 0)
+    if (this.$.queue.length === 0) {
       await this.constructQueue(db);
+      this.$.round++;
+    }
 
     let creature: null | Creature = null;
     while (creature === null) {
@@ -176,11 +179,37 @@ export class Fight {
                 const char = await Creature.fetch(c, db).catch(() => null);
                 if (!char) continue;
 
+                const health_injury_proportions = (char.$.stats.health.value - char.$.vitals.injuries) / char.$.stats.health.value;
+
+                let health_length_mod, shield_length_mod;
+                if (char.$.stats.health.value >= char.$.stats.shield.value) {
+                  health_length_mod = (char.$.stats.health.value - char.$.stats.shield.value) / char.$.stats.health.value;
+                } else {
+                  health_length_mod = (char.$.stats.shield.value - char.$.stats.health.value) / char.$.stats.shield.value;
+                }
+                shield_length_mod = 1 - health_length_mod;
+
                 str += 
                   `**${char.displayName}** (${CombatPosition[combatants.get(char.$._id)?.position ?? 0]})\n` +
-                  `Health **${char.$.vitals.health}**/**${char.$.stats.health.value - char.$.vitals.injuries}** (**${Math.round(100 * char.$.vitals.health / char.$.stats.health.value)}%**)\n` +
-                  `Shield ` + (char.$.stats.shield.value > 0 ? `${textStat(char.$.vitals.shield, char.$.stats.shield.value)} **${char.$.stats.shield_regen.value}**/t` : "No **Shield**") + "\n" +
-                  `Mana ${textStat(char.$.vitals.mana, char.$.stats.mana.value)} **${char.$.stats.mana_regen.value}**/t\n\n`
+                  `*(**${char.$.stats.health.value}** Health - **${char.$.vitals.injuries}** Injuries)*\n` +
+                  make_bar(100 * char.$.vitals.health / (char.$.stats.health.value - char.$.vitals.injuries), BAR_STYLE, Math.max(1, health_length_mod * Math.floor(BAR_LENGTH * health_injury_proportions))).str +
+                  (
+                    char.$.vitals.injuries > 0
+                    ? make_bar(100, "░", Math.max(1, health_length_mod * Math.ceil(BAR_LENGTH - (BAR_LENGTH * health_injury_proportions)))).str
+                    : ""
+                  ) +
+                  ` **Health** **${char.$.vitals.health}**/**${char.$.stats.health.value - char.$.vitals.injuries}** ` + 
+                  `(**${Math.round(100 * char.$.vitals.health / char.$.stats.health.value)}%**)\n` +
+                  (
+                    char.$.stats.shield.value > 0
+                    ? make_bar(100 * char.$.vitals.shield / char.$.stats.shield.value, BAR_STYLE, shield_length_mod * BAR_LENGTH).str +
+                    ` **Shield** ${textStat(char.$.vitals.shield, char.$.stats.shield.value)} ` +
+                    `**${char.$.stats.shield_regen.value}**/t`
+                    : "No **Shield**"
+                  ) + "\n" +
+                  make_bar(100 *char.$.vitals.mana / char.$.stats.mana.value, BAR_STYLE, BAR_LENGTH / 3).str +
+                  ` **Mana** ${textStat(char.$.vitals.mana, char.$.stats.mana.value)} `+
+                  `**${char.$.stats.mana_regen.value}**/t\n`
               }
 
               return str;
@@ -220,7 +249,7 @@ export class Fight {
       new MessageActionRow().setComponents([
         new MessageButton()
           .setCustomId(`fight/${this.$._id}/attack`)
-          .setLabel("Attack" + `(${Creature.ATTACK_COST})`)
+          .setLabel("Attack" + `(${creature?.$.stats.attack_cost.value})`)
           .setStyle("PRIMARY"),
         new MessageButton()
           .setCustomId(`cedit/${this.$.queue[0]}/edit/weapon_switch`)
@@ -357,3 +386,6 @@ export interface Combatant {
   position: CombatPosition
   down: boolean
 }
+
+const BAR_LENGTH = 10;
+const BAR_STYLE = bar_styles[0];

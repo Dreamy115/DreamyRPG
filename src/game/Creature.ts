@@ -34,6 +34,7 @@ export default class Creature {
         npc: data.info?.npc ?? false,
       },
       stats: {
+        attack_cost: new TrackableStat(6),
         accuracy: new TrackableStat(95),
         armor: new TrackableStat(24),
         lethality: new TrackableStat(0),
@@ -882,7 +883,6 @@ export default class Creature {
   static readonly MAX_EQUIPPED_UTILITY = 4;
   static readonly MAX_EQUIPPED_CLOTHING = 3;
 
-  static readonly ATTACK_COST = 6;
   static readonly ATTACK_MAX_STACKS = 12;
   static readonly ATTACK_STACK_DIE_SIZE = 6;
 
@@ -1104,6 +1104,7 @@ export interface CreatureData {
     siphon: TrackableStat
     initiative: TrackableStat
     insulation: TrackableStat
+    attack_cost: TrackableStat
   }
   attributes: {
     STR: TrackableStat

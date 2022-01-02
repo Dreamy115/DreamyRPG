@@ -128,8 +128,8 @@ export default new ComponentCommandHandler(
       case "attack": {
         if (interaction.isButton()) {
           if (creature.$.abilities.stacks === 0) {
-            if (creature.$.vitals.mana >= Creature.ATTACK_COST) {
-              creature.$.vitals.mana -= Creature.ATTACK_COST
+            if (creature.$.vitals.mana >= creature.$.stats.attack_cost.value) {
+              creature.$.vitals.mana -= creature.$.stats.attack_cost.value
             } else {
               interaction.editReply({
                 content: "Not enough Mana"

@@ -9,6 +9,7 @@ import { deltaHeatInfo } from "../../game/Locations.js";
 import { PassiveModifier } from "../../game/PassiveEffects.js";
 import { textStat, ModifierType, TrackableStat } from "../../game/Stats.js";
 import { SpeciesManager, ClassManager, capitalize, ItemManager, EffectManager, AbilitiesManager, CONFIG, RecipeManager, PerkManager, LocationManager, limitString } from "../../index.js";
+import { bar_styles, make_bar } from "../Bars.js";
 import { ApplicationCommandHandler } from "../commands.js";
 import { attributeComponents, ceditMenu } from "../component_commands/cedit.js";
 import { modifierDescriptor } from "./handbook.js";
@@ -121,7 +122,7 @@ export default new ApplicationCommandHandler(
         ]
       },
       {
-        name: "edit",
+        name: "editmenu",
         description: "Editing",
         type: "SUB_COMMAND"
       },
@@ -436,7 +437,7 @@ export default new ApplicationCommandHandler(
             }
           }
         }).put(db)
-          .then(() => interaction.editReply({ content: "Successfully created your character! Use `/char edit` to finish 'em up." }))
+          .then(() => interaction.editReply({ content: "Successfully created your character! Use `/char editmenu` to finish 'em up." }))
           .catch((e) => {
             console.error(e);
             interaction.editReply({ content: "Something went wrong..." });
@@ -472,7 +473,7 @@ export default new ApplicationCommandHandler(
           embeds: [await infoEmbed(char, Bot, page)]
         })
       } break;
-      case "edit": {
+      case "editmenu": {
         await interaction.deferReply({});
 
         const char = await Creature.fetch(interaction.user.id, db, false).catch(() => null);
@@ -510,6 +511,16 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string): 
       embed.setDescription("```json\n" + JSON.stringify(creature.$, undefined, "  ") + "```");
     } break;
     case "stats": {
+      const health_injury_proportions = (creature.$.stats.health.value - creature.$.vitals.injuries) / creature.$.stats.health.value;
+
+      let health_length_mod, shield_length_mod;
+      if (creature.$.stats.health.value >= creature.$.stats.shield.value) {
+        health_length_mod = (creature.$.stats.health.value - creature.$.stats.shield.value) / creature.$.stats.health.value;
+      } else {
+        health_length_mod = (creature.$.stats.shield.value - creature.$.stats.health.value) / creature.$.stats.shield.value;
+      }
+      shield_length_mod = 1 - health_length_mod;
+
       embed.addField(
         "Basic",
         `Race - **${SpeciesManager.map.get(creature.$.info.species ?? "")?.$.info.name ?? "Unknown"}**\n` +  
@@ -520,9 +531,25 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string): 
           name: "Vitals",
           inline: false,
           value: 
-          `**Health** **${creature.$.vitals.health}**/**${creature.$.stats.health.value - creature.$.vitals.injuries}** (**${Math.round(100 * creature.$.vitals.health / creature.$.stats.health.value)}%**)  *(**${creature.$.stats.health.value}** Health - **${creature.$.vitals.injuries}** Injuries)*\n` +
-          (creature.$.stats.shield.value > 0 ? `**Shield** ${textStat(creature.$.vitals.shield, creature.$.stats.shield.value)} **${creature.$.stats.shield_regen.value}**/t` : "No **Shield**") + "\n" +
-          `**Mana** ${textStat(creature.$.vitals.mana, creature.$.stats.mana.value)} **${creature.$.stats.mana_regen.value}**/t\n`
+          `*(**${creature.$.stats.health.value}** Health - **${creature.$.vitals.injuries}** Injuries)*\n` +
+          make_bar(100 * creature.$.vitals.health / (creature.$.stats.health.value - creature.$.vitals.injuries), BAR_STYLE, Math.max(1, health_length_mod * Math.floor(BAR_LENGTH * health_injury_proportions))).str +
+          (
+            creature.$.vitals.injuries > 0
+            ? make_bar(100, "░", Math.max(1, health_length_mod * Math.ceil(BAR_LENGTH - (BAR_LENGTH * health_injury_proportions)))).str
+            : ""
+          ) +
+          ` **Health** **${creature.$.vitals.health}**/**${creature.$.stats.health.value - creature.$.vitals.injuries}** ` + 
+          `(**${Math.round(100 * creature.$.vitals.health / creature.$.stats.health.value)}%**)\n` +
+          (
+            creature.$.stats.shield.value > 0
+            ? make_bar(100 * creature.$.vitals.shield / creature.$.stats.shield.value, BAR_STYLE, shield_length_mod * BAR_LENGTH).str +
+            ` **Shield** ${textStat(creature.$.vitals.shield, creature.$.stats.shield.value)} ` +
+            `**${creature.$.stats.shield_regen.value}**/t`
+            : "No **Shield**"
+          ) + "\n" +
+          make_bar(100 *creature.$.vitals.mana / creature.$.stats.mana.value, BAR_STYLE, BAR_LENGTH / 3).str +
+          ` **Mana** ${textStat(creature.$.vitals.mana, creature.$.stats.mana.value)} `+
+          `**${creature.$.stats.mana_regen.value}**/t\n`
         },
         {
           name: "Offense",
@@ -923,3 +950,6 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string): 
 
   return embed;
 }
+
+const BAR_STYLE = bar_styles[0];
+const BAR_LENGTH = 20;

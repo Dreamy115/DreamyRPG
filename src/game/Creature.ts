@@ -5,7 +5,7 @@ import { AbilitiesManager, capitalize, ClassManager, CONFIG, EffectManager, Item
 import { AppliedActiveEffect } from "./ActiveEffects.js";
 import { CraftingMaterials } from "./Crafting.js";
 import { CreatureAbility } from "./CreatureAbilities.js";
-import { DamageCause, DamageGroup, DamageLog, DamageMedium as DamageMethod, DamageType, DAMAGE_TO_INJURY_RATIO, reductionMultiplier, ShieldReaction } from "./Damage.js";
+import { DamageCause, DamageGroup, DamageLog, DamageMethod as DamageMethod, DamageType, DAMAGE_TO_INJURY_RATIO, reductionMultiplier, ShieldReaction } from "./Damage.js";
 import { AttackData, AttackSet, Item } from "./Items.js";
 import { PassiveEffect, PassiveModifier } from "./PassiveEffects.js";
 import { CreaturePerk } from "./Perks.js";
@@ -496,7 +496,7 @@ export default class Creature {
     }
 
     if (group.useDodge) {
-      group.chance -= group.medium === DamageMethod.Direct ? 0 : group.medium === DamageMethod.Melee ? this.$.stats.parry.value : this.$.stats.deflect.value;
+      group.chance -= group.method === DamageMethod.Direct ? 0 : group.method === DamageMethod.Melee ? this.$.stats.parry.value : this.$.stats.deflect.value;
     }
 
 
@@ -660,7 +660,7 @@ export default class Creature {
         this.active_effects[this.active_effects.findIndex((v) => v.id === effect.id)] = effect;
       } else return false;
     } else {
-      this.active_effects.push(effect);
+      this.$.active_effects.push(effect);
     }
 
     effectData.$.onApply?.(this, effect);
@@ -668,10 +668,10 @@ export default class Creature {
     return true;
   }
   clearActiveEffect(id: string, type: "expire" | "delete"): boolean {
-    const index = this.active_effects.findIndex((v) => v.id === id);
+    const index = this.$.active_effects.findIndex((v) => v.id === id);
     if (index === -1) return false;
 
-    const effect = this.active_effects.splice(index, 1)[0];
+    const effect = this.$.active_effects.splice(index, 1)[0];
     const effectData = EffectManager.map.get(effect.id);
 
     switch (type) {

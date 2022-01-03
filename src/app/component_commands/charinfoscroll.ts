@@ -28,8 +28,6 @@ export default new ComponentCommandHandler(
 
     let index = Number(args.shift());
 
-    console.log(index)
-
     const info = await infoEmbed(creature, Bot, page ?? "", index);
     
     const components = info.scrollable

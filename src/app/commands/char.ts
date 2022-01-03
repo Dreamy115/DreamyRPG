@@ -471,17 +471,30 @@ export default new ApplicationCommandHandler(
 
         const info = await infoEmbed(char, Bot, page);
 
+        const components: MessageActionRow[] = [];
+        if (info.scrollable)
+          components.push(
+            new MessageActionRow().setComponents([
+              new MessageButton()
+                .setCustomId(`charinfoscroll/${char.$._id}/${page}/1`)
+                .setStyle("SECONDARY")
+                .setLabel("Scroll +")
+            ])
+          )
+
+        components.push(
+          new MessageActionRow().setComponents([
+            new MessageButton()
+              .setCustomId(`charinfoscroll/${char.$._id}/${page}/0`)
+              .setStyle("SECONDARY")
+              .setLabel("Refresh")
+          ])
+        )
+
         interaction.followUp({
           ephemeral: false,
           embeds: [info.embed],
-          components: info.scrollable
-          ? [new MessageActionRow().setComponents([
-            new MessageButton()
-              .setCustomId(`charinfoscroll/${char.$._id}/${page}/1`)
-              .setStyle("SECONDARY")
-              .setLabel("Scroll +")
-          ])]
-          : undefined,
+          components,
           files: info.attachments
         })
       } break;

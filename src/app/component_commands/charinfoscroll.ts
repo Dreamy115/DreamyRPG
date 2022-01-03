@@ -31,12 +31,20 @@ export default new ComponentCommandHandler(
     const info = await infoEmbed(creature, Bot, page ?? "", index);
     
     const components = info.scrollable
-    ? [new MessageActionRow().setComponents([
-      new MessageButton()
-        .setCustomId(`charinfoscroll/${creature.$._id}/${page}/${index + 1}`)
-        .setStyle("SECONDARY")
-        .setLabel("Scroll +"),
-    ])]
+    ? [
+      new MessageActionRow().setComponents([
+        new MessageButton()
+          .setCustomId(`charinfoscroll/${creature.$._id}/${page}/${index + 1}`)
+          .setStyle("SECONDARY")
+          .setLabel("Scroll +"),
+      ]),
+      new MessageActionRow().setComponents([
+        new MessageButton()
+          .setCustomId(`charinfoscroll/${creature.$._id}/${page}/${index}`)
+          .setStyle("SECONDARY")
+          .setLabel("Refresh"),
+      ])
+    ]
     : undefined
 
     if (index > 0 && components) {

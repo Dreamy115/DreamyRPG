@@ -967,8 +967,13 @@ export default class Creature {
       },
       {
         type: ModifierType.ADD_PERCENT,
+        value: 0.12,
+        stat: "tenacity"
+      },
+      {
+        type: ModifierType.ADD_PERCENT,
         value: 0.1,
-        stat: "ranged"
+        stat: "parry"
       }
     ],
     FOR: [
@@ -979,7 +984,7 @@ export default class Creature {
       },
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.065,
+        value: 0.06,
         stat: "filter"
       },
       {
@@ -998,11 +1003,6 @@ export default class Creature {
         type: ModifierType.ADD_PERCENT,
         value: 0.1,
         stat: "shield_regen"
-      },
-      {
-        type: ModifierType.ADD_PERCENT,
-        value: 0.12,
-        stat: "tenacity"
       }
     ],
     PER: [
@@ -1013,20 +1013,35 @@ export default class Creature {
       },
       {
         type: ModifierType.ADD,
-        value: 1,
-        stat: "initiative"
+        value: 5,
+        stat: "lethality"
+      },
+      {
+        type: ModifierType.ADD,
+        value: 5,
+        stat: "defiltering"
       }
     ],
     INT: [
       {
-        type: ModifierType.ADD_PERCENT,
-        value: 0.25,
+        type: ModifierType.ADD,
+        value: 2,
         stat: "tech"
       },
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.12,
+        value: 0.185,
+        stat: "tech"
+      },
+      {
+        type: ModifierType.ADD_PERCENT,
+        value: 0.1,
         stat: "mana"
+      },
+      {
+        type: ModifierType.ADD_PERCENT,
+        value: 0.035,
+        stat: "shield"
       }
     ],
     DEX: [
@@ -1037,8 +1052,13 @@ export default class Creature {
       },
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.15,
+        value: 0.06,
         stat: "parry"
+      },
+      {
+        type: ModifierType.ADD_PERCENT,
+        value: 0.1,
+        stat: "ranged"
       }
     ],
     CHA: [
@@ -1049,7 +1069,7 @@ export default class Creature {
     STR: "Physical Strength and brute force.",
     FOR: "Fortitude, resilience, and physical resistance.",
     REJ: "Rejuvenation, the quickness of regaining ground.",
-    PER: "Perception, all 6 senses. Know your enemy.",
+    PER: "Perception, all 6 senses. Know your enemy, and their weak points.",
     INT: "Intelligence, crafting, technological swiftness.",
     DEX: "Dexterity, agility, light as a feather.",
     CHA: "Charisma, looks, and wits. Negotiation skills."

@@ -631,7 +631,7 @@ export default new ComponentCommandHandler(
               interaction.followUp({
                 ephemeral: true,
                 content: `Expendable points: **${creature.totalAttributePointsUsed}**/${creature.$.experience.level}\nPoint assignment is final!`,
-                embeds: [await infoEmbed(creature, Bot, "attributes")],
+                embeds: [(await infoEmbed(creature, Bot, "attributes")).embed],
                 components: attributeComponents(creature, "Add ", "cedit/$ID/edit/attr/$ATTR")
               })
               return;

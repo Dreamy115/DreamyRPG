@@ -311,33 +311,34 @@ export default new ApplicationCommandHandler(
             }
             if (item.$.type !== "consumable")
               embed.addFields([
-              { 
-                name: "Passives",
-                value: passivesDescriptor(Array.from(item.$.passives ?? [])) || "None"
-              },
-              { 
-                name: "Abilities",
-                value: abilitiesDescriptor(Array.from(item.$.abilities ?? [])) || "None"
-              },
-              {
-                name: "Perks",
-                value: perksDescriptor(Array.from(item.$.perks ?? []) || "None")
-              }
-            ]); 
+                { 
+                  name: "Passives",
+                  value: passivesDescriptor(Array.from(item.$.passives?.values() ?? [])) || "None"
+                },
+                { 
+                  name: "Abilities",
+                  value: abilitiesDescriptor(Array.from(item.$.abilities?.values() ?? [])) || "None"
+                },
+                {
+                  name: "Perks",
+                  value: perksDescriptor(Array.from(item.$.perks?.values() ?? [])) || "None"
+                }
+              ]);
           } else if (item instanceof CreatureSpecies) {
             embed.description += "\n" + (item.$.playable ? "**✅ Playable**" : "**❎ Unplayable**");
+            console.log(item.$.passives)
             embed.addFields([
               { 
                 name: "Passives",
-                value: passivesDescriptor(Array.from(item.$.passives ?? [])) || "None"
+                value: passivesDescriptor(Array.from(item.$.passives?.values() ?? [])) || "None"
               },
               { 
                 name: "Abilities",
-                value: abilitiesDescriptor(Array.from(item.$.abilities ?? [])) || "None"
+                value: abilitiesDescriptor(Array.from(item.$.abilities?.values() ?? [])) || "None"
               },
               {
                 name: "Perks",
-                value: perksDescriptor(Array.from(item.$.perks ?? []) || "None")
+                value: perksDescriptor(Array.from(item.$.perks?.values() ?? [])) || "None"
               }
             ]);
           } else if (item instanceof CreatureClass) {
@@ -395,15 +396,15 @@ export default new ApplicationCommandHandler(
             embed.addFields([
               { 
                 name: "Passives",
-                value: passivesDescriptor(Array.from(item.$.passives ?? [])) || "None"
+                value: passivesDescriptor(Array.from(item.$.passives?.values() ?? [])) || "None"
               },
               { 
                 name: "Abilities",
-                value: abilitiesDescriptor(Array.from(item.$.abilities ?? [])) || "None"
+                value: abilitiesDescriptor(Array.from(item.$.abilities?.values() ?? [])) || "None"
               },
               {
                 name: "Perks",
-                value: perksDescriptor(Array.from(item.$.perks ?? [])) || "None"
+                value: perksDescriptor(Array.from(item.$.perks?.values() ?? [])) || "None"
               }
             ]);
 

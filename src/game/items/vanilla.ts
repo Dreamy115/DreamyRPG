@@ -13,7 +13,7 @@ export default [
     type: "wearable",
     subtype: "utility",
     unique: new Set(["shield"]),
-    passives: [
+    passives: new Set([
       new PassiveEffect({
         info: {
           name: "Shield Primer",
@@ -24,7 +24,7 @@ export default [
           creature.$.stats.shield_regen.base += 4;
         }
       })
-    ]
+    ])
   }),
   new Item({
     id: "starter_knife",

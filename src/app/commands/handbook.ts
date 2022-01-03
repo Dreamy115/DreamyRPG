@@ -311,48 +311,48 @@ export default new ApplicationCommandHandler(
             }
             if (item.$.type !== "consumable")
               embed.addFields([
-                { 
-                  name: "Passives",
-                  value: passivesDescriptor(item.$.passives ?? []) || "None"
-                },
-                { 
-                  name: "Abilities",
-                  value: abilitiesDescriptor(item.$.abilities ?? []) || "None"
-                },
-                {
-                  name: "Perks",
-                  value: perksDescriptor(item.$.perks ?? []) || "None"
-                }
-              ]);
+              { 
+                name: "Passives",
+                value: passivesDescriptor(Array.from(item.$.passives ?? [])) || "None"
+              },
+              { 
+                name: "Abilities",
+                value: abilitiesDescriptor(Array.from(item.$.abilities ?? [])) || "None"
+              },
+              {
+                name: "Perks",
+                value: perksDescriptor(Array.from(item.$.perks ?? []) || "None")
+              }
+            ]); 
           } else if (item instanceof CreatureSpecies) {
             embed.description += "\n" + (item.$.playable ? "**✅ Playable**" : "**❎ Unplayable**");
             embed.addFields([
               { 
                 name: "Passives",
-                value: passivesDescriptor(item.$.passives ?? []) || "None"
+                value: passivesDescriptor(Array.from(item.$.passives ?? [])) || "None"
               },
               { 
                 name: "Abilities",
-                value: abilitiesDescriptor(item.$.abilities ?? []) || "None"
+                value: abilitiesDescriptor(Array.from(item.$.abilities ?? [])) || "None"
               },
               {
                 name: "Perks",
-                value: perksDescriptor(item.$.perks ?? []) || "None"
+                value: perksDescriptor(Array.from(item.$.perks ?? []) || "None")
               }
             ]);
           } else if (item instanceof CreatureClass) {
             embed.addFields([
               { 
                 name: "Passives",
-                value: passivesDescriptor(item.$.passives ?? []) || "None"
+                value: passivesDescriptor(Array.from(item.$.passives ?? [])) || "None"
               },
               { 
                 name: "Abilities",
-                value: abilitiesDescriptor(item.$.abilities ?? []) || "None"
+                value: abilitiesDescriptor(Array.from(item.$.abilities ?? [])) || "None"
               },
               {
                 name: "Perks",
-                value: perksDescriptor((item.$.perks ?? []) || "None")
+                value: perksDescriptor(Array.from(item.$.perks ?? []) || "None")
               }
             ]);
 
@@ -395,15 +395,15 @@ export default new ApplicationCommandHandler(
             embed.addFields([
               { 
                 name: "Passives",
-                value: passivesDescriptor(item.$.passives ?? []) || "None"
+                value: passivesDescriptor(Array.from(item.$.passives ?? [])) || "None"
               },
               { 
                 name: "Abilities",
-                value: abilitiesDescriptor(item.$.abilities ?? []) || "None"
+                value: abilitiesDescriptor(Array.from(item.$.abilities ?? [])) || "None"
               },
               {
                 name: "Perks",
-                value: perksDescriptor(item.$.perks ?? []) || "None"
+                value: perksDescriptor(Array.from(item.$.perks ?? [])) || "None"
               }
             ]);
 
@@ -588,10 +588,9 @@ export function modifierDescriptor(modifiers: PassiveModifier[]) {
   return str;
 }
 
-export function abilitiesDescriptor(abilities: string[] | Set<string>) {
+export function abilitiesDescriptor(abilities: string[]) {
   var str = "";
-  // @ts-expect-error
-  if (abilities.length > 0 || abilities.size > 0) {
+  if (abilities.length > 0) {
     for (const ab of abilities) {
       const ability = AbilitiesManager.map.get(ab);
       if (!ability) continue;
@@ -604,10 +603,9 @@ export function abilitiesDescriptor(abilities: string[] | Set<string>) {
 }
 
 
-export function passivesDescriptor(passives: Set<string | PassiveEffect> | (string | PassiveEffect)[]) {
+export function passivesDescriptor(passives: (string | PassiveEffect)[]) {
   var str = "";
-  // @ts-expect-error
-  if (passives.length > 0 || passives.size > 0) {
+  if (passives.length > 0) {
     for (const passive of passives) {
       if (typeof passive === "string") {
         str += `[**G**] ${PassivesManager.map.get(passive)?.$.info.name} \`${passive}\`\n`;
@@ -619,10 +617,9 @@ export function passivesDescriptor(passives: Set<string | PassiveEffect> | (stri
   }
   return str;
 }
-export function perksDescriptor(perks: Set<string | CreaturePerk> | (string | CreaturePerk)[]) {
+export function perksDescriptor(perks: (string | CreaturePerk)[]) {
   var str = "";
-  // @ts-expect-error
-  if (perks.length > 0 || perks.size > 0) {
+  if (perks.length > 0) {
     for (const perk of perks) {
       if (typeof perk === "string") {
         str += `[**G**] ${PassivesManager.map.get(perk)?.$.info.name} \`${perk}\`\n`;

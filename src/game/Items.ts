@@ -54,7 +54,7 @@ export interface BaseItemData {
 }
 
 interface PassiveItemData extends BaseItemData {
-  passives?: (PassiveEffect | string)[]
+  passives?: Set<PassiveEffect|string>
   abilities?: Set<string>
   perks?: Set<(string | CreaturePerk)>
   unique?: Set<string>

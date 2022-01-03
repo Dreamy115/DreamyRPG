@@ -1,4 +1,4 @@
-import { Client, EmbedFieldData, MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu } from "discord.js";
+import { Client, EmbedFieldData, MessageActionRow, MessageAttachment, MessageButton, MessageEmbed, MessageSelectMenu } from "discord.js";
 import { DisplaySeverity, replaceEffectLore, romanNumeral } from "../../game/ActiveEffects.js";
 import Creature from "../../game/Creature.js";
 import { replaceLore } from "../../game/CreatureAbilities.js";
@@ -481,7 +481,8 @@ export default new ApplicationCommandHandler(
               .setStyle("SECONDARY")
               .setLabel("Scroll +")
           ])]
-          : undefined
+          : undefined,
+          files: info.attachments
         })
       } break;
       case "editmenu": {
@@ -497,20 +498,21 @@ export default new ApplicationCommandHandler(
 
         interaction.editReply({
           content: `Editing menu for **${char.displayName}**`,
-          components: ceditMenu(char)
+          components: ceditMenu(char),
         })
       } break;
     }
   }
 )
 
-const PER_INDEX_PAGE = 10;
-export async function infoEmbed(creature: Creature, Bot: Client, page: string, index = 0): Promise<{embed: MessageEmbed, scrollable: boolean}> {
+const PER_INDEX_PAGE = 6;
+export async function infoEmbed(creature: Creature, Bot: Client, page: string, index = 0): Promise<{embed: MessageEmbed, attachments?: MessageAttachment[], scrollable: boolean}> {
   const embed = new MessageEmbed();
 
   const owner = await Bot.users.fetch(creature.$._id).catch(() => null);
 
   let scrollable = false;
+  let attachments: MessageAttachment[] = [];
   let total = 0;
 
   embed
@@ -522,7 +524,13 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
   switch (page) {
     default:
     case "debug": {
-      embed.setDescription("```json\n" + JSON.stringify(creature.$, undefined, "  ") + "```");
+      const stringified = JSON.stringify(creature.$, undefined, "  ");
+      if (stringified.length > 4096 - 12) {
+        embed.setDescription("Too big! Check attachment!");
+        attachments.push(new MessageAttachment(Buffer.from(stringified, "utf-8")).setName("info.json"));
+      } else {
+        embed.setDescription("```json\n" + stringified + "```");
+      }
     } break;
     case "stats": {
       const health_injury_proportions = (creature.$.stats.health.value - creature.$.vitals.injuries) / creature.$.stats.health.value;
@@ -602,7 +610,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
         const passive = passives[i];
 
         embed.addField(
-          `<${i}> ${passive.$.info.name}`,
+          `<${i+1}> ${passive.$.info.name}`,
           function() {
             var str = `*${passive.$.info.lore}*`;
             if ((passive.$.modifiers ?? []).length > 0) {
@@ -664,7 +672,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
 
             for (var i = index * PER_INDEX_PAGE; i < creature.items.length && i < PER_INDEX_PAGE * (index + 1); i++) {
               const item = creature.items[i];
-              str += `<**${i}**> **${item.$.info.name}** \`${item.$.id}\`\n*${item.$.info.lore}*\n\n`
+              str += `<**${i+1}**> **${item.$.info.name}** \`${item.$.id}\`\n*${item.$.info.lore}*\n\n`
             }
 
             return str.trim();
@@ -684,7 +692,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
               const item = ItemManager.map.get(creature.$.items.backpack[i]);
               if (!item) continue;
 
-              str += `<**${i}**> **${item.$.info.name}** \`${item.$.id}\`\n*${item.$.info.lore}*\n\n`
+              str += `<**${i+1}**> **${item.$.info.name}** \`${item.$.id}\`\n*${item.$.info.lore}*\n\n`
             }
 
             return str;
@@ -719,7 +727,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
           const ability = abilities[i];
 
           array.push({
-            name: `<${i}> \`${ability.$.id}\` ${ability.$.info.name}`,
+            name: `<${i+1}> \`${ability.$.id}\` ${ability.$.info.name}`,
             value: `${replaceLore(ability.$.info.lore, ability.$.info.lore_replacers, creature)}\n\n**${ability.$.haste ?? 1}** Haste`
           })
         }
@@ -785,7 +793,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
         if (!effectData) continue;
     
         embed.addField(
-          `<${i}> ${effectData.$.info.name} ${function() {
+          `<${i+1}> ${effectData.$.info.name} ${function() {
             switch (effectData.$.display_severity) {
               default: return "";
               case DisplaySeverity.ARABIC: return String(effect.severity);
@@ -914,7 +922,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
       for (var i = index * PER_INDEX_PAGE; i < perks.length && i < PER_INDEX_PAGE * (index + 1); i++) {
         const perk = perks[i]
         embed.addField(
-          `<${i}> \`${perk.$.id}\` **${perk.$.info.name}**`,
+          `<${i+1}> \`${perk.$.id}\` **${perk.$.info.name}**`,
           `${perk.$.info.lore}`
         )
       }
@@ -927,7 +935,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
       for (var i = index * PER_INDEX_PAGE; i < skills.length && i < PER_INDEX_PAGE * (index + 1); i++) {
         const skill = skills[i]
         embed.addField(
-          `<${i}> \`${skill.$.id}\` **${skill.$.info.name}**`,
+          `<${i+1}> \`${skill.$.id}\` **${skill.$.info.name}**`,
           `*${skill.$.info.lore}*\n\n` +
           `**Perks**:${perksDescriptor(Array.from(skill.$.perks ?? []))}\n\n` +
           `**Passives**:${passivesDescriptor(Array.from(skill.$.passives ?? []))}\n\n` +
@@ -950,7 +958,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
 
           const result = ItemManager.map.get(recipe.$.result);
 
-          str += `<**${i}**> \`${recipe.$.id}\` >> ${result?.$.info.name} (\`${recipe.$.result}\`)\n`;
+          str += `<**${i+1}**> \`${recipe.$.id}\` >> ${result?.$.info.name} (\`${recipe.$.result}\`)\n`;
         }
 
         return str;
@@ -1006,11 +1014,11 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
   embed.setFooter(
     `ID: ${creature.$._id}${(creature.$.info.locked || creature.$.info.npc) ? "" : " | NOT LOCKED"}` +
     (scrollable
-    ? ` | ${index * PER_INDEX_PAGE}-${((index + 1) * PER_INDEX_PAGE) - 1}/${total}`
+    ? ` | ${(index * PER_INDEX_PAGE) + 1}-${(index + 1) * PER_INDEX_PAGE}/${total}`
     : "")
   )
 
-  return {embed, scrollable};
+  return {embed, scrollable, attachments};
 }
 
 const BAR_STYLE = bar_styles[0];

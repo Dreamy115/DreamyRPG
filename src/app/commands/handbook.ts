@@ -356,7 +356,7 @@ export default new ApplicationCommandHandler(
               }
             ]);
 
-            if (item.$.compatibleSpecies && item.$.compatibleSpecies.length > 0) {
+            if (item.$.compatibleSpecies && item.$.compatibleSpecies.size > 0) {
               const species: string[] = [];
               for (const r of item.$.compatibleSpecies) {
                 const race = SpeciesManager.map.get(r);
@@ -407,7 +407,7 @@ export default new ApplicationCommandHandler(
               }
             ]);
 
-            if (item.$.compatibleSpecies && item.$.compatibleSpecies.length > 0) {
+            if (item.$.compatibleSpecies && item.$.compatibleSpecies.size > 0) {
               const species: string[] = [];
               for (const r of item.$.compatibleSpecies) {
                 const race = SpeciesManager.map.get(r);
@@ -422,7 +422,7 @@ export default new ApplicationCommandHandler(
               )
             }
           } else if (item instanceof CreaturePerk) {
-            if (item.$.compatibleSpecies && item.$.compatibleSpecies.length > 0) {
+            if (item.$.compatibleSpecies && item.$.compatibleSpecies.size > 0) {
               const species: string[] = [];
               for (const r of item.$.compatibleSpecies) {
                 const race = SpeciesManager.map.get(r);
@@ -436,7 +436,7 @@ export default new ApplicationCommandHandler(
                 species.join(", ")
               )
             }
-            if (item.$.compatibleClasses && item.$.compatibleClasses.length > 0) {
+            if (item.$.compatibleClasses && item.$.compatibleClasses.size > 0) {
               const classes: string[] = [];
               for (const c of item.$.compatibleClasses) {
                 const kit = ClassManager.map.get(c);
@@ -451,7 +451,7 @@ export default new ApplicationCommandHandler(
               )
             }
           } else if (item instanceof CraftingRecipe) {
-            if (item.$.requirements.perks && item.$.requirements.perks.length > 0)
+            if (item.$.requirements.perks && item.$.requirements.perks.size > 0)
               embed.addField(
                 "Required Perks",
                 function () {
@@ -588,9 +588,10 @@ export function modifierDescriptor(modifiers: PassiveModifier[]) {
   return str;
 }
 
-export function abilitiesDescriptor(abilities: string[]) {
+export function abilitiesDescriptor(abilities: string[] | Set<string>) {
   var str = "";
-  if (abilities.length > 0) {
+  // @ts-expect-error
+  if (abilities.length > 0 || abilities.size > 0) {
     for (const ab of abilities) {
       const ability = AbilitiesManager.map.get(ab);
       if (!ability) continue;
@@ -603,23 +604,25 @@ export function abilitiesDescriptor(abilities: string[]) {
 }
 
 
-export function passivesDescriptor(passives: (string | PassiveEffect)[]) {
+export function passivesDescriptor(passives: Set<string | PassiveEffect> | (string | PassiveEffect)[]) {
   var str = "";
-  if (passives.length > 0) {
+  // @ts-expect-error
+  if (passives.length > 0 || passives.size > 0) {
     for (const passive of passives) {
       if (typeof passive === "string") {
         str += `[**G**] ${PassivesManager.map.get(passive)?.$.info.name} \`${passive}\`\n`;
       } else {
-        str += `[**L**] ${passive.$.info.name}\n*${passive.$.info.lore}*\n${(passive.$.unique ?? []).length > 0 ? `Unique flags: ${passive.$.unique?.join(", ")}\n` : ""}\n${(passive.$.modifiers ?? []).length > 0 ? `**Modifiers**\n${modifierDescriptor(passive.$.modifiers ?? [])}` : ""}`;
+        str += `[**L**] ${passive.$.info.name}\n*${passive.$.info.lore}*\n${(passive.$.unique ?? new Set()).size > 0 ? `Unique flags: ${Array.from(passive.$.unique ?? []).join(", ")}\n` : ""}\n${(passive.$.modifiers ?? []).length > 0 ? `**Modifiers**\n${modifierDescriptor(passive.$.modifiers ?? [])}` : ""}`;
       }
     }
     str += "\n"
   }
   return str;
 }
-export function perksDescriptor(perks: (string | CreaturePerk)[]) {
+export function perksDescriptor(perks: Set<string | CreaturePerk> | (string | CreaturePerk)[]) {
   var str = "";
-  if (perks.length > 0) {
+  // @ts-expect-error
+  if (perks.length > 0 || perks.size > 0) {
     for (const perk of perks) {
       if (typeof perk === "string") {
         str += `[**G**] ${PassivesManager.map.get(perk)?.$.info.name} \`${perk}\`\n`;

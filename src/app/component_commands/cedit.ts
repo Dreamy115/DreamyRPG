@@ -191,7 +191,7 @@ export default new ComponentCommandHandler(
                 })
                 return;
               }
-              if (chosen_class.$.compatibleSpecies.length > 0 && !chosen_class.$.compatibleSpecies.includes(creature.$.info.species)) {
+              if (chosen_class.$.compatibleSpecies.size > 0 && !chosen_class.$.compatibleSpecies.has(creature.$.info.species)) {
                 interaction.followUp({
                   ephemeral: true,
                   content: "Class incompatible with race"
@@ -227,7 +227,7 @@ export default new ComponentCommandHandler(
               return;
             }
 
-            if (chosen_class.$.compatibleSpecies.length > 0 && !chosen_class.$.compatibleSpecies.includes(creature.$.info.species)) {
+            if (chosen_class.$.compatibleSpecies.size > 0 && !chosen_class.$.compatibleSpecies.has(creature.$.info.species)) {
               interaction.followUp({
                 ephemeral: true,
                 content: "Class incompatible with race"
@@ -1140,7 +1140,7 @@ export function ceditMenu(creature: Creature): MessageActionRow[] {
         const array: MessageSelectOptionData[] = [];
 
         for (const itemclass of ClassManager.map.values()) {
-          if (itemclass.$.compatibleSpecies.length == 0 || itemclass.$.compatibleSpecies.includes(creature.$.info.species))
+          if (itemclass.$.compatibleSpecies.size == 0 || itemclass.$.compatibleSpecies.has(creature.$.info.species))
             array.push({
               label: itemclass.$.info.name,
               value: itemclass.$.id,

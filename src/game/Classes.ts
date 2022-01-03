@@ -36,7 +36,7 @@ export class CreatureClass {
       name: string
       lore: string
     }
-    compatibleSpecies: string[] // Empty means everything
+    compatibleSpecies: Set<string> // Empty means everything
     schematics?: Set<string>
     passives?: Set<(string | PassiveEffect)>
     abilities?: Set<string>

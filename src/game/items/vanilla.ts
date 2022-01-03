@@ -12,7 +12,7 @@ export default [
     },
     type: "wearable",
     subtype: "utility",
-    unique: ["shield"],
+    unique: new Set(["shield"]),
     passives: [
       new PassiveEffect({
         info: {

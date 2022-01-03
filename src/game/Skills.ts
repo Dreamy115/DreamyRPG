@@ -35,12 +35,12 @@ export class CreatureSkill {
       name: string
       lore: string
     }
-    compatibleSpecies?: string[]
-    compatibleClasses?: string[]
-    passives?: (string | PassiveEffect)[]
-    abilities?: string[]
-    perks?: (string | CreaturePerk)[]
-    unique?: string[]
+    compatibleSpecies?: Set<string>
+    compatibleClasses?: Set<string>
+    passives?: Set<(string | PassiveEffect)>
+    abilities?: Set<string>
+    perks?: Set<(string | CreaturePerk)>
+    unique?: Set<string>
   }
 
   constructor(data: CreatureSkill["$"]) {

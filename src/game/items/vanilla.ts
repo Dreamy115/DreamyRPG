@@ -1,5 +1,5 @@
 import { HealType } from "../Creature";
-import { DamageMedium, DamageType } from "../Damage";
+import { DamageMethod, DamageType } from "../Damage";
 import { Item } from "../Items";
 import { PassiveEffect } from "../PassiveEffects";
 
@@ -34,7 +34,7 @@ export default [
       lore: "You found this laying around! You can make use of it!"
     },
     attack: {
-      type: DamageMedium.Melee,
+      type: DamageMethod.Melee,
       weak: [
         {
           modifiers: {
@@ -93,7 +93,7 @@ export default [
       lore: "Nothing special. This outdated revolver still uses .45 ACP.\n**Revolver Perk** - Damage group count increases with attack stability!"
     },
     attack: {
-      type: DamageMedium.Ranged,
+      type: DamageMethod.Ranged,
       weak: [
         { 
           modifiers: {

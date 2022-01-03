@@ -37,11 +37,11 @@ export class CreatureClass {
       lore: string
     }
     compatibleSpecies: string[] // Empty means everything
-    schematics?: string[]
-    passives?: (string | PassiveEffect)[]
-    abilities?: string[]
+    schematics?: Set<string>
+    passives?: Set<(string | PassiveEffect)>
+    abilities?: Set<string>
     items?: string[]
-    perks?: (string | CreaturePerk)[]
+    perks?: Set<(string | CreaturePerk)>
   }
 
   constructor(data: CreatureClass["$"]) {

@@ -37,7 +37,7 @@ Signatured (with ID) vs Signatureless Effects (without ID)
 Signatured Effects are effects accessible from the effect manager, and are meant to be global
 Signatureless Effects are meant to be locally accessible, and are not unique!
 
-unique?: string[] - is an optional list of names, signaling uniqueness.
+unique?: Set<string> - is an optional list of names, signaling uniqueness.
 Two effects with overlapping uniques list cannot be loaded on a creature at the same time. Only one will be loaded!
 
 Signatureless Effects CAN have unique lists, and will have priority.
@@ -49,7 +49,7 @@ export class PassiveEffect {
       name: string
       lore: string
     }
-    unique?: string[]
+    unique?: Set<string>
     // preload is called while parsing, BEFORE vitals are loaded.
     preload?: (creature: Creature) => void
     // postload is called while parsing, AFTER vitals are loaded.

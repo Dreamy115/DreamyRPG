@@ -2,7 +2,7 @@ import { Client, EmbedFieldData, MessageActionRow, MessageEmbed, MessageSelectMe
 import { DisplaySeverity, replaceEffectLore, romanNumeral } from "../../game/ActiveEffects.js";
 import Creature from "../../game/Creature.js";
 import { replaceLore } from "../../game/CreatureAbilities.js";
-import { reductionMultiplier, DAMAGE_TO_INJURY_RATIO, DamageMedium, DamageType } from "../../game/Damage.js";
+import { reductionMultiplier, DAMAGE_TO_INJURY_RATIO, DamageMethod, DamageType } from "../../game/Damage.js";
 import { CombatPosition } from "../../game/Fight.js";
 import { AttackData } from "../../game/Items.js";
 import { deltaHeatInfo } from "../../game/Locations.js";
@@ -696,7 +696,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string): 
       }())
     } break;
     case "attack": {
-      function attackInfo(creature: Creature, attacks: AttackData[], type: DamageMedium) {
+      function attackInfo(creature: Creature, attacks: AttackData[], type: DamageMethod) {
         var str = "";
 
         for (const attackdata of attacks) {
@@ -705,7 +705,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string): 
             var str = "";
 
             for (const source of attackdata.sources) {
-              str += `[**${Math.round(source.flat_bonus + (source.from_skill * (type === DamageMedium.Melee ? creature.$.stats.melee.value : creature.$.stats.ranged.value)))} *(${source.flat_bonus} + ${Math.round(100 * source.from_skill) / 100}x)* ${DamageType[source.type]}**]\n`
+              str += `[**${Math.round(source.flat_bonus + (source.from_skill * (type === DamageMethod.Melee ? creature.$.stats.melee.value : creature.$.stats.ranged.value)))} *(${source.flat_bonus} + ${Math.round(100 * source.from_skill) / 100}x)* ${DamageType[source.type]}**]\n`
             }
 
             return str;
@@ -722,7 +722,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string): 
       embed.addFields([
         {
           name: "Position",
-          value: `${CombatPosition[attack.type]} - ${DamageMedium[attack.type]}`
+          value: `${CombatPosition[attack.type]} - ${DamageMethod[attack.type]}`
         },
         {
           name: "Crit",

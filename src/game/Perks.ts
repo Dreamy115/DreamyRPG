@@ -33,8 +33,8 @@ export class CreaturePerk {
       name: string
       lore: string
     }
-    compatibleSpecies?: string[]
-    compatibleClasses?: string[]
+    compatibleSpecies?: Set<string>
+    compatibleClasses?: Set<string>
   }
 
   constructor(data: CreaturePerk["$"]) {

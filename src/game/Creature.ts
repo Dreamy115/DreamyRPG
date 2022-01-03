@@ -364,18 +364,18 @@ export default class Creature {
 
     const species = SpeciesManager.map.get(this.$.info.species);
     if (species) {
-      globalOrLocalPusher(abilities, species.$.abilities ?? [], AbilitiesManager);
+      globalOrLocalPusherArray(abilities, Array.from(species.$.abilities?.values() ?? []), AbilitiesManager);
     }
 
     const kit = ClassManager.map.get(this.$.info.class ?? "");
     if (kit) {
-      globalOrLocalPusher(abilities, kit.$.abilities ?? [], AbilitiesManager);
+      globalOrLocalPusherArray(abilities, Array.from(kit.$.abilities?.values() ?? []), AbilitiesManager);
     } 
 
 
     for (const item of this.items) {
       // @ts-expect-error
-      globalOrLocalPusher(abilities, item.$.abilities ?? [], AbilitiesManager);
+      globalOrLocalPusherArray(abilities, Array.from(item.$.abilities?.values() ?? []), AbilitiesManager);
     }
 
     const uniques: string[] = [];
@@ -396,39 +396,37 @@ export default class Creature {
   }
 
   get passives(): PassiveEffect[] {
-    const passives: PassiveEffect[] = [];
+    const passives = new Set<PassiveEffect>();
 
     const species = SpeciesManager.map.get(this.$.info.species);
     if (species) {
-      globalOrLocalPusher(passives, species.$.passives ?? [], PassivesManager);
+      globalOrLocalPusherSet(passives, species.$.passives ?? new Set(), PassivesManager);
     }
 
     const kit = ClassManager.map.get(this.$.info.class ?? "");
     if (kit) {
-      globalOrLocalPusher(passives, kit.$.passives ?? [], PassivesManager);
+      globalOrLocalPusherSet(passives, kit.$.passives ?? new Set(), PassivesManager);
     } 
 
 
     for (const item of this.items) {
       // @ts-expect-error
-      globalOrLocalPusher(passives, item.$.passives ?? [], PassivesManager);
+      globalOrLocalPusherSet(passives, item.$.passives ?? new Set(), PassivesManager);
     }
 
-    const uniques: string[] = [];
-    for (var i = 0; i < passives.length; i++) {
-      const passive = passives[i];
+    const uniques = new Set<string>();
+    for (const passive of passives) {
       for (const u of passive.$.unique ?? []) {
-        if (uniques.includes(u)) {
-          passives.splice(i, 1);
-          i--;
+        if (uniques.has(u)) {
+          passives.delete(passive);
           break;
         } else {
-          uniques.push(u);
+          uniques.add(u);
         }
       }
     }
 
-    return [...new Set(passives)];
+    return [...passives];
   }
 
   get items(): Item[] {
@@ -747,53 +745,51 @@ export default class Creature {
 
 
   get perks(): CreaturePerk[] {
-    const perks: CreaturePerk[] = [];
+    const perks = new Set<CreaturePerk>();
 
     const race = SpeciesManager.map.get(this.$.info.species);
-    globalOrLocalPusher(perks, race?.$.perks ?? [], PerkManager);
+    globalOrLocalPusherSet(perks, race?.$.perks ?? new Set(), PerkManager);
 
     const kit = ClassManager.map.get(this.$.info.class ?? "");
-    globalOrLocalPusher(perks, kit?.$.perks ?? [], PerkManager);
+    globalOrLocalPusherSet(perks, kit?.$.perks ?? new Set(), PerkManager);
     
     for (const skill of this.skills) {
-      globalOrLocalPusher(perks, skill.$.perks ?? [], PerkManager);
+      globalOrLocalPusherSet(perks, skill.$.perks ?? new Set(), PerkManager);
     }
 
     const items = this.items;
     for (const item of items) {
       // @ts-expect-error
-      globalOrLocalPusher(perks, item.$.perks ?? [], PerkManager)
+      globalOrLocalPusherSet(perks, item.$.perks ?? new Set(), PerkManager)
     }
 
-    return [...new Set(perks)];
+    return [...perks];
   }
 
   get skills(): CreatureSkill[] {
-    const array: CreatureSkill[] = [];
+    const set = new Set<CreatureSkill>();
     
     for (const s of this.$.items.skills) {
       const skill = SkillManager.map.get(s);
       if (skill)
-        array.push(skill);
+        set.add(skill);
     }
 
-    const uniques: string[] = [];
-    for (var s = 0; s < array.length; s++) {
-      const skill = array[s];
-      if (!skill.$.unique || skill.$.unique.length === 0) continue;
+    const uniques = new Set<string>();
+    for (const skill of set) {
+      if (!skill.$.unique || skill.$.unique.size === 0) continue;
 
       for (const u of skill.$.unique) {
-        if (uniques.includes(u)) {
-          array.splice(s, 1);
-          s--;
+        if (uniques.has(u)) {
+          set.delete(skill);
           break;
         } else {
-          uniques.push(u);
+          uniques.add(u);
         }
       }
     }
 
-    return [...new Set(array)];
+    return [...set];
   }
 
   get location() {
@@ -1195,7 +1191,7 @@ export enum HealType {
   "Health", "Shield", "Overheal", "Mana", "Injuries"
 }
 
-function globalOrLocalPusher<T>(array: T[], input: (T | string)[], manager: any) {
+function globalOrLocalPusherArray<T>(array: T[], input: (T | string)[], manager: any) {
   for (const p of input) {
     if (typeof p === "string") {
       const item = manager.map.get(p);
@@ -1203,6 +1199,17 @@ function globalOrLocalPusher<T>(array: T[], input: (T | string)[], manager: any)
         array.push(item);
     } else {
       array.push(p);
+    }
+  }
+}
+function globalOrLocalPusherSet<T>(array: Set<T>, input: Set<T | string>, manager: any) {
+  for (const p of input) {
+    if (typeof p === "string") {
+      const item = manager.map.get(p);
+      if (item)
+        array.add(item);
+    } else {
+      array.add(p);
     }
   }
 }

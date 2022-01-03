@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 
 import { PassiveEffect } from "./PassiveEffects";
-import { DamageMedium, DamageType } from "./Damage";
+import { DamageMethod, DamageType } from "./Damage";
 import { CreaturePerk } from "./Perks";
 import Creature from "./Creature";
 import { AbilityUseLog } from "./CreatureAbilities";
@@ -55,9 +55,9 @@ export interface BaseItemData {
 
 interface PassiveItemData extends BaseItemData {
   passives?: (PassiveEffect | string)[]
-  abilities?: string[]
-  perks?: (string | CreaturePerk)[]
-  unique?: string[]
+  abilities?: Set<string>
+  perks?: Set<(string | CreaturePerk)>
+  unique?: Set<string>
 }
 export interface WearableItemData extends PassiveItemData {
   type: "wearable"
@@ -79,7 +79,7 @@ export interface AttackSet {
   crit: AttackData[]
   normal: AttackData[]
   weak: AttackData[]
-  type: DamageMedium
+  type: DamageMethod
 }
 export interface AttackData {
   modifiers?: {

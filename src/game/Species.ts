@@ -38,10 +38,10 @@ export class CreatureSpecies {
       description: string
     }
     playable: boolean
-    passives?: (string | PassiveEffect)[]
-    schematics?: string[]
-    abilities?: string[]
-    perks?: (string | CreaturePerk)[]
+    passives?: Set<(string | PassiveEffect)>
+    schematics?: Set<string>
+    abilities?: Set<string>
+    perks?: Set<(string | CreaturePerk)>
   }
 
   constructor(data: CreatureSpecies["$"]) {

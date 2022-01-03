@@ -4,7 +4,7 @@ import Creature from "./Creature";
 export enum DamageType {
   "True", "Physical", "Energy"
 }
-export enum DamageMedium {
+export enum DamageMethod {
   "Direct", "Melee", "Ranged"
 }
 
@@ -17,7 +17,7 @@ export interface DamageGroup {
   sources: DamageSource[]
   attacker?: Creature | string
   victim?: Creature
-  medium: DamageMedium
+  method: DamageMethod
   penetration?: {
     lethality?: number
     defiltering?: number
@@ -100,7 +100,7 @@ export function damageLogEmbed(log: DamageLog) {
 }
 
 function damageGroupString(group: DamageGroup) {
-  return `**${group.chance}%** Chance\n**${DamageMedium[group.medium]} ${DamageCause[group.cause]}**, Shield reaction: **${ShieldReaction[group.shieldReaction]}**\n` +
+  return `**${group.chance}%** Chance\n**${DamageMethod[group.method]} ${DamageCause[group.cause]}**, Shield reaction: **${ShieldReaction[group.shieldReaction]}**\n` +
   `*${!group.useDodge ? "Not " : ""}Dodgeable*\n` +
   `Lethality **${group.penetration?.lethality ?? 0}** | **${group.penetration?.defiltering ?? 0}** Defiltering | **${group.penetration?.cutting ?? 0}** Cutting\n\n` +
   `**Sources**\n` +

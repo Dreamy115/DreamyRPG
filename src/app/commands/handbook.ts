@@ -4,7 +4,7 @@ import { ActiveEffect, DisplaySeverity, romanNumeral } from "../../game/ActiveEf
 import { CreatureClass } from "../../game/Classes";
 import { CraftingRecipe } from "../../game/Crafting";
 import { CreatureAbility, replaceLore } from "../../game/CreatureAbilities";
-import { DamageMedium, DamageType } from "../../game/Damage";
+import { DamageMethod, DamageType } from "../../game/Damage";
 import { AttackData, AttackSet, Item } from "../../game/Items";
 import { GameLocation } from "../../game/Locations";
 import { PassiveEffect, PassiveModifier } from "../../game/PassiveEffects";
@@ -267,7 +267,7 @@ export default new ApplicationCommandHandler(
                 embed
                 .addField(
                   "Type",
-                  `${DamageMedium[item.$.attack.type]} Weapon`
+                  `${DamageMethod[item.$.attack.type]} Weapon`
                 ).addFields([
                   {
                     name: "Crit",

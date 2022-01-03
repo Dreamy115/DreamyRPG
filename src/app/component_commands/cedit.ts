@@ -3,7 +3,7 @@ import { capitalize, ClassManager, CONFIG, ItemManager, limitString, messageInpu
 import { CraftingMaterials } from "../../game/Crafting";
 import Creature, { HealType } from "../../game/Creature";
 import { AbilityUseLog } from "../../game/CreatureAbilities";
-import { DamageCause, DamageGroup, damageLogEmbed, DamageMedium, DamageType, ShieldReaction } from "../../game/Damage";
+import { DamageCause, DamageGroup, damageLogEmbed, DamageMethod, DamageType, ShieldReaction } from "../../game/Damage";
 import { Item } from "../../game/Items";
 import { TrackableStat } from "../../game/Stats";
 import { infoEmbed } from "../commands/char";
@@ -743,63 +743,6 @@ export default new ComponentCommandHandler(
             }
 
             switch (args.shift()) {
-              case "damage": {
-                await interaction.followUp({
-                  ephemeral: true,
-                  content: 
-                    "Please input damage string using this syntax: `<type>,<medium>,<value>,<chance>,<penetration>,<shield_reaction>` without spaces, whole numbers, and without %.\n" +
-                    "Possible values:\n" +
-                    "`<type>` - `Physical` `Energy` `True`\n" +
-                    "`<medium>` - `Melee` `Ranged` `Direct`\n" +
-                    "`<value>` `<chance>` `<penetration>` - A non-negative integer\n" +
-                    "`<shield_reaction>` - `Normal` `Ignore` `Only`\n"+
-                    "ex. `Physical,Melee,25,100,0,Normal`"
-                });
-
-                var inputmsg = await messageInput(channel, interaction.user.id).catch(() => "#");
-                if (inputmsg === "#") {
-                  interaction.followUp({
-                    ephemeral: true,
-                    content: "Cancelled"
-                  });
-                  return;
-                }
-
-                const input = inputmsg.split(",");
-
-                try {
-                  const group: DamageGroup = {
-                    chance: Number(input[3]),
-                    // @ts-expect-error
-                    medium: DamageMedium[input[1]],
-                    penetration: {
-                      defiltering: Number(input[4]),
-                      lethality: Number(input[4])
-                    },
-                    // @ts-expect-error
-                    shieldReaction: ShieldReaction[input[5]],
-                    useDodge: true,
-                    sources: [{
-                      // @ts-expect-error
-                      type: DamageType[input[0]],
-                      value: Number(input[2])
-                    }],
-                    cause: DamageCause.Other
-                  }
-
-                  interaction.followUp({
-                    embeds: [damageLogEmbed(creature.applyDamage(group))]
-                  });
-                } catch (e) {
-                  console.error(e);
-                  interaction.followUp({
-                    ephemeral: true,
-                    content: "Error!"
-                  });
-                  return;
-                }
-
-              } break;
               case "heal": {
                 await interaction.followUp({
                   ephemeral: true,
@@ -1251,7 +1194,8 @@ export function gm_ceditMenu(creature_id: string): MessageActionRow[] {
       new MessageButton()
         .setCustomId(`cedit/${creature_id}/edit/gm/damage`)
         .setStyle("DANGER")
-        .setLabel("Deal Damage"),
+        .setDisabled(true)
+        .setLabel("Deal Damage (CLI Only)"),
       new MessageButton()
         .setCustomId(`cedit/${creature_id}/edit/gm/heal`)
         .setStyle("SUCCESS")
@@ -1261,11 +1205,13 @@ export function gm_ceditMenu(creature_id: string): MessageActionRow[] {
       new MessageButton()
         .setCustomId(`cedit/${creature_id}/edit/gm/effect/apply`)
         .setStyle("PRIMARY")
-        .setLabel("Apply Effect"),
+        .setDisabled(true)
+        .setLabel("Apply Effect (CLI Only)"),
       new MessageButton()
         .setCustomId(`cedit/${creature_id}/edit/gm/effect/clear`)
         .setStyle("PRIMARY")
-        .setLabel("Clear Effect"),
+        .setDisabled(true)
+        .setLabel("Clear Effect (CLI Only)"),
       new MessageButton()
         .setCustomId(`cedit/${creature_id}/edit/gm/effect/clear_all`)
         .setStyle("SECONDARY")
@@ -1275,7 +1221,8 @@ export function gm_ceditMenu(creature_id: string): MessageActionRow[] {
       new MessageButton()
         .setCustomId(`cedit/${creature_id}/edit/gm/item/add`)
         .setStyle("PRIMARY")
-        .setLabel("Add Item"),
+        .setDisabled(true)
+        .setLabel("Add Item (CLI Only)"),
       new MessageButton()
         .setCustomId(`cedit/${creature_id}/edit/gm/item/remove`)
         .setStyle("SECONDARY")
@@ -1283,7 +1230,8 @@ export function gm_ceditMenu(creature_id: string): MessageActionRow[] {
       new MessageButton()
         .setCustomId(`cedit/${creature_id}/edit/gm/skill/add`)
         .setStyle("PRIMARY")
-        .setLabel("Add Skill"),
+        .setDisabled(true)
+        .setLabel("Add Skill (CLI Only)"),
       new MessageButton()
         .setCustomId(`cedit/${creature_id}/edit/gm/skill/remove`)
         .setStyle("SECONDARY")

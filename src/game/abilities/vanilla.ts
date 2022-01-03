@@ -1,5 +1,5 @@
 import { CreatureAbility } from "../CreatureAbilities";
-import { DamageCause, DamageMedium, DamageType, ShieldReaction } from "../Damage";
+import { DamageCause, DamageMethod, DamageType, ShieldReaction } from "../Damage";
 
 export default [
   

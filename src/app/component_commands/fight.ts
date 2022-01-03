@@ -1,7 +1,7 @@
 import { MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu, MessageSelectMenuOptions, MessageSelectOptionData } from "discord.js";
 import { AbilitiesManager, CONFIG, sleep } from "../..";
 import Creature, { diceRoll } from "../../game/Creature";
-import { DamageCause, DamageLog, damageLogEmbed, DamageMedium, DamageSource, ShieldReaction } from "../../game/Damage";
+import { DamageCause, DamageLog, damageLogEmbed, DamageMethod, DamageSource, ShieldReaction } from "../../game/Damage";
 import { Combatant, CombatPosition, Fight } from "../../game/Fight";
 import { ComponentCommandHandler } from "../component_commands";
 
@@ -250,14 +250,14 @@ export default new ComponentCommandHandler(
           for (const set of creature.attackSet[type]) {
             let skill_value: number;
             switch (creature.attackSet.type) {
-              case DamageMedium.Direct:
+              case DamageMethod.Direct:
               default:
                 skill_value = Math.round((creature.$.stats.melee.value + creature.$.stats.ranged.value) / 2)
                 break;
-              case DamageMedium.Melee:
+              case DamageMethod.Melee:
                 skill_value = creature.$.stats.melee.value;
                 break;
-              case DamageMedium.Ranged:
+              case DamageMethod.Ranged:
                 skill_value = creature.$.stats.ranged.value;
                 break;
             }
@@ -265,7 +265,7 @@ export default new ComponentCommandHandler(
             logs.push(target.applyDamage({
               cause: attack_type,
               chance: accuracy_mod * (creature.$.stats.accuracy.value + (set.modifiers?.accuracy ?? 0)),
-              medium: creature.attackSet.type,
+              method: creature.attackSet.type,
               penetration: {
                 lethality: (set.modifiers?.lethality ?? 0) + creature.$.stats.lethality.value,
                 defiltering: (set.modifiers?.defiltering ?? 0) + creature.$.stats.defiltering.value,

@@ -1,6 +1,6 @@
 import { ActiveEffect, DisplaySeverity } from "../ActiveEffects";
 import Creature from "../Creature";
-import { DamageCause, DamageMedium, DamageType, ShieldReaction } from "../Damage";
+import { DamageCause, DamageMethod, DamageType, ShieldReaction } from "../Damage";
 import { ModifierType } from "../Stats";
 
 export default [
@@ -22,7 +22,7 @@ export default [
       creature.applyDamage({
         cause: DamageCause.DoT,
         chance: 100,
-        medium: DamageMedium.Direct,
+        method: DamageMethod.Direct,
         shieldReaction: ShieldReaction.Ignore,
         useDodge: false,
         sources: [{

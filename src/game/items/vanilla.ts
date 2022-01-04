@@ -179,15 +179,25 @@ export default [
     type: "consumable",
     info: {
       name: "Makeshift Bandage",
-      lore: "A bandage to stop **Bleeding** and heal **10** Injuries"
+      lore: "A bandage to stop **Bleeding** and heal **{0}** Injuries",
+      replacers: [
+        {
+          stat: "tech",
+          multiplier: 0.05,
+          bonus: 10
+        }
+      ]
     },
     onUse: async (creature) => {
       creature.clearActiveEffect("bleeding", "delete");
-      creature.heal(10, HealType.Injuries);
-      creature.heal(10, HealType.Health);
+
+      const amount = 10 + (creature.$.stats.tech.value * 0.05);
+
+      creature.heal(amount, HealType.Injuries);
+      creature.heal(amount, HealType.Health);
 
       return {
-        text: `**${creature.displayName}** used a Bandage; healed **10** Injuries and stopped bleeding, if any.`
+        text: `**${creature.displayName}** used a Bandage; healed **${amount}** Injuries and stopped bleeding, if any.`
       }
     },
     scrap: {

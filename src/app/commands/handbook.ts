@@ -314,6 +314,9 @@ export default new ApplicationCommandHandler(
                   "Type",
                   "Consumable"
                 )
+                
+                embed.setDescription(replaceLore(embed.description ?? "", item.$.info.replacers));
+
                 if (item.$.returnItems) {
                   embed.addField(
                     "Return After Use",

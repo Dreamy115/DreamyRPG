@@ -719,7 +719,14 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
               const item = ItemManager.map.get(creature.$.items.backpack[i]);
               if (!item) continue;
 
-              str += `<**${i+1}**> **${item.$.info.name}** \`${item.$.id}\`\n*${item.$.info.lore}*\n\n`
+              let lore = item.$.info.lore;
+              // @ts-expect-error
+              if (item.$.info.replacers) {
+                // @ts-expect-error
+                lore = replaceLore(lore, item.$.info.replacers, creature);
+              }
+
+              str += `<**${i+1}**> **${item.$.info.name}** \`${item.$.id}\`\n*${lore}*\n\n`
             }
 
             return str;

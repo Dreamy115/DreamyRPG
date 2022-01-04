@@ -5,7 +5,7 @@ import { PassiveEffect } from "./PassiveEffects";
 import { DamageMethod, DamageType } from "./Damage";
 import { CreaturePerk } from "./Perks";
 import Creature from "./Creature";
-import { AbilityUseLog } from "./CreatureAbilities";
+import { AbilityUseLog, LoreReplacer } from "./CreatureAbilities";
 import { CraftingMaterials } from "./Crafting";
 
 export default class ItemsManager {
@@ -70,6 +70,11 @@ export interface WeaponItemData extends PassiveItemData {
 
 export interface ConsumableItemData extends BaseItemData {
   type: "consumable"
+  info: {
+    name: string
+    lore: string
+    replacers: LoreReplacer[]
+  }
   onUse: (creature: Creature) => Promise<AbilityUseLog>
   returnItems?: string[]
 }

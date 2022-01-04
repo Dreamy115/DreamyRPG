@@ -70,7 +70,7 @@ export function replaceLore(input: string, replacers: LoreReplacer[], creature?:
       `${Math.round(1000 * replacer.multiplier) / 10}% ${replacer.bonus ? ((replacer.bonus > 0 ? "+" : "-") + Math.abs(replacer.bonus)) : ""} ${capitalize(replacer.stat.replaceAll(/_/g, " "))}` +
       (creature
       // @ts-expect-error
-      ? `*(${(creature.$.stats[replacer.stat]?.value * replacer.multiplier) + replacer.bonus})*`
+      ? ` (${(creature.$.stats[replacer.stat]?.value * replacer.multiplier) + replacer.bonus}) `
       : "")
     );
   }

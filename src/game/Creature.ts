@@ -55,7 +55,8 @@ export default class Creature {
         vamp: new TrackableStat(0),
         siphon: new TrackableStat(0),
         initiative: new TrackableStat(10),
-        insulation: new TrackableStat(0)
+        min_comfortable_temperature: new TrackableStat(15),
+        heat_capacity: new TrackableStat(100)
       },
       attributes: {
         STR: new TrackableStat(data.attributes?.STR ?? 0),
@@ -73,7 +74,8 @@ export default class Creature {
         health: (data.vitals?.health ?? 1),
         injuries: (data.vitals?.injuries ?? 0),
         mana: (data.vitals?.mana ?? 0),
-        shield: (data.vitals?.shield ?? 0)
+        shield: (data.vitals?.shield ?? 0),
+        heat: (data.vitals?.heat ?? 1)
       },
       items: {
         equipped: data.items?.equipped ?? [],
@@ -248,6 +250,7 @@ export default class Creature {
     this.$.vitals.health = Math.round(Math.min(Math.max(0, this.$.vitals.health), this.$.stats.health.value - this.$.vitals.injuries));
     this.$.vitals.mana = Math.round(Math.min(Math.max(0, this.$.vitals.mana), this.$.stats.mana.value));
     this.$.vitals.shield = Math.round(Math.min(Math.max(0, this.$.vitals.shield), this.$.stats.shield.value));
+    this.$.vitals.heat = Math.round(Math.min(Math.max(0, this.$.vitals.heat), this.$.stats.heat_capacity.value));
 
     if (isNaN(this.$.vitals.shield))
       this.$.vitals.shield = 0;
@@ -845,7 +848,7 @@ export default class Creature {
   }
 
   get deltaHeat() {
-    return (this.location?.$.temperature ?? 0) + this.$.stats.insulation.value;
+    return (this.location?.$.temperature ?? 0) - this.$.stats.min_comfortable_temperature.value;
   }
 
   static async fetch(id: string, db: typeof mongoose, cache = true): Promise<Creature> {
@@ -1119,7 +1122,8 @@ export interface CreatureData {
     vamp: TrackableStat
     siphon: TrackableStat
     initiative: TrackableStat
-    insulation: TrackableStat
+    min_comfortable_temperature: TrackableStat
+    heat_capacity: TrackableStat
     attack_cost: TrackableStat
   }
   attributes: {
@@ -1139,6 +1143,7 @@ export interface CreatureData {
     mana: number
     shield: number
     injuries: number
+    heat: number
   }
   items: {
     primary_weapon: string | null
@@ -1177,6 +1182,7 @@ export interface CreatureDump {
     mana?: number
     shield?: number
     injuries?: number
+    heat?: number
   }
   attributes?: {
     STR?: number

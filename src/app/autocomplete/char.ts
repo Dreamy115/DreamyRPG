@@ -2,6 +2,7 @@ import { ApplicationCommandOptionChoice } from "discord.js";
 import Mongoose from "mongoose";
 import { ItemManager, RecipeManager } from "../..";
 import Creature from "../../game/Creature";
+import { Item } from "../../game/Items";
 import { AutocompleteHandler } from "../autocomplete";
 import { getAutocompleteListOfItems } from "./handbook";
 
@@ -25,11 +26,28 @@ export default new AutocompleteHandler(
             const recipe = RecipeManager.map.get(schem);
             if (!recipe) continue;
 
-            const result = ItemManager.map.get(recipe.$.id);
+            const results: Item[] = [];
+            const names: string[] = [];
+            for (const res of recipe.$.results) {
+              const result = ItemManager.map.get(res);
+              if (!result) continue;
 
-            if (search.test(schem) || search.test(recipe.$.result) || search.test(result?.$.info.name ?? "Unknown")) {
+              results.push(result);
+              names.push(result.$.info.name)
+            }
+
+            if (
+              search.test(schem) ||
+              function() {
+                for (const result of results) {
+                  if (search.test(result.$.info.name) || search.test(result.$.id)) return true;
+                }
+
+                return false;
+              }()
+            ) {
               array.push({
-                name: `${recipe.$.id} >> ${result?.$.info.name} (${recipe.$.result})`,
+                name: `${recipe.$.id} >> ${names.join(", ")} (${recipe.$.results.join(", ")})`,
                 value: recipe.$.id
               })
             }

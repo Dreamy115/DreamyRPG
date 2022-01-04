@@ -57,18 +57,9 @@ export interface LocationEffect {
   severity: number
 }
 
-export function deltaHeatInfo(delta: number) {
-  // @ts-expect-error
-  const nums: deltaHeat[] = Object.values(deltaHeat).filter(x => !isNaN(x)).sort((a, b) => a - b);
-  if (delta > nums[nums.length - 1]) return deltaHeat[nums[nums.length - 1]];
-  if (delta < nums[0]) return deltaHeat[nums[0]];
-  return deltaHeat[delta];
+export function cToF(celsius: number) {
+  return celsius * 1.8 + 32
 }
-export enum deltaHeat {
-  "Warm" = 1,
-  "Liveable" = 0,
-  "Chilly" = -1,
-  "Cold" = -2,
-  "Freezing" = -3,
-  "Extreme" = -4
+export function fToC(fahrenheit: number) {
+  return (fahrenheit - 32) / 1.8
 }

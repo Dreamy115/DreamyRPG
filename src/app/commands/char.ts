@@ -4,8 +4,8 @@ import Creature from "../../game/Creature.js";
 import { replaceLore } from "../../game/CreatureAbilities.js";
 import { reductionMultiplier, DAMAGE_TO_INJURY_RATIO, DamageMethod, DamageType } from "../../game/Damage.js";
 import { CombatPosition } from "../../game/Fight.js";
-import { AttackData } from "../../game/Items.js";
-import { deltaHeatInfo } from "../../game/Locations.js";
+import { AttackData, Item } from "../../game/Items.js";
+import { cToF } from "../../game/Locations.js";
 import { PassiveModifier } from "../../game/PassiveEffects.js";
 import { textStat, ModifierType, TrackableStat } from "../../game/Stats.js";
 import { SpeciesManager, ClassManager, capitalize, ItemManager, EffectManager, AbilitiesManager, CONFIG, RecipeManager, PerkManager, LocationManager, limitString } from "../../index.js";
@@ -299,8 +299,13 @@ export default new ApplicationCommandHandler(
         const recipe = RecipeManager.map.get(interaction.options.getString("recipe_id", true));
         if (!recipe?.$.id) return;
         
-        const result = ItemManager.map.get(recipe.$.result);
-        if (!result?.$.id) return;
+        const results: Item[] = [];
+        for (const res of recipe.$.results) {
+          const result = ItemManager.map.get(res);
+          if (result)
+            results.push(result);
+        }
+        if (results.length === 0) return;
 
         const [creature,] = await Promise.all([
           Creature.fetch(interaction.user.id, db),
@@ -349,12 +354,21 @@ export default new ApplicationCommandHandler(
           creature.$.items.crafting_materials[mat] -= recipe.$.requirements.materials[mat];
         }
 
-        creature.$.items.backpack.push(result.$.id);
+        for (const result of results) {
+          creature.$.items.backpack.push(result.$.id);
+        }
 
         await creature.put(db);
 
         interaction.editReply({
-          content: `You got **${result.$.info.name}**!`
+          content: `You got **${function() {
+            const names: string[] = [];
+
+            for (const result of results)
+              names.push(result.$.info.name)
+
+            return names.join("**, **");
+          }()}**!`
         })
       } break;
       case "say": {
@@ -609,7 +623,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
           "\n" +
           `**${creature.$.stats.tenacity.value}** Tenacity *(Taking **${Math.round(100 * reductionMultiplier(creature.$.stats.tenacity.value) * DAMAGE_TO_INJURY_RATIO)}%** health damage as **Injuries**)*` +
           "\n" +
-          `**${creature.$.stats.insulation.value}** Insulation (**${creature.deltaHeat}** Delta Heat - ${deltaHeatInfo(creature.deltaHeat)})`
+          `**${creature.$.stats.min_comfortable_temperature.value}**°C (**${cToF(creature.$.stats.min_comfortable_temperature.value)}**°F) Min Comfortable Temperature *(**${creature.deltaHeat}**°C Delta)*`
         }
       ])
     } break;
@@ -969,9 +983,13 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
           const recipe = RecipeManager.map.get(schem);
           if (!recipe) continue;
 
-          const result = ItemManager.map.get(recipe.$.result);
+          const results: string[] = [];
+          for (const res of recipe.$.results) {
+            const result = ItemManager.map.get(res);
+            results.push(result?.$.info.name ?? "Invalid")
+          }
 
-          str += `<**${i+1}**> \`${recipe.$.id}\` >> ${result?.$.info.name} (\`${recipe.$.result}\`)\n`;
+          str += `<**${i+1}**> \`${recipe.$.id}\` >> ${results.join(", ")} (\`${recipe.$.results.join(", ")}\`)\n`;
         }
 
         return str;
@@ -988,7 +1006,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
 
         embed.addField(
           "Flags",
-          `**${location.$.temperature}** Temperature\n` +
+          `**${location.$.temperature}**°C (**${cToF(location.$.temperature)}**°F) Temperature\n` +
           `${location.$.shop !== undefined ? "⬜" : "🔳"} - \`/char shop\` ${location.$.shop !== undefined ? "available" : "unavailable"}\n` + 
           `${location.$.hasEnhancedCrafting ? "⬜" : "🔳"} - ${location.$.hasEnhancedCrafting ? "Enhanced Crafting" : "Limited Crafting"}\n`
         )

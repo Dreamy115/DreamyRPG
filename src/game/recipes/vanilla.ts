@@ -13,6 +13,6 @@ export default [
         plastic: 0
       }
     },
-    result: "rough_bandage"
+    results: ["rough_bandage"]
   })
 ]

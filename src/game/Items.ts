@@ -43,7 +43,7 @@ export class Item {
 }
 
 export interface BaseItemData {
-  id?: string
+  id: string
   info: {
     name: string
     lore: string

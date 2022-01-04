@@ -6,7 +6,7 @@ import { CraftingRecipe } from "../../game/Crafting";
 import { CreatureAbility, replaceLore } from "../../game/CreatureAbilities";
 import { DamageMethod, DamageType } from "../../game/Damage";
 import { AttackData, AttackSet, Item } from "../../game/Items";
-import { GameLocation } from "../../game/Locations";
+import { cToF, GameLocation } from "../../game/Locations";
 import { PassiveEffect, PassiveModifier } from "../../game/PassiveEffects";
 import { CreaturePerk } from "../../game/Perks";
 import { CreatureSkill } from "../../game/Skills";
@@ -206,8 +206,12 @@ export default new ApplicationCommandHandler(
 
         for (const item of array) {
           if (item instanceof CraftingRecipe) {
-            const result = ItemManager.map.get(item.$.result);
-            embed.description += `\`${item.$.id}\` **${result?.$.info.name}** (\`${result?.$.id}\`)\n`;
+            const things: string[] = [];
+            for (const res of item.$.results) {
+              const result = ItemManager.map.get(res);
+              things.push(result?.$.info.name ?? "Invalid");
+            }
+            embed.description += `\`${item.$.id}\` **${things.join("**, **")}** (\`${item.$.results.join(", ")}\`)\n`;
           } else {
             // @ts-expect-error
             embed.description += `\`${item.$.id}\` **${item.$.info.name}**${item.$.type ? ` (${capitalize(item.$.type)})` : "" }\n`
@@ -225,11 +229,30 @@ export default new ApplicationCommandHandler(
         }
 
         if (item instanceof CraftingRecipe) {
-          const thing = ItemManager.map.get(item.$.result);
-          if (thing) {
+          const things: (Item | null)[] = [];
+          for (const res of item.$.results) {
+            const result = ItemManager.map.get(res);
+            things.push(result ?? null);
+          }
+          if (things.length > 0) {
             embed
-            .setTitle("A recipe for " + thing.$.info.name)
-            .setDescription(`*For more info on the item check the result item:* \`${thing.$.id}\``)
+            .setTitle("Recipe")
+            .addField(
+              "Results",
+              function () {
+                var str = "";
+
+                for (const thing of things) {
+                  if (thing) {
+                    str += `\`${thing.$.id}\` **${thing.$.info.name}**\n`;
+                  } else {
+                    str += `*Invalid Item*\n`;
+                  }
+                }
+
+                return str;
+              }()
+            )
           } else {
             embed
             .setTitle("Invalid Recipe")
@@ -503,6 +526,7 @@ export default new ApplicationCommandHandler(
           } else if (item instanceof GameLocation) {
             embed.addField(
               "Flags",
+              `**${item.$.temperature}**°C (**${cToF(item.$.temperature)}**°F) Temperature\n` +
               `${item.$.shop !== undefined ? "⬜" : "🔳"} - \`/char shop\` ${item.$.shop !== undefined ? "available" : "unavailable"}\n` + 
               `${item.$.hasEnhancedCrafting ? "⬜" : "🔳"} - ${item.$.hasEnhancedCrafting ? "Enhanced Crafting" : "Limited Crafting"}\n`
             )

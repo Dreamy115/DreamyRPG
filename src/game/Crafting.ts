@@ -29,7 +29,7 @@ export default class CraftingManager {
 export class CraftingRecipe {
   $: {
     id: string
-    result: string
+    results: string[]
     requirements: {
       enhancedCrafting: boolean
       perks?: Set<string>

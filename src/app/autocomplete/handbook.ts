@@ -8,6 +8,7 @@ import ItemsManager, { Item } from "../../game/Items";
 import PassiveEffectManager from "../../game/PassiveEffects";
 import CreatureSpeciesManager, { CreatureSpecies } from "../../game/Species";
 import { AutocompleteHandler } from "../autocomplete";
+import { ManagedItems } from "../commands/handbook";
 
 export default new AutocompleteHandler(
   "handbook",
@@ -60,28 +61,46 @@ export async function getAutocompleteListOfItems(value: string, type: string): P
   let choices: ApplicationCommandOptionChoice[] = []; 
   if (values[0] instanceof CraftingRecipe) {
     for (var i = 0; choices.length < MAX_RESULTS && i < keys.length; i++) {
-      const item = values[i];
-      if (!item) continue;
+      // @ts-expect-error
+      const recipe: CraftingRecipe = values[i];
+      if (!recipe) continue;
   
-      if (input_regex.test(item.$.id) || input_regex.test(item.$.info.name)) {
-        const result = ItemManager.map.get(item.$.result);
+      const results: Item[] = [];
+      const names: string[] = [];
+      for (const res of recipe.$.results) {
+        const result = ItemManager.map.get(res);
         if (!result) continue;
 
+        results.push(result);
+        names.push(result.$.info.name)
+      }
+
+      if (
+        input_regex.test(recipe.$.id) ||
+        function() {
+          for (const result of results) {
+            if (input_regex.test(result.$.info.name) || input_regex.test(result.$.id)) return true;
+          }
+
+          return false;
+        }()
+      ) {
         choices.push({
-          name: `${item.$.id} - ${result.$.info.name} (${result.$.id})`,
-          value: item.$.id
+          name: `${recipe.$.id} >> ${names.join(", ")} (${recipe.$.results.join(", ")})`,
+          value: recipe.$.id
         })
       }
     }
   } else {
     for (var i = 0; choices.length < MAX_RESULTS && i < keys.length; i++) {
-      const item = values[i];
+      // @ts-expect-error
+      const item: Exclude<ManagedItems, CraftingRecipe> = values[i];
       if (!item) continue;
 
-      if (input_regex.test(item.$.id) || input_regex.test(item.$.info.name)) 
+      if (input_regex.test(item.$.id ?? "") || input_regex.test(item.$.info.name)) 
         choices.push({
           name: `${item.$.info.name} (${item.$.id})`,
-          value: item.$.id
+          value: item.$.id ?? "null"
         })
     }
   }

@@ -237,7 +237,7 @@ export function removeMarkdown(str: string) {
 }
 
 export function logCommandInteraction(interaction: CommandInteraction | AutocompleteInteraction): string {
-  var str = interaction.commandName;
+  var str = interaction.commandName + " ";
  
   const subcommandgroup = interaction.options.getSubcommandGroup(false);
   const subcommand = interaction.options.getSubcommand(false);

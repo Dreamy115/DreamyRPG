@@ -794,7 +794,7 @@ export default new ApplicationCommandHandler({
         } break;
         case "remove": {
           const index = creature.$.items.backpack.findIndex(v => v === interaction.options.getString("backpack_item", true));
-          if (!index) {
+          if (index === -1) {
             interaction.followUp({
               ephemeral: true,
               content: "Item not in backpack!"

@@ -213,5 +213,42 @@ export default [
         plastic: 0
       }
     }
+  }),
+  new Item({
+    id: "mediocre_bandage",
+    type: "consumable",
+    info: {
+      name: "Makeshift Bandage",
+      lore: "A bandage to stop **Bleeding** and heal **{0}** Injuries",
+      quality: ItemQuality.Uncommon,
+      replacers: [
+        {
+          stat: "tech",
+          multiplier: 0.06,
+          bonus: 15
+        }
+      ]
+    },
+    onUse: async (creature) => {
+      creature.clearActiveEffect("bleeding", "delete");
+
+      const amount = 10 + (creature.$.stats.tech.value * 0.05);
+
+      creature.heal(amount, HealType.Injuries);
+      creature.heal(amount, HealType.Health);
+
+      return {
+        text: `**${creature.displayName}** used a Bandage; healed **${amount}** Injuries and stopped bleeding, if any.`
+      }
+    },
+    scrap: {
+      materials: {
+        metal: 0,
+        fabric: 10,
+        biomaterial: 0,
+        cells: 0,
+        plastic: 0
+      }
+    }
   })
 ]

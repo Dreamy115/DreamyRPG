@@ -10,7 +10,11 @@ export default [
         entries: [
           {
             items: ["rough_bandage"],
-            weight: 1
+            weight: 6
+          },
+          {
+            items: ["mediocre_bandage"],
+            weight: 2
           }
         ]
       }

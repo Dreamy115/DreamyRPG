@@ -383,19 +383,20 @@ export default new ComponentCommandHandler(
           
                   await creature.put(db);
           
-                  interaction.editReply({
+                  await interaction.editReply({
                     content: `You got **${function() {
                       const names: string[] = [];
           
                       for (const res of results) {
                         const result = ItemManager.map.get(res);
                         if (result)
-                          names.push(result.$.info.name)
+                          names.push(`${ItemQualityEmoji[result.$.info.quality]} ${result.$.info.name}`)
                       }
           
                       return names.join("**, **");
                     }() || "Nothing"}**!`
                   })
+                  return;
                 } break;
                 case "scrap": {
                   if (!creature.$.info.locked && !creature.$.info.npc) {

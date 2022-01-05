@@ -239,8 +239,9 @@ export default new ApplicationCommandHandler(
               "Results",
               function () {
                 var str = "";
-                for (const pool of table.probabilities) {
-                  str += "- Pool\n"
+                for (const p in table.probabilities) {
+                  const pool = table.probabilities[p];
+                  str += `- Rolls **${table.$.pools[p].min_rolls}**${table.$.pools[p].max_rolls > table.$.pools[p].min_rolls ? `-**${table.$.pools[p].max_rolls}**x` : ""}\n`
 
                   for (const i of pool) {
                     const item = ItemManager.map.get(i.id);

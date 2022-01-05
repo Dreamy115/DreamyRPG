@@ -1,12 +1,13 @@
 import { ApplicationCommandOptionData, MessageActionRow, MessageButton, MessageEmbed } from "discord.js";
-import { AbilitiesManager, capitalize, ClassManager, CONFIG, EffectManager, ItemManager, LocationManager, PassivesManager, PerkManager, RecipeManager, SkillManager, SpeciesManager } from "../..";
+import { AbilitiesManager, capitalize, ClassManager, CONFIG, EffectManager, ItemManager, LocationManager, LootTables, PassivesManager, PerkManager, SchematicsManager, SkillManager, SpeciesManager } from "../..";
 import { ActiveEffect, DisplaySeverity, romanNumeral } from "../../game/ActiveEffects";
 import { CreatureClass } from "../../game/Classes";
-import { CraftingRecipe } from "../../game/Crafting";
+import { Schematic } from "../../game/Crafting";
 import { CreatureAbility, replaceLore } from "../../game/CreatureAbilities";
 import { DamageMethod, DamageType } from "../../game/Damage";
 import { AttackData, AttackSet, Item, ItemQualityColor, ItemQualityEmoji } from "../../game/Items";
 import { cToF, GameLocation } from "../../game/Locations";
+import { LootTable } from "../../game/LootTables";
 import { PassiveEffect, PassiveModifier } from "../../game/PassiveEffects";
 import { CreaturePerk } from "../../game/Perks";
 import { CreatureSkill } from "../../game/Skills";
@@ -55,12 +56,16 @@ const typeOption: ApplicationCommandOptionData = {
       value: "skills"
     },
     {
-      name: "Crafting Recipes",
-      value: "recipes"
+      name: "Schematics",
+      value: "schematics"
     },
     {
       name: "Locations",
       value: "locations"
+    },
+    {
+      name: "Loot Tables",
+      value: "loottables"
     }
   ]
 }
@@ -163,13 +168,18 @@ export default new ApplicationCommandHandler(
         list = SkillManager.map;
         title = "Skills";
         break;
-      case "recipes":
-        list = RecipeManager.map;
-        title = "Crafting Recipes";
+      case "schematics":
+        list = SchematicsManager.map;
+        title = "Schematics";
         break;
       case "locations":
         list = LocationManager.map;
         title = "Locations (Confidential)";
+        confidential = true;
+        break;
+      case "loottables":
+        list = LootTables.map;
+        title = "Loot Tables (Confidential)";
         confidential = true;
         break;
     }
@@ -205,17 +215,8 @@ export default new ApplicationCommandHandler(
         .setDescription("");
 
         for (const item of array) {
-          if (item instanceof CraftingRecipe) {
-            const things: string[] = [];
-            for (const res of item.$.results) {
-              const result = ItemManager.map.get(res);
-              things.push(result?.$.info.name ?? "Invalid");
-            }
-            embed.description += `\`${item.$.id}\` **${things.join("**, **")}** (\`${item.$.results.join(", ")}\`)\n`;
-          } else {
-            // @ts-expect-error
-            embed.description += `\`${item.$.id}\` ${item.$.info.quality !== undefined ? `${ItemQualityEmoji[item.$.info.quality]} `: ""}**${item.$.info.name}**${item.$.type ? ` (${capitalize(item.$.type)})` : "" }\n`
-          }
+          // @ts-expect-error
+          embed.description += `\`${item.$.id}\` ${item.$.info.quality !== undefined ? `${ItemQualityEmoji[item.$.info.quality]} `: ""}**${item.$.info.name}**${item.$.type ? ` (${capitalize(item.$.type)})` : "" }\n`
         }
       } break;
       case "item": {
@@ -228,34 +229,51 @@ export default new ApplicationCommandHandler(
           return;
         }
 
-        if (item instanceof CraftingRecipe) {
-          const things: (Item | null)[] = [];
-          for (const res of item.$.results) {
-            const result = ItemManager.map.get(res);
-            things.push(result ?? null);
-          }
-          if (things.length > 0) {
+        if (item instanceof Schematic) {
+          const table = LootTables.map.get(item.$.table);
+
+          if (table) {
             embed
             .setTitle("Recipe")
             .addField(
               "Results",
               function () {
                 var str = "";
+                for (const pool of table.probabilities) {
+                  str += "- Pool\n"
 
-                for (const thing of things) {
-                  if (thing) {
-                    str += `\`${thing.$.id}\` **${thing.$.info.name}**\n`;
-                  } else {
-                    str += `*Invalid Item*\n`;
+                  for (const i of pool) {
+                    const item = ItemManager.map.get(i.id);
+                    if (!item) continue;
+
+                    str += `**${Math.round(1000 * i.chance) / 10}%** x ${ItemQualityEmoji[item.$.info.quality]} **${item.$.info.name}** \`${item.$.id}\`\n`
                   }
-                }
 
+                  str += "\n"
+                }
                 return str;
               }()
             )
           } else {
             embed
             .setTitle("Invalid Recipe")
+          }
+        } else if (item instanceof LootTable) {
+          for (const p in item.$.pools) {
+            const pool = item.$.pools[p];
+            embed.addField(
+              `Pool ${p}`,
+              function () {
+                var str = `Rolls **${pool.min_rolls}-${pool.max_rolls}**\n`;
+
+                for (const e in pool.entries) {
+                  const entry = pool.entries[e];
+                  str += `Entry [${e}] - ${entry.weight} Weight\n\`${entry.items.join("`, `")}\`\n\n`;
+                }
+
+                return str;
+              }()
+            )
           }
         } else {
           embed
@@ -485,7 +503,7 @@ export default new ApplicationCommandHandler(
                 classes.join(", ")
               )
             }
-          } else if (item instanceof CraftingRecipe) {
+          } else if (item instanceof Schematic) {
             if (item.$.requirements.perks && item.$.requirements.perks.size > 0)
               embed.addField(
                 "Required Perks",
@@ -668,4 +686,4 @@ export function perksDescriptor(perks: (string | CreaturePerk)[]) {
   return str;
 }
 
-export type ManagedItems = Item | CreatureClass | CreatureSpecies | PassiveEffect | CreatureAbility | ActiveEffect | CreatureSkill | CreaturePerk | CraftingRecipe | GameLocation;
+export type ManagedItems = Item | CreatureClass | CreatureSpecies | PassiveEffect | CreatureAbility | ActiveEffect | CreatureSkill | CreaturePerk | Schematic | GameLocation | LootTable;

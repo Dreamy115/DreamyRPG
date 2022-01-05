@@ -8,7 +8,7 @@ import { AttackData, Item, ItemQualityEmoji } from "../../game/Items.js";
 import { cToF } from "../../game/Locations.js";
 import { PassiveModifier } from "../../game/PassiveEffects.js";
 import { textStat, ModifierType, TrackableStat } from "../../game/Stats.js";
-import { SpeciesManager, ClassManager, capitalize, ItemManager, EffectManager, AbilitiesManager, CONFIG, RecipeManager, PerkManager, LocationManager, limitString } from "../../index.js";
+import { SpeciesManager, ClassManager, capitalize, ItemManager, EffectManager, AbilitiesManager, CONFIG, SchematicsManager, PerkManager, LocationManager, limitString, LootTables } from "../../index.js";
 import { bar_styles, make_bar } from "../Bars.js";
 import { ApplicationCommandHandler } from "../commands.js";
 import { attributeComponents, ceditMenu } from "../component_commands/cedit.js";
@@ -296,21 +296,21 @@ export default new ApplicationCommandHandler(
         })
       } break;
       case "craft": {
-        const recipe = RecipeManager.map.get(interaction.options.getString("recipe_id", true));
+        const recipe = SchematicsManager.map.get(interaction.options.getString("recipe_id", true));
         if (!recipe?.$.id) return;
         
-        const results: Item[] = [];
-        for (const res of recipe.$.results) {
-          const result = ItemManager.map.get(res);
-          if (result)
-            results.push(result);
-        }
-        if (results.length === 0) return;
-
         const [creature,] = await Promise.all([
           Creature.fetch(interaction.user.id, db),
           interaction.deferReply({ephemeral: true})
         ])
+
+        const results = LootTables.map.get(recipe.$.table)?.generate();
+        if (!results) {
+          interaction.editReply({
+            content: "LootTable error"
+          })
+          return;
+        }
 
         try {
           if (!creature.schematics.has(recipe.$.id)) throw new Error("Doesn't have the schematic");
@@ -354,8 +354,10 @@ export default new ApplicationCommandHandler(
           creature.$.items.crafting_materials[mat] -= recipe.$.requirements.materials[mat];
         }
 
-        for (const result of results) {
-          creature.$.items.backpack.push(result.$.id);
+        for (const res of results) {
+          const result = ItemManager.map.get(res);
+          if (result)
+           creature.$.items.backpack.push(result.$.id);
         }
 
         await creature.put(db);
@@ -364,8 +366,11 @@ export default new ApplicationCommandHandler(
           content: `You got **${function() {
             const names: string[] = [];
 
-            for (const result of results)
-              names.push(result.$.info.name)
+            for (const res of results) {
+              const result = ItemManager.map.get(res);
+              if (result)
+                names.push(result.$.info.name)
+            }
 
             return names.join("**, **");
           }()}**!`
@@ -989,16 +994,10 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
         for (var i = index * PER_INDEX_PAGE; i < schematics.length && i < PER_INDEX_PAGE * (index + 1); i++) {
           const schem = schematics[i];
 
-          const recipe = RecipeManager.map.get(schem);
-          if (!recipe) continue;
+          const item = SchematicsManager.map.get(schem);
+          if (!item) continue;
 
-          const results: string[] = [];
-          for (const res of recipe.$.results) {
-            const result = ItemManager.map.get(res);
-            results.push(result?.$.info.name ?? "Invalid")
-          }
-
-          str += `<**${i+1}**> \`${recipe.$.id}\` >> ${results.join(", ")} (\`${recipe.$.results.join(", ")}\`)\n`;
+          str += `<**${i+1}**> ${ItemQualityEmoji[item.$.info.quality]} **${item.$.info.name}** \`${item.$.id}\`\n*${item.$.info.lore}*\n\n`;
         }
 
         return str;

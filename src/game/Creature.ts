@@ -14,8 +14,8 @@ import { Modifier, ModifierType, textStat, TrackableStat } from "./Stats.js";
 
 export default class Creature {
   static cache: NodeCache = new NodeCache({
-    checkperiod: CONFIG.cache?.creatureCheckPeriod ?? 120,
-    stdTTL: CONFIG.cache?.creatureTTL ?? 90
+    checkperiod: CONFIG?.cache?.creatureCheckPeriod ?? 120,
+    stdTTL: CONFIG?.cache?.creatureTTL ?? 90
   })
   $: CreatureData
 

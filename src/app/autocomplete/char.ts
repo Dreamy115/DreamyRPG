@@ -1,6 +1,6 @@
 import { ApplicationCommandOptionChoice } from "discord.js";
 import Mongoose from "mongoose";
-import { ItemManager, RecipeManager } from "../..";
+import { ItemManager, SchematicsManager } from "../..";
 import Creature from "../../game/Creature";
 import { Item } from "../../game/Items";
 import { AutocompleteHandler } from "../autocomplete";
@@ -23,31 +23,14 @@ export default new AutocompleteHandler(
           const array: ApplicationCommandOptionChoice[] = [];
 
           for (const schem of creature.schematics) {
-            const recipe = RecipeManager.map.get(schem);
+            const recipe = SchematicsManager.map.get(schem);
             if (!recipe) continue;
 
-            const results: Item[] = [];
-            const names: string[] = [];
-            for (const res of recipe.$.results) {
-              const result = ItemManager.map.get(res);
-              if (!result) continue;
-
-              results.push(result);
-              names.push(result.$.info.name)
-            }
-
             if (
-              search.test(schem) ||
-              function() {
-                for (const result of results) {
-                  if (search.test(result.$.info.name) || search.test(result.$.id)) return true;
-                }
-
-                return false;
-              }()
+              search.test(schem) || search.test(recipe.$.info.name)
             ) {
               array.push({
-                name: `${recipe.$.id} >> ${names.join(", ")} (${recipe.$.results.join(", ")})`,
+                name: `${recipe.$.info.name} (${recipe.$.id})`,
                 value: recipe.$.id
               })
             }

@@ -19,6 +19,7 @@ import CreatureSkillManager from "./game/Skills.js";
 import CraftingManager from "./game/Crafting.js";
 import GameLocationManager from "./game/Locations.js";
 import LocationShopsManager from "./game/Shops.js";
+import LootTableManager from "./game/LootTables.js";
 
 process.on("uncaughtException", (e) => {
   console.error(e);
@@ -70,7 +71,9 @@ export const PerkManager = new CreaturePerkManager();
 
 export const LocationManager = new GameLocationManager();
 export const ShopManager = new LocationShopsManager();
-export const RecipeManager = new CraftingManager();
+export const SchematicsManager = new CraftingManager();
+
+export const LootTables = new LootTableManager();
 ///
 
 const Bot = new Client({
@@ -188,7 +191,9 @@ export function gameLoad() {
 
   LocationManager.load(path.join(__dirname, "game/locations"));
   ShopManager.load(path.join(__dirname, "game/shops"));
-  RecipeManager.load(path.join(__dirname, "game/recipes"));
+  SchematicsManager.load(path.join(__dirname, "game/schematics"));
+
+  LootTables.load(path.join(__dirname, "game/loottables"));
 
   console.log("Loading complete");
 }

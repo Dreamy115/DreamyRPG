@@ -1,5 +1,5 @@
 import { ApplicationCommandOptionChoice } from "discord.js";
-import { SkillManager, EffectManager, ItemManager } from "../..";
+import { SkillManager, EffectManager, ItemManager, SchematicsManager } from "../..";
 import { DisplaySeverity, romanNumeral } from "../../game/ActiveEffects";
 import Creature from "../../game/Creature";
 import { AutocompleteHandler } from "../autocomplete";
@@ -19,11 +19,17 @@ export default new AutocompleteHandler(
       })
     }
     switch (focused.name) {
+      case "loottable": {
+        interaction.respond(await getAutocompleteListOfItems(String(focused.value), "loottables"));
+      } break;
       case "cid": {
         interaction.respond(await autocompleteCreatures(search, db))
       } break;
       case "effect_id": {
         interaction.respond(await getAutocompleteListOfItems(String(focused.value), "effects"))
+      } break;
+      case "schematic_id": {
+        interaction.respond(await getAutocompleteListOfItems(String(focused.value), "schematics"))
       } break;
       case "item_id": {
         interaction.respond(await getAutocompleteListOfItems(String(focused.value), "items"))
@@ -92,6 +98,22 @@ export default new AutocompleteHandler(
           const array: ApplicationCommandOptionChoice[] = [];
           for (const i of char.$.items.skills) {
             const item = SkillManager.map.get(i);
+            if (search.test(i) || search.test(item?.$.info.name ?? ""))
+              array.push({
+                name: `${i} - ${item?.$.info.name}`,
+                value: i
+              })
+            if (array.length >= 25) break;
+          }
+          interaction.respond(array);
+        }
+      } break;
+      case "unlocked_schematic": {
+        const char = await fetchChar();
+        if (char) {
+          const array: ApplicationCommandOptionChoice[] = [];
+          for (const i of char.$.items.schematics) {
+            const item = SchematicsManager.map.get(i);
             if (search.test(i) || search.test(item?.$.info.name ?? ""))
               array.push({
                 name: `${i} - ${item?.$.info.name}`,

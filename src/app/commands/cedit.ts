@@ -25,6 +25,27 @@ export default new ApplicationCommandHandler({
       ]
     },
     {
+      name: "loot",
+      description: "Grant some loot from a loot table!",
+      type: "SUB_COMMAND",
+      options: [
+        {
+          name: "cid",
+          description: "Find by ID",
+          type: "STRING",
+          autocomplete: true,
+          required: true
+        },
+        {
+          name: "loottable",
+          description: "Loot table ID",
+          type: "STRING",
+          autocomplete: true,
+          required: true
+        }
+      ]
+    },
+    {
       name: "tick",
       description: "Pass the time for the creature",
       type: "SUB_COMMAND",
@@ -107,6 +128,11 @@ export default new ApplicationCommandHandler({
           required: true
         },
         {
+          name: "attacker",
+          description: "What attacked the Creature?",
+          type: "STRING"
+        },
+        {
           name: "chance",
           description: "Chance of damaging in %",
           type: "NUMBER"
@@ -181,192 +207,267 @@ export default new ApplicationCommandHandler({
       ]
     },
     {
-      name: "effect_apply",
-      description: "Apply an Effect",
-      type: "SUB_COMMAND",
+      name: "effects",
+      description: "Manage the Creature's ActiveEffects",
+      type: "SUB_COMMAND_GROUP",
       options: [
         {
-          name: "cid",
-          description: "Find by ID",
-          type: "STRING",
-          autocomplete: true,
-          required: true
-        },
-        {
-          name: "effect_id",
-          description: "Effect to apply",
-          type: "STRING",
-          autocomplete: true,
-          required: true
-        },
-        {
-          name: "severity",
-          description: "Severity",
-          type: "INTEGER",
-          required: true
-        },
-        {
-          name: "ticks",
-          description: "Amount of ticks for the effect to linger",
-          type: "INTEGER",
-          required: true
-        }
-      ]
-    },
-    {
-      name: "effect_clear",
-      description: "Clear an effect",
-      type: "SUB_COMMAND",
-      options: [
-        {
-          name: "cid",
-          description: "Find by ID",
-          type: "STRING",
-          autocomplete: true,
-          required: true
-        },
-        {
-          name: "effect",
-          description: "Effect to remove",
-          type: "STRING",
-          autocomplete: true,
-          required: true
-        },
-        {
-          name: "type",
-          description: "The type of removal",
-          type: "STRING",
-          required: true,
-          choices: [
+          name: "apply",
+          description: "Apply an Effect",
+          type: "SUB_COMMAND",
+          options: [
             {
-              name: "Simulated Expiration",
-              value: "expire"
+              name: "cid",
+              description: "Find by ID",
+              type: "STRING",
+              autocomplete: true,
+              required: true
             },
             {
-              name: "Straight-Up Delete",
-              value: "delete"
+              name: "effect_id",
+              description: "Effect to apply",
+              type: "STRING",
+              autocomplete: true,
+              required: true
+            },
+            {
+              name: "severity",
+              description: "Severity",
+              type: "INTEGER",
+              required: true
+            },
+            {
+              name: "ticks",
+              description: "Amount of ticks for the effect to linger",
+              type: "INTEGER",
+              required: true
+            }
+          ]
+        },
+        {
+          name: "clear",
+          description: "Clear an effect",
+          type: "SUB_COMMAND",
+          options: [
+            {
+              name: "cid",
+              description: "Find by ID",
+              type: "STRING",
+              autocomplete: true,
+              required: true
+            },
+            {
+              name: "effect",
+              description: "Effect to remove",
+              type: "STRING",
+              autocomplete: true,
+              required: true
+            },
+            {
+              name: "type",
+              description: "The type of removal",
+              type: "STRING",
+              required: true,
+              choices: [
+                {
+                  name: "Simulated Expiration",
+                  value: "expire"
+                },
+                {
+                  name: "Straight-Up Delete",
+                  value: "delete"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          name: "clear_all",
+          description: "Clear an effect",
+          type: "SUB_COMMAND",
+          options: [
+            {
+              name: "cid",
+              description: "Find by ID",
+              type: "STRING",
+              autocomplete: true,
+              required: true
+            },
+            {
+              name: "type",
+              description: "The type of removal",
+              type: "STRING",
+              required: true,
+              choices: [
+                {
+                  name: "Simulated Expiration",
+                  value: "expire"
+                },
+                {
+                  name: "Straight-Up Delete",
+                  value: "delete"
+                }
+              ]
             }
           ]
         }
       ]
     },
     {
-      name: "effect_clear_all",
-      description: "Clear an effect",
-      type: "SUB_COMMAND",
+      name: "items",
+      description: "Manage the Creature's Items",
+      type: "SUB_COMMAND_GROUP",
       options: [
         {
-          name: "cid",
-          description: "Find by ID",
-          type: "STRING",
-          autocomplete: true,
-          required: true
-        },
-        {
-          name: "type",
-          description: "The type of removal",
-          type: "STRING",
-          required: true,
-          choices: [
+          name: "add",
+          description: "Add an item to Creature's backpack",
+          type: "SUB_COMMAND",
+          options: [
             {
-              name: "Simulated Expiration",
-              value: "expire"
+              name: "cid",
+              description: "Find by ID",
+              type: "STRING",
+              autocomplete: true,
+              required: true
             },
             {
-              name: "Straight-Up Delete",
-              value: "delete"
+              name: "item_id",
+              description: "The item to add",
+              type: "STRING",
+              autocomplete: true,
+              required: true
+            }
+          ]
+        },
+        {
+          name: "remove",
+          description: "Remove an item from Creature's backpack",
+          type: "SUB_COMMAND",
+          options: [
+            {
+              name: "cid",
+              description: "Find by ID",
+              type: "STRING",
+              autocomplete: true,
+              required: true
+            },
+            {
+              name: "backpack_item",
+              description: "The item to remove",
+              type: "STRING",
+              autocomplete: true,
+              required: true
             }
           ]
         }
       ]
     },
     {
-      name: "item_add",
-      description: "Add an item to Creature's backpack",
-      type: "SUB_COMMAND",
+      name: "skills",
+      description: "Manage the Creature's Skills",
+      type: "SUB_COMMAND_GROUP",
       options: [
         {
-          name: "cid",
-          description: "Find by ID",
-          type: "STRING",
-          autocomplete: true,
-          required: true
+          name: "add",
+          description: "Add an additional skill to Creature",
+          type: "SUB_COMMAND",
+          options: [
+            {
+              name: "cid",
+              description: "Find by ID",
+              type: "STRING",
+              autocomplete: true,
+              required: true
+            },
+            {
+              name: "skill_id",
+              description: "The skill to add",
+              type: "STRING",
+              autocomplete: true,
+              required: true
+            }
+          ]
         },
         {
-          name: "item_id",
-          description: "The item to add",
-          type: "STRING",
-          autocomplete: true,
-          required: true
+          name: "remove",
+          description: "Remove an additional skill from Creature",
+          type: "SUB_COMMAND",
+          options: [
+            {
+              name: "cid",
+              description: "Find by ID",
+              type: "STRING",
+              autocomplete: true,
+              required: true
+            },
+            {
+              name: "unlocked_skill",
+              description: "The skill to remove",
+              type: "STRING",
+              autocomplete: true,
+              required: true
+            }
+          ]
         }
       ]
     },
     {
-      name: "item_remove",
-      description: "Remove an item from Creature's backpack",
-      type: "SUB_COMMAND",
+      name: "schematics",
+      description: "Manage the Creature's schematics",
+      type: "SUB_COMMAND_GROUP",
       options: [
         {
-          name: "cid",
-          description: "Find by ID",
-          type: "STRING",
-          autocomplete: true,
-          required: true
+          name: "add",
+          description: "Add an additional skill to Creature",
+          type: "SUB_COMMAND",
+          options: [
+            {
+              name: "cid",
+              description: "Find by ID",
+              type: "STRING",
+              autocomplete: true,
+              required: true
+            },
+            {
+              name: "schematic_id",
+              description: "The schematic to add",
+              type: "STRING",
+              autocomplete: true,
+              required: true
+            }
+          ]
         },
         {
-          name: "backpack_item",
-          description: "The item to remove",
-          type: "STRING",
-          autocomplete: true,
-          required: true
+          name: "remove",
+          description: "Remove an additional schematic from Creature",
+          type: "SUB_COMMAND",
+          options: [
+            {
+              name: "cid",
+              description: "Find by ID",
+              type: "STRING",
+              autocomplete: true,
+              required: true
+            },
+            {
+              name: "unlocked_schematic",
+              description: "The skill to remove",
+              type: "STRING",
+              autocomplete: true,
+              required: true
+            }
+          ]
         }
       ]
     },
     {
-      name: "skill_add",
-      description: "Add an additional skill to Creature",
-      type: "SUB_COMMAND",
-      options: [
-        {
-          name: "cid",
-          description: "Find by ID",
-          type: "STRING",
-          autocomplete: true,
-          required: true
-        },
-        {
-          name: "skill_id",
-          description: "The skill to add",
-          type: "STRING",
-          autocomplete: true,
-          required: true
-        }
-      ]
-    },
-    {
-      name: "skill_remove",
-      description: "Remove an additional skill from Creature",
-      type: "SUB_COMMAND",
-      options: [
-        {
-          name: "cid",
-          description: "Find by ID",
-          type: "STRING",
-          autocomplete: true,
-          required: true
-        },
-        {
-          name: "unlocked_skill",
-          description: "The skill to remove",
-          type: "STRING",
-          autocomplete: true,
-          required: true
-        }
-      ]
+      name: "crafting_materials",
+      description: "Manage the Creature's materials",
+      type: "SUB_COMMAND_GROUP"
     },
     {
       name: "level_set",
-      description: "Set the creature's level",
+      description: "Set the Creature's level",
       type: "SUB_COMMAND",
       options: [
         {
@@ -385,54 +486,61 @@ export default new ApplicationCommandHandler({
       ]
     },
     {
-      name: "attributes_clear",
-      description: "Reset all attributes to 0",
-      type: "SUB_COMMAND",
+      name: "attributes",
+      description: "Set the attributes",
+      type: "SUB_COMMAND_GROUP",
       options: [
         {
-          name: "cid",
-          description: "Find by ID",
-          type: "STRING",
-          autocomplete: true,
-          required: true
-        }
-      ]
-    },
-    {
-      name: "attribute_set",
-      description: "Set an attribute",
-      type: "SUB_COMMAND",
-      options: [
-        {
-          name: "cid",
-          description: "Find by ID",
-          type: "STRING",
-          autocomplete: true,
-          required: true
-        },
-        {
-          name: "attribute",
-          description: "Which attribute?",
-          type: "STRING",
-          required: true,
-          choices: function () {
-            const array: ApplicationCommandOptionChoice[] = [];
-
-            for (const a in new Creature({_id: ""}).$.attributes) {
-              array.push({
-                name: a,
-                value: a
-              });
+          name: "clear",
+          description: "Reset all attributes to 0",
+          type: "SUB_COMMAND",
+          options: [
+            {
+              name: "cid",
+              description: "Find by ID",
+              type: "STRING",
+              autocomplete: true,
+              required: true
             }
-
-            return array;
-          }()
+          ]
         },
         {
-          name: "amount",
-          description: "Set to what amount? (Typical range 0-8)",
-          type: "INTEGER",
-          required: true
+          name: "set",
+          description: "Set an attribute",
+          type: "SUB_COMMAND",
+          options: [
+            {
+              name: "cid",
+              description: "Find by ID",
+              type: "STRING",
+              autocomplete: true,
+              required: true
+            },
+            {
+              name: "attribute",
+              description: "Which attribute?",
+              type: "STRING",
+              required: true,
+              choices: function () {
+                const array: ApplicationCommandOptionChoice[] = [];
+    
+                for (const a in new Creature({_id: ""}).$.attributes) {
+                  array.push({
+                    name: a,
+                    value: a
+                  });
+                }
+    
+                return array;
+              }()
+            },
+            {
+              name: "amount",
+              description: "Set to what amount? (Typical range 0-8)",
+              type: "INTEGER",
+              required: true
+            }
+          ]
         }
       ]
     }
@@ -473,7 +581,7 @@ export default new ApplicationCommandHandler({
     return;
   }
 
-  switch (interaction.options.getSubcommand(true)) {
+  switch (interaction.options.getSubcommandGroup(false) ?? interaction.options.getSubcommand(true)) {
     case "menu": {
       await interaction.editReply({
         content: `Editing menu for **${creature.displayName}**`,
@@ -493,7 +601,7 @@ export default new ApplicationCommandHandler({
         cause: DamageCause.Other,
         method: interaction.options.getInteger("method", true),
         chance: interaction.options.getNumber("chance", false) ?? 100,
-        shieldReaction: interaction.options.getInteger("shield_reaction", true),
+        shieldReaction: interaction.options.getInteger("shield_reaction", false) ?? ShieldReaction.Normal,
         useDodge: interaction.options.getBoolean("dodgeable", true),
         penetration: {
           lethality: interaction.options.getInteger("penetration", false) ?? undefined,
@@ -503,7 +611,8 @@ export default new ApplicationCommandHandler({
         sources: [{
           type: interaction.options.getInteger("type", true),
           value: interaction.options.getNumber("amount", true)
-        }]
+        }],
+        attacker: interaction.options.getString("attacker", true)
       }
 
       const log = creature.applyDamage(damage);
@@ -520,45 +629,67 @@ export default new ApplicationCommandHandler({
         interaction.options.getInteger("type", true)
       )
     } break;
-    case "effect_apply": {
-      creature.applyActiveEffect({
-        id: interaction.options.getString("effect_id", true),
-        severity: interaction.options.getInteger("severity", true),
-        ticks: interaction.options.getInteger("ticks", true)
-      }, true)
-    } break;
-    case "effect_clear": {
-      creature.clearActiveEffect(
-        interaction.options.getString("effect", true),
-        // @ts-expect-error
-        interaction.options.getString("type", true)
-      )
-    } break;
-    case "effect_clear_all": {
-      creature.clearAllEffects(
-        // @ts-expect-error
-        interaction.options.getString("type", true)
-      )
-    } break;
-    case "item_add": {
-      creature.$.items.backpack.push(interaction.options.getString("item_id", true));
-    } break;
-    case "item_remove": {
-      const index = creature.$.items.backpack.findIndex(v => v === interaction.options.getString("item", true));
-      if (!index) {
-        interaction.followUp({
-          ephemeral: true,
-          content: "Item not in backpack!"
-        })
-        return;
+    case "effects": {
+      switch (interaction.options.getSubcommand(true)) {
+        case "apply": {
+          creature.applyActiveEffect({
+            id: interaction.options.getString("effect_id", true),
+            severity: interaction.options.getInteger("severity", true),
+            ticks: interaction.options.getInteger("ticks", true)
+          }, true)
+        } break;
+        case "clear": {
+          creature.clearActiveEffect(
+            interaction.options.getString("effect", true),
+            // @ts-expect-error
+            interaction.options.getString("type", true)
+          )
+        } break;
+        case "clear_all": {
+          creature.clearAllEffects(
+            // @ts-expect-error
+            interaction.options.getString("type", true)
+          )
+        } break;
       }
-      creature.$.items.backpack.splice(index, 1);
-    }
-    case "skill_add": {
-      creature.$.items.skills.add(interaction.options.getString("skill_id", true));
     } break;
-    case "skill_remove": {
-      creature.$.items.skills.delete(interaction.options.getString("unlocked_skill", true));
+    case "items": {
+      switch (interaction.options.getSubcommand(true)) {
+        case "add": {
+          creature.$.items.backpack.push(interaction.options.getString("item_id", true));
+        } break;
+        case "remove": {
+          const index = creature.$.items.backpack.findIndex(v => v === interaction.options.getString("item", true));
+          if (!index) {
+            interaction.followUp({
+              ephemeral: true,
+              content: "Item not in backpack!"
+            })
+            return;
+          }
+          creature.$.items.backpack.splice(index, 1);
+        } break;
+      }
+    } break;
+    case "skills": {
+      switch (interaction.options.getSubcommand(true)) {
+        case "add": {
+          creature.$.items.skills.add(interaction.options.getString("skill_id", true));
+        } break;
+        case "remove": {
+          creature.$.items.skills.delete(interaction.options.getString("unlocked_skill", true));
+        } break;
+      }
+    } break;
+    case "schematics": {
+      switch (interaction.options.getSubcommand(true)) {
+        case "add": {
+          creature.$.items.schematics.add(interaction.options.getString("schematic_id", true));
+        } break;
+        case "remove": {
+          creature.$.items.schematics.delete(interaction.options.getString("unlocked_schematic", true));
+        } break;
+      }
     } break;
     case "level_set": {
       const amount = interaction.options.getInteger("amount", true);
@@ -571,26 +702,30 @@ export default new ApplicationCommandHandler({
       }
       creature.$.experience.level = amount;
     } break;
-    case "attributes_clear": {
-      for (const a in creature.$.attributes) {
-        // @ts-expect-error
-        const attr: TrackableStat = creature.$.attributes[a];
-
-        attr.base = 0;
+    case "attributes": {
+      switch (interaction.options.getSubcommand(true)) {
+        case "clear": {
+          for (const a in creature.$.attributes) {
+            // @ts-expect-error
+            const attr: TrackableStat = creature.$.attributes[a];
+    
+            attr.base = 0;
+          }
+        } break;
+        case "set": {
+          // @ts-expect-error
+          const attr: TrackableStat | undefined = creature.$.attributes[interaction.options.getString("attribute", true)];
+          if (!attr) {
+            interaction.followUp({
+              ephemeral: true,
+              content: "No such attribute!"
+            });
+            return;
+          }
+          attr.base = interaction.options.getInteger("amount", true); 
+        } break;
       }
-    } break;
-    case "attribute_set": {
-      // @ts-expect-error
-      const attr: TrackableStat | undefined = creature.$.attributes[interaction.options.getString("attribute", true)];
-      if (!attr) {
-        interaction.followUp({
-          ephemeral: true,
-          content: "No such attribute!"
-        });
-        return;
-      }
-      attr.base = interaction.options.getInteger("amount", true); 
-    } break;
+    }
   }
 
   await creature.put(db);

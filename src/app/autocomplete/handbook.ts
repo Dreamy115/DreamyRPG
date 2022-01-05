@@ -1,10 +1,11 @@
 import { ApplicationCommandOptionChoice, Interaction } from "discord.js";
-import { ItemManager, SpeciesManager, ClassManager, PassivesManager, AbilitiesManager, EffectManager, PerkManager, SkillManager, RecipeManager, LocationManager } from "../..";
+import { ItemManager, SpeciesManager, ClassManager, PassivesManager, AbilitiesManager, EffectManager, PerkManager, SkillManager, SchematicsManager, LocationManager, LootTables } from "../..";
 import ActiveEffectManager, { ActiveEffect } from "../../game/ActiveEffects";
 import CreatureClassManager, { CreatureClass } from "../../game/Classes";
-import { CraftingRecipe } from "../../game/Crafting";
+import { Schematic } from "../../game/Crafting";
 import CreatureAbilitiesManager, { CreatureAbility } from "../../game/CreatureAbilities";
 import ItemsManager, { Item } from "../../game/Items";
+import { LootTable } from "../../game/LootTables";
 import PassiveEffectManager from "../../game/PassiveEffects";
 import CreatureSpeciesManager, { CreatureSpecies } from "../../game/Species";
 import { AutocompleteHandler } from "../autocomplete";
@@ -45,11 +46,14 @@ export async function getAutocompleteListOfItems(value: string, type: string): P
     case "skills":
       list = SkillManager.map;
       break;
-    case "recipes":
-      list = RecipeManager.map;
+    case "schematics":
+      list = SchematicsManager.map;
       break;
     case "locations":
       list = LocationManager.map;
+      break;
+    case "loottables":
+      list = LootTables.map;
       break;
   }
 
@@ -59,42 +63,28 @@ export async function getAutocompleteListOfItems(value: string, type: string): P
   const input_regex = RegExp(value, "i");
 
   let choices: ApplicationCommandOptionChoice[] = []; 
-  if (values[0] instanceof CraftingRecipe) {
+  if (values[0] instanceof LootTable) {
     for (var i = 0; choices.length < MAX_RESULTS && i < keys.length; i++) {
       // @ts-expect-error
-      const recipe: CraftingRecipe = values[i];
-      if (!recipe) continue;
-  
-      const results: Item[] = [];
-      const names: string[] = [];
-      for (const res of recipe.$.results) {
-        const result = ItemManager.map.get(res);
-        if (!result) continue;
+      const item: LootTable = values[i];
+      if (!item) continue;
 
-        results.push(result);
-        names.push(result.$.info.name)
-      }
+      if (input_regex.test(item.$.id ?? "")) { 
+        let total_entries = 0;
+        for (const pool of item.$.pools) {
+          total_entries += pool.entries.length;
+        }
 
-      if (
-        input_regex.test(recipe.$.id) ||
-        function() {
-          for (const result of results) {
-            if (input_regex.test(result.$.info.name) || input_regex.test(result.$.id)) return true;
-          }
-
-          return false;
-        }()
-      ) {
         choices.push({
-          name: `${recipe.$.id} >> ${names.join(", ")} (${recipe.$.results.join(", ")})`,
-          value: recipe.$.id
+          name: `${item.$.id} - ${item.$.pools.length} Pools, ${total_entries} Entries`,
+          value: item.$.id ?? "null"
         })
       }
     }
   } else {
     for (var i = 0; choices.length < MAX_RESULTS && i < keys.length; i++) {
       // @ts-expect-error
-      const item: Exclude<ManagedItems, CraftingRecipe> = values[i];
+      const item: Exclue<Exclude<ManagedItems, Schematic>, LootTable> = values[i];
       if (!item) continue;
 
       if (input_regex.test(item.$.id ?? "") || input_regex.test(item.$.info.name)) 

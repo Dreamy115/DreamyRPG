@@ -1,8 +1,9 @@
 import fs from "fs";
 import path from "path";
+import { ItemQuality } from "./Items";
 
 export default class CraftingManager {
-  map = new Map<string, CraftingRecipe>();
+  map = new Map<string, Schematic>();
   async load(dir: fs.PathLike) {
     this.map.clear();
 
@@ -11,12 +12,12 @@ export default class CraftingManager {
 
       const {default: loadedFile} = await import(path.join(dir.toString(), file));
 
-      if (loadedFile instanceof CraftingRecipe) {
+      if (loadedFile instanceof Schematic) {
         this.map.set(loadedFile.$.id, loadedFile);
       } else {
         if (loadedFile instanceof Array) {
           for (const subfile of loadedFile) {
-            if (subfile instanceof CraftingRecipe) {
+            if (subfile instanceof Schematic) {
               this.map.set(subfile.$.id, subfile);
             }
           }
@@ -26,10 +27,15 @@ export default class CraftingManager {
   }
 }
 
-export class CraftingRecipe {
+export class Schematic {
   $: {
     id: string
-    results: string[]
+    info: {
+      name: string
+      lore: string
+      quality: ItemQuality
+    }
+    table: string
     requirements: {
       enhancedCrafting: boolean
       perks?: Set<string>
@@ -38,7 +44,7 @@ export class CraftingRecipe {
     }
   }
 
-  constructor(data: CraftingRecipe["$"]) {
+  constructor(data: Schematic["$"]) {
     this.$ = data;
   }
 }

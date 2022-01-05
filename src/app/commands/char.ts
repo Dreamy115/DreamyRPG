@@ -956,7 +956,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
       for (var i = index * PER_INDEX_PAGE; i < perks.length && i < PER_INDEX_PAGE * (index + 1); i++) {
         const perk = perks[i]
         embed.addField(
-          `<${i+1}> \`${perk.$.id}\` **${perk.$.info.name}**`,
+          `<${i+1}> ${perk.$.id ? `\`${perk.$.id}\`` : ""} **${perk.$.info.name}**`,
           `${perk.$.info.lore}`
         )
       }
@@ -967,13 +967,77 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
       const skills = creature.skills;
       total = skills.length;
       for (var i = index * PER_INDEX_PAGE; i < skills.length && i < PER_INDEX_PAGE * (index + 1); i++) {
-        const skill = skills[i]
+        const skill = skills[i];
+
+        var str = "";
+
+        if (skill.$.perks) {
+          const perks: string[] = [];
+          for (const p of skill.$.perks) {
+            let perk: CreaturePerk | undefined;
+            if (typeof p === "string") {
+              perk = PerkManager.map.get(p)
+            } else {
+              perk = p;
+            }
+    
+            if (!perk) continue;
+            
+            perks.push(perk.$.info.name);
+          }
+    
+          str += `**Perks**: **${perks.join("**, **")}**\n`;
+        }
+        if (skill.$.passives) {
+          const passives: string[] = [];
+          for (const p of skill.$.passives) {
+            let perk: PassiveEffect | undefined;
+            if (typeof p === "string") {
+              perk = PassivesManager.map.get(p)
+            } else {
+              perk = p;
+            }
+    
+            if (!perk) continue;
+            
+            passives.push(perk.$.info.name);
+          }
+    
+          str += `**Passives**: **${passives.join("**, **")}**\n`;
+        }
+        if (skill.$.abilities) {
+          const abilities: string[] = [];
+          for (const p of skill.$.abilities) {
+            let perk: CreatureAbility | undefined;
+            if (typeof p === "string") {
+              perk = AbilitiesManager.map.get(p)
+            } else {
+              perk = p;
+            }
+    
+            if (!perk) continue;
+            
+            abilities.push(perk.$.info.name);
+          }
+    
+          str += `**Abilities**: **${abilities.join("**, **")}**\n`;
+        }
+        if (skill.$.unique) {
+          str += `Unique Flags: ${function () {
+            var s = "";
+    
+            const uniques: string[] = Array.from(skill.$.unique);
+            for (const u of uniques) {
+              s += capitalize(u.replaceAll(/_/gi, " ")) + ", ";
+            }
+            
+            return s.substring(0, s.length - 2);
+          }()}`
+        }
+
         embed.addField(
           `<${i+1}> \`${skill.$.id}\` **${skill.$.info.name}**`,
-          `*${skill.$.info.lore}*\n\n` +
-          `**Perks**:${perksDescriptor(Array.from(skill.$.perks ?? []))}\n\n` +
-          `**Passives**:${passivesDescriptor(Array.from(skill.$.passives ?? []))}\n\n` +
-          `**Abilities**:${abilitiesDescriptor(Array.from(skill.$.abilities ?? []))}\n\n`
+          `*${skill.$.info.lore}*\n\n${str}` 
         )
       }
     } break;

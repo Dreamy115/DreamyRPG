@@ -1,5 +1,5 @@
 import { MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu, MessageSelectOptionData } from "discord.js";
-import { capitalize, ClassManager, CONFIG, ItemManager, limitString, messageInput, removeMarkdown, SkillManager, SpeciesManager } from "../..";
+import { capitalize, ClassManager, CONFIG, ItemManager, limitString, LootTables, messageInput, PerkManager, removeMarkdown, SchematicsManager, SkillManager, SpeciesManager } from "../..";
 import { CraftingMaterials } from "../../game/Crafting";
 import Creature, { HealType } from "../../game/Creature";
 import { AbilityUseLog } from "../../game/CreatureAbilities";
@@ -321,6 +321,82 @@ export default new ComponentCommandHandler(
           case "item": {
             if (interaction.isButton()) {
               switch (args.shift()) {
+                case "craft": {
+                  const recipe = SchematicsManager.map.get(args.shift() ?? "");
+                  if (!recipe?.$.id) return;
+                  
+                  const results = LootTables.map.get(recipe.$.table)?.generate();
+                  if (!results) {
+                    interaction.editReply({
+                      content: "LootTable error"
+                    })
+                    return;
+                  }
+          
+                  try {
+                    if (!creature.schematics.has(recipe.$.id)) throw new Error("Doesn't have the schematic");
+                    if (recipe.$.requirements.enhancedCrafting && !creature.location?.$.hasEnhancedCrafting) throw new Error("You cannot craft this item in this location. Go to an area with Enhanced Crafting");
+          
+                    var perks = creature.perks;
+                    for (const p of recipe.$.requirements.perks ?? []) {
+                      const perk = PerkManager.map.get(p);
+                      if (!perk) continue;
+          
+                      if (!perks.find((v) => v.$.id === perk.$.id)) throw new Error(`Must have ${perk.$.info.name} (${perk.$.id}) perk`)
+                    }
+                    for (const mat in recipe.$.requirements.materials) {
+                      // @ts-expect-error
+                      const material: number = recipe.$.requirements.materials[mat];
+          
+                      // @ts-expect-error
+                      if (creature.$.items.crafting_materials[mat] < material) throw new Error(`Not enough materials; need more ${capitalize(mat)}`)
+                    }
+                    for (const i of recipe.$.requirements.items ?? []) {
+                      const item = ItemManager.map.get(i);
+                      if (!item) continue;
+          
+                      if (!creature.$.items.backpack.includes(item.$.id ?? "")) throw new Error(`Item ${item.$.info.name} (${item.$.id}) is missing (must be unequipped to count)`)
+                    }
+                  } catch (e: any) {
+                    interaction.editReply({
+                      content: `Your character doesn't meet the requirements:\n*${e?.message}*`
+                    });
+                    return;
+                  }
+          
+                  for (const i of recipe.$.requirements.items ?? []) {
+                    const item = ItemManager.map.get(i);
+                    if (!item) continue;
+          
+                    creature.$.items.backpack.splice(creature.$.items.backpack.findIndex(v => v === item.$.id), 1);
+                  }
+                  for (const mat in recipe.$.requirements.materials) {
+                    // @ts-expect-error
+                    creature.$.items.crafting_materials[mat] -= recipe.$.requirements.materials[mat];
+                  }
+          
+                  for (const res of results) {
+                    const result = ItemManager.map.get(res);
+                    if (result)
+                     creature.$.items.backpack.push(result.$.id);
+                  }
+          
+                  await creature.put(db);
+          
+                  interaction.editReply({
+                    content: `You got **${function() {
+                      const names: string[] = [];
+          
+                      for (const res of results) {
+                        const result = ItemManager.map.get(res);
+                        if (result)
+                          names.push(result.$.info.name)
+                      }
+          
+                      return names.join("**, **");
+                    }() || "Nothing"}**!`
+                  })
+                } break;
                 case "scrap": {
                   if (!creature.$.info.locked && !creature.$.info.npc) {
                     interaction.editReply({

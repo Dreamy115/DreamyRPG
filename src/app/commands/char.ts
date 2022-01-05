@@ -1,5 +1,6 @@
 import { Client, EmbedFieldData, MessageActionRow, MessageAttachment, MessageButton, MessageEmbed, MessageSelectMenu } from "discord.js";
 import { DisplaySeverity, replaceEffectLore, romanNumeral } from "../../game/ActiveEffects.js";
+import { Schematic } from "../../game/Crafting.js";
 import Creature from "../../game/Creature.js";
 import { replaceLore } from "../../game/CreatureAbilities.js";
 import { reductionMultiplier, DAMAGE_TO_INJURY_RATIO, DamageMethod, DamageType } from "../../game/Damage.js";
@@ -296,84 +297,26 @@ export default new ApplicationCommandHandler(
         })
       } break;
       case "craft": {
-        const recipe = SchematicsManager.map.get(interaction.options.getString("recipe_id", true));
-        if (!recipe?.$.id) return;
-        
-        const [creature,] = await Promise.all([
-          Creature.fetch(interaction.user.id, db),
-          interaction.deferReply({ephemeral: true})
-        ])
+        const schem = SchematicsManager.map.get(interaction.options.getString("recipe_id", true));
+        if (!schem) return;
 
-        const results = LootTables.map.get(recipe.$.table)?.generate();
-        if (!results) {
-          interaction.editReply({
-            content: "LootTable error"
-          })
-          return;
-        }
-
-        try {
-          if (!creature.schematics.has(recipe.$.id)) throw new Error("Doesn't have the schematic");
-          if (recipe.$.requirements.enhancedCrafting && !creature.location?.$.hasEnhancedCrafting) throw new Error("You cannot craft this item in this location. Go to an area with Enhanced Crafting");
-
-          var perks = creature.perks;
-          for (const p of recipe.$.requirements.perks ?? []) {
-            const perk = PerkManager.map.get(p);
-            if (!perk) continue;
-
-            if (!perks.find((v) => v.$.id === perk.$.id)) throw new Error(`Must have ${perk.$.info.name} (${perk.$.id}) perk`)
-          }
-          for (const mat in recipe.$.requirements.materials) {
-            // @ts-expect-error
-            const material: number = recipe.$.requirements.materials[mat];
-
-            // @ts-expect-error
-            if (creature.$.items.crafting_materials[mat] < material) throw new Error(`Not enough materials; need more ${capitalize(mat)}`)
-          }
-          for (const i of recipe.$.requirements.items ?? []) {
-            const item = ItemManager.map.get(i);
-            if (!item) continue;
-
-            if (!creature.$.items.backpack.includes(item.$.id ?? "")) throw new Error(`Item ${item.$.info.name} (${item.$.id}) is missing (must be unequipped to count)`)
-          }
-        } catch (e: any) {
-          interaction.editReply({
-            content: `Your character doesn't meet the requirements:\n*${e?.message}*`
-          });
-          return;
-        }
-
-        for (const i of recipe.$.requirements.items ?? []) {
-          const item = ItemManager.map.get(i);
-          if (!item) continue;
-
-          creature.$.items.backpack.splice(creature.$.items.backpack.findIndex(v => v === item.$.id), 1);
-        }
-        for (const mat in recipe.$.requirements.materials) {
-          // @ts-expect-error
-          creature.$.items.crafting_materials[mat] -= recipe.$.requirements.materials[mat];
-        }
-
-        for (const res of results) {
-          const result = ItemManager.map.get(res);
-          if (result)
-           creature.$.items.backpack.push(result.$.id);
-        }
-
-        await creature.put(db);
-
-        interaction.editReply({
-          content: `You got **${function() {
-            const names: string[] = [];
-
-            for (const res of results) {
-              const result = ItemManager.map.get(res);
-              if (result)
-                names.push(result.$.info.name)
-            }
-
-            return names.join("**, **");
-          }()}**!`
+        interaction.reply({
+          ephemeral: true,
+          content: "Please Confirm",
+          embeds: [
+            new MessageEmbed()
+              .setTitle(`${ItemQualityEmoji[schem.$.info.quality]} **${schem.$.info.name}**`)
+              .setFooter(schem.$.id)
+              .setDescription(schematicDescriptor(schem))
+          ],
+          components: [
+            new MessageActionRow().setComponents([
+              new MessageButton()
+                .setCustomId(`cedit/${interaction.user.id}/edit/item/craft/${schem.$.id}`)
+                .setLabel("Confirm Craft")
+                .setStyle("SUCCESS")
+            ])
+          ]
         })
       } break;
       case "say": {
@@ -997,7 +940,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
           const item = SchematicsManager.map.get(schem);
           if (!item) continue;
 
-          str += `<**${i+1}**> ${ItemQualityEmoji[item.$.info.quality]} **${item.$.info.name}** \`${item.$.id}\`\n*${item.$.info.lore}*\n\n`;
+          str += `<**${i+1}**> ${ItemQualityEmoji[item.$.info.quality]} **${item.$.info.name}** \`${item.$.id}\`\n` + schematicDescriptor(item);
         }
 
         return str;
@@ -1062,3 +1005,75 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
 
 const BAR_STYLE = bar_styles[0];
 const BAR_LENGTH = 20;
+
+export function schematicDescriptor(item: Schematic) {
+  var str = `*${item.$.info.lore}*\n`;
+
+  const table = LootTables.map.get(item.$.table);
+  if (!table) return str;
+
+  str += function () {
+    var str = "";
+    for (const pool of table.probabilities) {
+      str += "- Pool\n"
+
+      for (const i of pool) {
+        const item = ItemManager.map.get(i.id);
+        if (!item) continue;
+
+        str += `**${Math.round(1000 * i.chance) / 10}%** x ${ItemQualityEmoji[item.$.info.quality]} **${item.$.info.name}** \`${item.$.id}\`\n`
+      }
+
+      str += "\n";
+    }
+    return str;
+  }()
+  if (item.$.requirements.perks && item.$.requirements.perks.size > 0) {
+    str +=
+      "**Required Perks**\n" +
+      (function () {
+        var str = "";
+
+        for (const p of item.$.requirements.perks) {
+          const perk = PerkManager.map.get(p);
+          if (!perk) continue;
+
+          str += `\`${perk.$.id}\` **${perk.$.info.name}**\n`;
+        }
+
+        return str;
+      }() || "Invalid") + "\n"
+  }
+  if (item.$.requirements.materials) {
+    str +=
+      "**Materials**\n" +
+      function () {
+        var str = "";
+
+        for (const mat in item.$.requirements.materials) {
+          // @ts-expect-error
+          str += `**${item.$.requirements.materials[mat]}** ${capitalize(mat)}, `;
+        }
+
+        return str.substring(0, str.length - 2);
+      }() + "\n"
+  }
+  if (item.$.requirements.items && item.$.requirements.items.length > 0) {
+    str +=
+      "**Item Ingredients**" +
+      (function () {
+        var str = "";
+
+        for (const i of item.$.requirements.items) {
+          const thing = ItemManager.map.get(i);
+          if (!thing) continue;
+
+          str += `\`${thing.$.id}\` **${thing.$.info.name}**`;
+        }
+
+        return str;
+      }() || "Invalid") + "\n" 
+  }
+
+  return str;
+}

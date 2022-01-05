@@ -48,10 +48,11 @@ export class LootTable {
       }
       for (const entry of pool.entries) {
         for (const item of entry.items) {
-          items.push({
-            id: item,
-            chance: entry.weight / totalweight
-          });
+          if (item !== "")
+            items.push({
+              id: item,
+              chance: entry.weight / totalweight
+            });
         }
       }
       array.push(items);

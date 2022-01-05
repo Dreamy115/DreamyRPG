@@ -1,5 +1,6 @@
 import { ApplicationCommandOptionChoice } from "discord.js";
-import { CONFIG } from "../..";
+import { capitalize, CONFIG } from "../..";
+import { CraftingMaterials } from "../../game/Crafting";
 import Creature, { HealType } from "../../game/Creature";
 import { DamageType, DamageMethod, ShieldReaction, DamageCause, DamageGroup, damageLogEmbed } from "../../game/Damage";
 import { ApplicationCommandHandler } from "../commands";
@@ -463,7 +464,85 @@ export default new ApplicationCommandHandler({
     {
       name: "crafting_materials",
       description: "Manage the Creature's materials",
-      type: "SUB_COMMAND_GROUP"
+      type: "SUB_COMMAND_GROUP",
+      options: [
+        {
+          name: "set",
+          description: "Set the materials amount",
+          type: "SUB_COMMAND",
+          options: [
+            {
+              name: "cid",
+              description: "Find by ID",
+              type: "STRING",
+              autocomplete: true,
+              required: true
+            },
+            {
+              name: "material",
+              description: "The material to set",
+              type: "STRING",
+              required: true,
+              choices: function () {
+                const array: ApplicationCommandOptionChoice[] = [];
+
+                for (const mat in new CraftingMaterials({})) {
+                  array.push({
+                    name: capitalize(mat),
+                    value: mat
+                  })
+                }
+
+                return array;
+              }()
+            },
+            {
+              name: "amount",
+              description: "The amount to set to",
+              type: "INTEGER",
+              required: true
+            }
+          ]
+        },
+        {
+          name: "add",
+          description: "Add/remove some materials",
+          type: "SUB_COMMAND",
+          options: [
+            {
+              name: "cid",
+              description: "Find by ID",
+              type: "STRING",
+              autocomplete: true,
+              required: true
+            },
+            {
+              name: "material",
+              description: "The material to add to",
+              type: "STRING",
+              required: true,
+              choices: function () {
+                const array: ApplicationCommandOptionChoice[] = [];
+
+                for (const mat in new CraftingMaterials({})) {
+                  array.push({
+                    name: capitalize(mat),
+                    value: mat
+                  })
+                }
+
+                return array;
+              }()
+            },
+            {
+              name: "amount",
+              description: "The amount to add. Negative amounts supported",
+              type: "INTEGER",
+              required: true
+            }
+          ]
+        }
+      ]
     },
     {
       name: "level_set",
@@ -628,6 +707,19 @@ export default new ApplicationCommandHandler({
         interaction.options.getNumber("amount", true),
         interaction.options.getInteger("type", true)
       )
+    } break;
+    case "crafting_materials": {
+      const mat = interaction.options.getString("material", true);
+
+      switch (interaction.options.getSubcommand(true)) {
+        // @ts-expect-error
+        case "set": creature.$.items.crafting_materials[mat] = interaction.options.getInteger("amount", true); break;
+        // @ts-expect-error
+        case "add": creature.$.items.crafting_materials[mat] += interaction.options.getInteger("amount", true); break;
+      }
+
+      // @ts-expect-error
+      creature.$.items.crafting_materials[mat] = Math.max(creature.$.items.crafting_materials[mat], 0);
     } break;
     case "effects": {
       switch (interaction.options.getSubcommand(true)) {

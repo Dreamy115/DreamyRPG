@@ -733,7 +733,7 @@ export default new ApplicationCommandHandler({
           type: interaction.options.getInteger("type", true),
           value: interaction.options.getNumber("amount", true)
         }],
-        attacker: interaction.options.getString("attacker", true)
+        attacker: interaction.options.getString("attacker", false) ?? undefined
       }
 
       const log = creature.applyDamage(damage);

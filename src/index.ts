@@ -118,9 +118,27 @@ Bot.on("ready", async () => {
 
       console.log(`/${interaction.commandName} ${function() {
         var str = "";
-        for (const v of Array.from(interaction.options.data.values())) {
-          str += `${v.name} `
+       
+        const subcommandgroup = interaction.options.getSubcommandGroup(false);
+        const subcommand = interaction.options.getSubcommand(false);
+
+        const options = (
+          subcommandgroup
+          ? interaction.options.data[0].options?.[0].options
+          : interaction.options.data[0].options
+        ) ?? Array.from(interaction.options.data.values())
+
+        if (subcommandgroup) {
+          str += subcommandgroup + " "
         }
+        if (subcommand) {
+          str += subcommand + " "
+        }
+
+        for (const option of options) {
+          str += `${option.name}:${option.value} `;
+        }
+
         return str.trim();
       }()} @${interaction.user.id}`);
 

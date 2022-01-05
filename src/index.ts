@@ -1,4 +1,4 @@
-import { ApplicationCommandData, Client, Intents, Snowflake, SnowflakeUtil, TextBasedChannels } from "discord.js";
+import { ApplicationCommandData, AutocompleteInteraction, Client, CommandInteraction, Intents, Snowflake, SnowflakeUtil, TextBasedChannels } from "discord.js";
 import Mongoose from "mongoose";
 import YAML from "yaml";
 
@@ -116,31 +116,7 @@ Bot.on("ready", async () => {
 
       const executionId = SnowflakeUtil.generate();
 
-      console.log(`/${interaction.commandName} ${function() {
-        var str = "";
-       
-        const subcommandgroup = interaction.options.getSubcommandGroup(false);
-        const subcommand = interaction.options.getSubcommand(false);
-
-        const options = (
-          subcommandgroup
-          ? interaction.options.data[0].options?.[0].options
-          : interaction.options.data[0].options
-        ) ?? Array.from(interaction.options.data.values())
-
-        if (subcommandgroup) {
-          str += subcommandgroup + " "
-        }
-        if (subcommand) {
-          str += subcommand + " "
-        }
-
-        for (const option of options) {
-          str += `${option.name}:${option.value} `;
-        }
-
-        return str.trim();
-      }()} @${interaction.user.id}`);
+      console.log(`/${logCommandInteraction(interaction)}`, `@${interaction.user.id}`);
 
       console.time(`cmd-${executionId}`);
       await command.run(interaction, Bot, await db);
@@ -177,14 +153,9 @@ Bot.on("ready", async () => {
       }
 
       const executionId = SnowflakeUtil.generate();
-
-      console.log(`A/${interaction.commandName} ${function() {
-        var str = "";
-        for (const v of Array.from(interaction.options.data.values())) {
-          str += `${v.name} `
-        }
-        return str.trim();
-      }()} @${interaction.user.id}`);
+    
+      const focus = interaction.options.getFocused(true);
+      console.log(`A/${logCommandInteraction(interaction)} | ${focus.name}`, `@${interaction.user.id}`);
 
       console.time(`aut-${executionId}`);
       await command.run(interaction, Bot, await db);
@@ -263,4 +234,30 @@ export async function sleep(ms: number) {
 
 export function removeMarkdown(str: string) {
   return str.replaceAll(/\\(\*|_|`|~|\\)/g, '$1').replace(/(\*|_|`|~|\\)/g, "")
+}
+
+export function logCommandInteraction(interaction: CommandInteraction | AutocompleteInteraction): string {
+  var str = interaction.commandName;
+ 
+  const subcommandgroup = interaction.options.getSubcommandGroup(false);
+  const subcommand = interaction.options.getSubcommand(false);
+
+  const options = (
+    subcommandgroup
+    ? interaction.options.data[0].options?.[0].options
+    : interaction.options.data[0].options
+  ) ?? Array.from(interaction.options.data.values())
+
+  if (subcommandgroup) {
+    str += subcommandgroup + " "
+  }
+  if (subcommand) {
+    str += subcommand + " "
+  }
+
+  for (const option of options) {
+    str += `${option.name}:${option.value} `;
+  }
+
+  return str.trim();
 }

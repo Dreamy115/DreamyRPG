@@ -655,7 +655,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
           // @ts-expect-error
           `<**${i+1}**> **${item.displayName}** \`${item.$.id}\`\n**${capitalize(item.$.type)}**${item.$.subtype ? `, ${capitalize(item.$.subtype)}` : ""}`,
           describeItem(item, creature) + "\n\n",
-          true
+          item.$.type !== "weapon"
         )
       }
       
@@ -697,7 +697,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
           // @ts-expect-error
           `<**${i+1}**> **${item.displayName}** \`${item.$.id}\`\n**${capitalize(item.$.type)}**${item.$.subtype ? `, ${capitalize(item.$.subtype)}` : ""}`,
           describeItem(item, creature) + "\n\n",
-          true
+          item.$.type !== "weapon"
         )
       }
     } break;

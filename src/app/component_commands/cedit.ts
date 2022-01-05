@@ -556,7 +556,20 @@ export default new ComponentCommandHandler(
                       if (index === -1) throw new Error("Creature doesn't have item " + item.$.id);
                     
                       const log = await item.$.onUse(creature);
-                      creature.$.items.backpack.splice(index, 1, ...item.$.returnItems ?? []);
+
+                      const table = LootTables.map.get(item.$.returnTable ?? "");
+
+                      if (table) {
+                        const returns = table.generate();
+                        creature.$.items.backpack.splice(index, 1, ...returns);
+
+                        log.returns = [];
+                        for (const i of returns) {
+                          const item = ItemManager.map.get(i);
+                          if (item)
+                            returns.push(item.displayName);
+                        }
+                      }
 
                       logs.push(log);
                     } catch (e) {
@@ -569,11 +582,14 @@ export default new ComponentCommandHandler(
                     content: "OK"
                   });
 
-
                   for (const log of logs) {
                     await interaction.followUp({
                       ephemeral: false,
-                      content: log.text,
+                      content: `${log.text}` + (
+                        log.returns
+                        ? `\n\nItem Returns: **${log.returns.join("**, **")}**`
+                        : ""
+                      ),
                       embeds: (log.damageLogs?.length ?? 0 > 0) ? function () {
                         const array: MessageEmbed[] = [];
 

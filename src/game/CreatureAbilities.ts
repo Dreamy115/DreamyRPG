@@ -81,4 +81,5 @@ export function replaceLore(input: string, replacers: LoreReplacer[], creature?:
 export interface AbilityUseLog {
   damageLogs?: DamageLog[]
   text: string
+  returns?: string[]
 }

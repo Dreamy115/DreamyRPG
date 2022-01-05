@@ -100,7 +100,7 @@ Bot.on("ready", async () => {
 
   const guild = await Bot.guilds.fetch(CONFIG.guild?.id ?? "");
   await guild.roles.fetch();
-  guild.commands.set(commandData).then(() => console.log(`Commands uploaded to ${guild.id}`)).catch(() => console.error("Failed uploading commands"));
+  guild.commands.set(commandData).then(() => console.log(`Commands uploaded to ${guild.id}`)).catch((e) => console.error("Failed uploading commands", e));
 
   // Loading Game Stuff
   gameLoad();

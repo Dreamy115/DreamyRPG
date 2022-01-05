@@ -1,7 +1,7 @@
-import { Client, EmbedFieldData, MessageActionRow, MessageAttachment, MessageButton, MessageEmbed, MessageSelectMenu } from "discord.js";
+import { ApplicationCommandOptionChoice, Client, EmbedFieldData, MessageActionRow, MessageAttachment, MessageButton, MessageEmbed, MessageSelectMenu } from "discord.js";
 import { DisplaySeverity, replaceEffectLore, romanNumeral } from "../../game/ActiveEffects.js";
 import { Schematic } from "../../game/Crafting.js";
-import Creature from "../../game/Creature.js";
+import Creature, { diceRoll } from "../../game/Creature.js";
 import { CreatureAbility, replaceLore } from "../../game/CreatureAbilities.js";
 import { reductionMultiplier, DAMAGE_TO_INJURY_RATIO, DamageMethod, DamageType } from "../../game/Damage.js";
 import { CombatPosition } from "../../game/Fight.js";
@@ -32,11 +32,36 @@ export default new ApplicationCommandHandler(
             name: "id",
             description: "Find character by ID",
             type: "STRING",
-            autocomplete: true
+            autocomplete: true,
+            required: true
+          },
+          {
+            name: "difficulty",
+            description: "The difficulty. Usual ranges 3-20 from Trivial to Impossible",
+            type: "INTEGER",
+            required: true
+          },
+          {
+            name: "attribute",
+            description: "Which attribute to roll for?",
+            type: "STRING",
+            required: true,
+            choices: function () {
+              const array: ApplicationCommandOptionChoice[] = [];
+
+              for (const attr in new Creature({_id: ""}).$.attributes) {
+                array.push({
+                  name: attr,
+                  value: attr
+                })
+              }
+
+              return array;
+            }()
           },
           {
             name: "bonus",
-            description: "Modify the check",
+            description: "Modify the check value",
             type: "INTEGER"
           }
         ]
@@ -188,19 +213,39 @@ export default new ApplicationCommandHandler(
       case "rollfor": {
         const [creature,] = await Promise.all([
           Creature.fetch(interaction.options.getString("id", false) ?? interaction.user.id, db).catch(() => null),
-          interaction.deferReply({ephemeral: true})
+          interaction.deferReply({ephemeral: false})
         ]);
 
         if (!creature) {
           interaction.editReply({
             content: "Invalid creature"
-          })
+          }).finally(() => setTimeout(() => {
+            interaction.deleteReply();
+          }, 5000))
           return;
         }
 
+        const diff = interaction.options.getInteger("difficulty", true);
+        const bonus = interaction.options.getInteger("bonus", false) ?? 0;
+        const attr_name = interaction.options.getString("attribute", true);
+
+        // @ts-expect-error
+        const attr: TrackableStat = creature.$.attributes[attr_name];
+
+        const rolls: number[] = [];
+        for (var i = 0; i < DICE_ROLL_AMOUNT; i++) {
+          rolls.push(diceRoll(DICE_ROLL_SIDES));
+        }
+  
+        const score = rolls.reduce((p,v) => p += v) + attr.value;
+
         interaction.editReply({
-          content: `Select a stat (with **${interaction.options.getInteger("bonus", false) ?? 0}** bonus)`,
-          components: attributeComponents(creature, "", `rollstat/$ID/$ATTR/${interaction.options.getInteger("bonus", false) ?? 0}`)
+          content:
+            `**${attr_name}** Check: ***${rollResult(score - diff)}***\n` +
+            `**${score}** of **${diff}** *(**${rolls.join("**, **")}**)*\n` +
+            `**${attr.value < 0 ? "-" : "+"}${Math.abs(attr.value)}** Attribute\n` +
+            `**${bonus < 0 ? "-" : "+"}${Math.abs(bonus)}** Bonus\n` +
+            `as **${creature.displayName}**`
         })
       } break;
       case "shop": {
@@ -1189,3 +1234,14 @@ export function describeItem(item: Item, creature?: Creature) {
 
   return str.trim();
 }
+
+export function rollResult(delta: number) {
+  if (delta >= 0) return "Pass";
+  if (delta < 0) return "Fail";
+}
+
+export const DIFFICULTY_MIN = 3;
+export const DIFFICULTY_MAX = 20;
+
+export const DICE_ROLL_SIDES = 6;
+export const DICE_ROLL_AMOUNT = 2;

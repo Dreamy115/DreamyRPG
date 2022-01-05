@@ -4,7 +4,7 @@ import { CraftingMaterials } from "../../game/Crafting";
 import Creature, { HealType } from "../../game/Creature";
 import { AbilityUseLog } from "../../game/CreatureAbilities";
 import { DamageCause, DamageGroup, damageLogEmbed, DamageMethod, DamageType, ShieldReaction } from "../../game/Damage";
-import { Item } from "../../game/Items";
+import { Item, ItemQualityEmoji } from "../../game/Items";
 import { TrackableStat } from "../../game/Stats";
 import { infoEmbed } from "../commands/char";
 import { ComponentCommandHandler } from "../component_commands";
@@ -297,6 +297,7 @@ export default new ComponentCommandHandler(
                           array.push({
                             label: item.$.info.name,
                             description: limitString(item.$.info.lore, 100),
+                            emoji: ItemQualityEmoji[item.$.info.quality],
                             value: item.$.id ?? "",
                           })
                         }
@@ -336,6 +337,7 @@ export default new ComponentCommandHandler(
 
                     items.push({
                       label: item.$.info.name,
+                      emoji: ItemQualityEmoji[item.$.info.quality],
                       value: item.$.id ?? ""
                     })
                   }
@@ -364,6 +366,7 @@ export default new ComponentCommandHandler(
 
                     items.push({
                       label: item.$.info.name,
+                      emoji: ItemQualityEmoji[item.$.info.quality],
                       value: item.$.id ?? ""
                     })
                   }
@@ -392,6 +395,7 @@ export default new ComponentCommandHandler(
 
                     items.push({
                       label: item.$.info.name,
+                      emoji: ItemQualityEmoji[item.$.info.quality],
                       value: item.$.id ?? ""
                     })
                   }
@@ -436,6 +440,7 @@ export default new ComponentCommandHandler(
 
                             array.push({
                               label: item.$.info.name,
+                              emoji: ItemQualityEmoji[item.$.info.quality],
                               value: item.$.id ?? "",
                               description: capitalize(item.$.type)
                             })
@@ -817,6 +822,7 @@ export default new ComponentCommandHandler(
 
                         items.push({
                           label: item.$.info.name,
+                          emoji: ItemQualityEmoji[item.$.info.quality],
                           value: item.$.id ?? ""
                         })
                       }

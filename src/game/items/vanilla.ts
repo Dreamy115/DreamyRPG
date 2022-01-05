@@ -1,6 +1,6 @@
 import { HealType } from "../Creature";
 import { DamageMethod, DamageType } from "../Damage";
-import { Item } from "../Items";
+import { Item, ItemQuality } from "../Items";
 import { PassiveEffect } from "../PassiveEffects";
 
 export default [
@@ -8,7 +8,8 @@ export default [
     id: "starter_shield",
     info: {
       name: "Starter Shield",
-      lore: "A basic, used shield primer. Will stop a ping-pong ball thrown in your face but don't expect too much."
+      lore: "A basic, used shield primer. Will stop a ping-pong ball thrown in your face but don't expect too much.",
+      quality: ItemQuality.Common
     },
     type: "wearable",
     subtype: "utility",
@@ -31,7 +32,8 @@ export default [
     type: "weapon",
     info: {
       name: "Kitchen Knife",
-      lore: "You found this laying around! You can make use of it!"
+      lore: "You found this laying around! You can make use of it!",
+      quality: ItemQuality.Common
     },
     attack: {
       type: DamageMethod.Melee,
@@ -90,7 +92,8 @@ export default [
     type: "weapon",
     info: {
       name: "R340 Revolver",
-      lore: "Nothing special. This outdated revolver still uses .45 ACP.\n**Revolver Perk** - Damage group count increases with attack stability!"
+      lore: "Nothing special. This outdated revolver still uses .45 ACP.\n**Revolver Perk** - Damage group count increases with attack stability!",
+      quality: ItemQuality.Common
     },
     attack: {
       type: DamageMethod.Ranged,
@@ -180,6 +183,7 @@ export default [
     info: {
       name: "Makeshift Bandage",
       lore: "A bandage to stop **Bleeding** and heal **{0}** Injuries",
+      quality: ItemQuality.Common,
       replacers: [
         {
           stat: "tech",

@@ -5,7 +5,7 @@ import { CreatureClass } from "../../game/Classes";
 import { CraftingRecipe } from "../../game/Crafting";
 import { CreatureAbility, replaceLore } from "../../game/CreatureAbilities";
 import { DamageMethod, DamageType } from "../../game/Damage";
-import { AttackData, AttackSet, Item } from "../../game/Items";
+import { AttackData, AttackSet, Item, ItemQualityColor, ItemQualityEmoji } from "../../game/Items";
 import { cToF, GameLocation } from "../../game/Locations";
 import { PassiveEffect, PassiveModifier } from "../../game/PassiveEffects";
 import { CreaturePerk } from "../../game/Perks";
@@ -214,7 +214,7 @@ export default new ApplicationCommandHandler(
             embed.description += `\`${item.$.id}\` **${things.join("**, **")}** (\`${item.$.results.join(", ")}\`)\n`;
           } else {
             // @ts-expect-error
-            embed.description += `\`${item.$.id}\` **${item.$.info.name}**${item.$.type ? ` (${capitalize(item.$.type)})` : "" }\n`
+            embed.description += `\`${item.$.id}\` ${item.$.info.quality !== undefined ? `${ItemQualityEmoji[item.$.info.quality]} `: ""}**${item.$.info.name}**${item.$.type ? ` (${capitalize(item.$.type)})` : "" }\n`
           }
         }
       } break;
@@ -259,8 +259,16 @@ export default new ApplicationCommandHandler(
           }
         } else {
           embed
-          .setTitle(item.$.info.name)
+          // @ts-expect-error
+          .setTitle(`${item.$.info.quality ? `${ItemQualityEmoji[item.$.info.quality]} ` : ""}${item.$.info.name}`)
           .setDescription(item.$.info.lore);
+
+          // @ts-expect-error
+          if (item.$.info.quality !== undefined) {
+            // @ts-expect-error
+            embed.setColor(ItemQualityColor[item.$.info.quality]);
+          }
+
             // @ts-expect-error
             if ((item.$.unique ?? []).length > 0) {
               embed.addField(

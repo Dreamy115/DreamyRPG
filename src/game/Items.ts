@@ -47,6 +47,7 @@ export interface BaseItemData {
   info: {
     name: string
     lore: string
+    quality: ItemQuality
   }
   scrap?: {
     materials?: CraftingMaterials
@@ -73,7 +74,8 @@ export interface ConsumableItemData extends BaseItemData {
   info: {
     name: string
     lore: string
-    replacers: LoreReplacer[]
+    replacers: LoreReplacer[],
+    quality: ItemQuality
   }
   onUse: (creature: Creature) => Promise<AbilityUseLog>
   returnItems?: string[]
@@ -99,3 +101,28 @@ export interface AttackData {
     flat_bonus: number
   }[]
 }
+
+export enum ItemQuality {
+  "Common",
+  "Uncommon",
+  "Rare",
+  "Enhanced",
+  "Legendary",
+  "Prototype"
+}
+export const ItemQualityEmoji = [
+  "⚪",
+  "🟢",
+  "🔵",
+  "🟣",
+  "🟠",
+  "🔴",
+]
+export const ItemQualityColor = [
+  "#EEEEEE",
+  "#4AE052",
+  "#4AB1E0",
+  "#B14AE0",
+  "#F5CA31",
+  "#FC392B"
+]

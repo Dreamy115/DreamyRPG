@@ -4,7 +4,7 @@ import Creature from "../../game/Creature.js";
 import { replaceLore } from "../../game/CreatureAbilities.js";
 import { reductionMultiplier, DAMAGE_TO_INJURY_RATIO, DamageMethod, DamageType } from "../../game/Damage.js";
 import { CombatPosition } from "../../game/Fight.js";
-import { AttackData, Item } from "../../game/Items.js";
+import { AttackData, Item, ItemQualityEmoji } from "../../game/Items.js";
 import { cToF } from "../../game/Locations.js";
 import { PassiveModifier } from "../../game/PassiveEffects.js";
 import { textStat, ModifierType, TrackableStat } from "../../game/Stats.js";
@@ -249,7 +249,7 @@ export default new ApplicationCommandHandler(
               })
 
               embed.addField(
-                `[${i}] Item - ${item.$.info.name} \`${item.$.id}\``,
+                `[${i}] Item - ${ItemQualityEmoji[item.$.info.quality]} ${item.$.info.name} \`${item.$.id}\``,
                 `*${item.$.info.lore}*\n\n${function(){
                   var arr: string[] = [];
                   for (const mat in content.cost) {
@@ -595,7 +595,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
             ` **Shield** ${textStat(creature.$.vitals.shield, creature.$.stats.shield.value)} ` +
             `**${creature.$.stats.shield_regen.value}**/t`
             : "No **Shield**"
-          ) + "\n" +
+          ) + "\n\n" +
           make_bar(100 *creature.$.vitals.mana / creature.$.stats.mana.value, BAR_STYLE, BAR_LENGTH / 3).str +
           ` **Mana** ${textStat(creature.$.vitals.mana, creature.$.stats.mana.value)} `+
           `**${creature.$.stats.mana_regen.value}**/t\n`
@@ -699,7 +699,8 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
 
             for (var i = index * PER_INDEX_PAGE; i < creature.items.length && i < PER_INDEX_PAGE * (index + 1); i++) {
               const item = creature.items[i];
-              str += `<**${i+1}**> **${item.$.info.name}** \`${item.$.id}\`\n*${item.$.info.lore}*\n\n`
+              // @ts-expect-error
+              str += `<**${i+1}**> ${ItemQualityEmoji[item.$.info.quality]} **${item.$.info.name}** \`${item.$.id}\`\n**${capitalize(item.$.type)}**${item.$.subtype ? `, ${capitalize(item.$.subtype)}` : ""}\n*${item.$.info.lore}*\n\n`
             }
 
             return str.trim();
@@ -726,7 +727,8 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
                 lore = replaceLore(lore, item.$.info.replacers, creature);
               }
 
-              str += `<**${i+1}**> **${item.$.info.name}** \`${item.$.id}\`\n*${lore}*\n\n`
+              // @ts-expect-error
+              str += `<**${i+1}**> ${ItemQualityEmoji[item.$.info.quality]} **${item.$.info.name}** \`${item.$.id}\`\n**${capitalize(item.$.type)}**${item.$.subtype ? `, ${capitalize(item.$.subtype)}` : ""}\n*${lore}*\n\n`
             }
 
             return str;

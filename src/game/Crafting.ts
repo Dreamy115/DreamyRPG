@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { ItemQuality } from "./Items";
+import { ItemQuality, ItemQualityEmoji } from "./Items";
 
 export default class CraftingManager {
   map = new Map<string, Schematic>();
@@ -46,6 +46,10 @@ export class Schematic {
 
   constructor(data: Schematic["$"]) {
     this.$ = data;
+  }
+
+  get displayName() {
+    return `${ItemQualityEmoji[this.$.info.quality]} ${this.$.info.name}`;
   }
 }
 

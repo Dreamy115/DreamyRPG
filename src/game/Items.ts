@@ -40,6 +40,10 @@ export class Item {
   constructor(data: Item["$"]) {
     this.$ = data;
   }
+
+  get displayName() {
+    return `${ItemQualityEmoji[this.$.info.quality]} ${this.$.info.name}`;
+  }
 }
 
 export interface BaseItemData {

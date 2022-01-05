@@ -224,7 +224,7 @@ export default [
       replacers: [
         {
           stat: "tech",
-          multiplier: 0.06,
+          multiplier: 0.075,
           bonus: 15
         }
       ]
@@ -232,7 +232,7 @@ export default [
     onUse: async (creature) => {
       creature.clearActiveEffect("bleeding", "delete");
 
-      const amount = 10 + (creature.$.stats.tech.value * 0.05);
+      const amount = 15 + (creature.$.stats.tech.value * 0.075);
 
       creature.heal(amount, HealType.Injuries);
       creature.heal(amount, HealType.Health);

@@ -250,7 +250,7 @@ export default new ApplicationCommandHandler(
               })
 
               embed.addField(
-                `[${i}] Item - ${ItemQualityEmoji[item.$.info.quality]} ${item.$.info.name} \`${item.$.id}\``,
+                `[${i}] Item - ${item.displayName} \`${item.$.id}\``,
                 `*${item.$.info.lore}*\n\n${function(){
                   var arr: string[] = [];
                   for (const mat in content.cost) {
@@ -648,7 +648,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
             for (var i = index * PER_INDEX_PAGE; i < creature.items.length && i < PER_INDEX_PAGE * (index + 1); i++) {
               const item = creature.items[i];
               // @ts-expect-error
-              str += `<**${i+1}**> ${ItemQualityEmoji[item.$.info.quality]} **${item.$.info.name}** \`${item.$.id}\`\n**${capitalize(item.$.type)}**${item.$.subtype ? `, ${capitalize(item.$.subtype)}` : ""}\n*${item.$.info.lore}*\n\n`
+              str += `<**${i+1}**> **${item.displayName}** \`${item.$.id}\`\n**${capitalize(item.$.type)}**${item.$.subtype ? `, ${capitalize(item.$.subtype)}` : ""}\n*${item.$.info.lore}*\n\n`
             }
 
             return str.trim();
@@ -676,7 +676,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
               }
 
               // @ts-expect-error
-              str += `<**${i+1}**> ${ItemQualityEmoji[item.$.info.quality]} **${item.$.info.name}** \`${item.$.id}\`\n**${capitalize(item.$.type)}**${item.$.subtype ? `, ${capitalize(item.$.subtype)}` : ""}\n*${lore}*\n\n`
+              str += `<**${i+1}**> **${item.displayName} **\`${item.$.id}\`\n**${capitalize(item.$.type)}**${item.$.subtype ? `, ${capitalize(item.$.subtype)}` : ""}\n*${lore}*\n\n`
             }
 
             return str;
@@ -940,7 +940,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
           const item = SchematicsManager.map.get(schem);
           if (!item) continue;
 
-          str += `<**${i+1}**> ${ItemQualityEmoji[item.$.info.quality]} **${item.$.info.name}** \`${item.$.id}\`\n` + schematicDescriptor(item);
+          str += `<**${i+1}**> **${item.displayName}** \`${item.$.id}\`\n` + schematicDescriptor(item);
         }
 
         return str;
@@ -1022,7 +1022,7 @@ export function schematicDescriptor(item: Schematic) {
         const item = ItemManager.map.get(i.id);
         if (!item) continue;
 
-        str += `**${Math.round(1000 * i.chance) / 10}%** x ${ItemQualityEmoji[item.$.info.quality]} **${item.$.info.name}** \`${item.$.id}\`\n`
+        str += `**${Math.round(1000 * i.chance) / 10}%** x **${item.displayName}** \`${item.$.id}\`\n`
       }
 
       str += "\n";

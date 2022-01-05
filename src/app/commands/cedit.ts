@@ -1,7 +1,8 @@
-import { ApplicationCommandOptionChoice } from "discord.js";
-import { capitalize, CONFIG } from "../..";
+import { ApplicationCommandOptionChoice, MessageEmbed } from "discord.js";
+import { capitalize, CONFIG, ItemManager, LootTables } from "../..";
 import { CraftingMaterials } from "../../game/Crafting";
 import Creature, { HealType } from "../../game/Creature";
+import { replaceLore } from "../../game/CreatureAbilities";
 import { DamageType, DamageMethod, ShieldReaction, DamageCause, DamageGroup, damageLogEmbed } from "../../game/Damage";
 import { ApplicationCommandHandler } from "../commands";
 import { ceditMenu, gm_ceditMenu } from "../component_commands/cedit";
@@ -26,7 +27,7 @@ export default new ApplicationCommandHandler({
       ]
     },
     {
-      name: "loot",
+      name: "grant_loot",
       description: "Grant some loot from a loot table!",
       type: "SUB_COMMAND",
       options: [
@@ -661,6 +662,47 @@ export default new ApplicationCommandHandler({
   }
 
   switch (interaction.options.getSubcommandGroup(false) ?? interaction.options.getSubcommand(true)) {
+    case "grant_loot": {
+      const table = LootTables.map.get(interaction.options.getString("loottable", true));
+      if (!table) return;
+
+      const items = table.generate();
+
+      creature.$.items.backpack.push(...items);
+      creature.put(db);
+
+      await interaction.editReply({content: "OK"});
+
+      const embed = new MessageEmbed()
+        .setColor("AQUA")
+        .setTitle("Booty Granted!")
+        .setAuthor(creature.displayName, creature.$.info.display.avatar ?? undefined)
+        .setFooter(`Creature ID: ${creature.$._id}`)
+        .setDescription(`**${creature.displayName}**, enjoy your sweet loot!`)
+
+      for (const i of items) {
+        const item = ItemManager.map.get(i);
+        const lore = item?.$.info.lore ?? "Such a myserious item... We weren't able to load it!";
+
+        embed.addField(
+          `${item?.displayName ?? "Unknown"}`,
+          // @ts-expect-error
+          `**${capitalize(item?.$.type ?? "Unknown")}**${item?.$.subtype ? `, ${capitalize(item?.$.subtype ?? "Unknown")}` : ""}\n` +
+          `*${
+            // @ts-expect-error
+            item?.$.info.replacers
+            // @ts-expect-error
+            ? replaceLore(lore, item?.$.info.replacers, creature)
+            : lore
+          }*`
+        )
+      }
+
+      interaction.followUp({
+        embeds: [embed]
+      })
+      return;
+    } break;
     case "menu": {
       await interaction.editReply({
         content: `Editing menu for **${creature.displayName}**`,

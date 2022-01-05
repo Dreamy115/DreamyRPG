@@ -247,7 +247,7 @@ export default new ApplicationCommandHandler(
                     const item = ItemManager.map.get(i.id);
                     if (!item) continue;
 
-                    str += `**${Math.round(1000 * i.chance) / 10}%** x ${ItemQualityEmoji[item.$.info.quality]} **${item.$.info.name}** \`${item.$.id}\`\n`
+                    str += `**${Math.round(1000 * i.chance) / 10}%** x **${item.displayName}** \`${item.$.id}\`\n`
                   }
 
                   str += "\n"

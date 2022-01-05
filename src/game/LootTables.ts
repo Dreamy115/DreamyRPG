@@ -41,8 +41,8 @@ export class LootTable {
     const array: {id: string, chance: number}[][] = [];
     for (const pool of this.$.pools) {
       const items: {id: string, chance: number}[] = [];
+      
       let totalweight: number = 0;
-
       for (const entry of pool.entries) {
         totalweight += entry.weight;
       }
@@ -78,8 +78,6 @@ export class LootTable {
 
         var e = 0;
         for (e = 0; e < pool.entries.length; e++) {
-          const entry = pool.entries[e];
-
           let target = 0;
           for (var w = 0; w <= e; w++) {
             target += totalweights[w];

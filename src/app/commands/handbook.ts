@@ -5,14 +5,14 @@ import { CreatureClass } from "../../game/Classes";
 import { Schematic } from "../../game/Crafting";
 import { CreatureAbility, replaceLore } from "../../game/CreatureAbilities";
 import { DamageMethod, DamageType } from "../../game/Damage";
-import { AttackData, AttackSet, Item, ItemQualityColor, ItemQualityEmoji } from "../../game/Items";
+import { AttackData, Item, ItemQualityColor, ItemQualityEmoji } from "../../game/Items";
 import { cToF, GameLocation } from "../../game/Locations";
 import { LootTable } from "../../game/LootTables";
 import { PassiveEffect, PassiveModifier } from "../../game/PassiveEffects";
 import { CreaturePerk } from "../../game/Perks";
 import { CreatureSkill } from "../../game/Skills";
 import { CreatureSpecies } from "../../game/Species";
-import { Modifier, ModifierType } from "../../game/Stats";
+import { ModifierType } from "../../game/Stats";
 import { ApplicationCommandHandler } from "../commands";
 
 const ITEMS_PER_PAGE = 25;
@@ -269,7 +269,7 @@ export default new ApplicationCommandHandler(
 
                 for (const e in pool.entries) {
                   const entry = pool.entries[e];
-                  str += `Entry [${e}] - ${entry.weight} Weight\n\`${entry.items.join("`, `")}\`\n\n`;
+                  str += `Entry [**${e}**] - **${entry.weight}** Weight\n\`${entry.items.join("`, `")}\`\n\n`;
                 }
 
                 return str;

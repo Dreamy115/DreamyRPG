@@ -82,7 +82,7 @@ export interface ConsumableItemData extends BaseItemData {
     quality: ItemQuality
   }
   onUse: (creature: Creature) => Promise<AbilityUseLog>
-  returnItems?: string[]
+  returnTable?: string
 }
 
 

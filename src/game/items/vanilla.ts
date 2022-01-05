@@ -1,3 +1,4 @@
+import { CraftingMaterials } from "../Crafting";
 import { HealType } from "../Creature";
 import { DamageMethod, DamageType } from "../Damage";
 import { Item, ItemQuality } from "../Items";
@@ -205,13 +206,13 @@ export default [
       }
     },
     scrap: {
-      materials: {
+      materials: new CraftingMaterials({
         metal: 0,
         fabric: 8,
         biomaterial: 0,
         cells: 0,
         plastic: 0
-      }
+      })
     }
   }),
   new Item({
@@ -242,13 +243,13 @@ export default [
       }
     },
     scrap: {
-      materials: {
+      materials: new CraftingMaterials({
         metal: 0,
         fabric: 10,
         biomaterial: 0,
         cells: 0,
         plastic: 0
-      }
+      })
     }
   })
 ]

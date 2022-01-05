@@ -2,18 +2,20 @@ import { Client, EmbedFieldData, MessageActionRow, MessageAttachment, MessageBut
 import { DisplaySeverity, replaceEffectLore, romanNumeral } from "../../game/ActiveEffects.js";
 import { Schematic } from "../../game/Crafting.js";
 import Creature from "../../game/Creature.js";
-import { replaceLore } from "../../game/CreatureAbilities.js";
+import { CreatureAbility, replaceLore } from "../../game/CreatureAbilities.js";
 import { reductionMultiplier, DAMAGE_TO_INJURY_RATIO, DamageMethod, DamageType } from "../../game/Damage.js";
 import { CombatPosition } from "../../game/Fight.js";
 import { AttackData, Item, ItemQualityEmoji } from "../../game/Items.js";
 import { cToF } from "../../game/Locations.js";
-import { PassiveModifier } from "../../game/PassiveEffects.js";
+import { LootTable } from "../../game/LootTables.js";
+import { PassiveEffect, PassiveModifier } from "../../game/PassiveEffects.js";
+import { CreaturePerk } from "../../game/Perks.js";
 import { textStat, ModifierType, TrackableStat } from "../../game/Stats.js";
-import { SpeciesManager, ClassManager, capitalize, ItemManager, EffectManager, AbilitiesManager, CONFIG, SchematicsManager, PerkManager, LocationManager, limitString, LootTables } from "../../index.js";
+import { SpeciesManager, ClassManager, capitalize, ItemManager, EffectManager, AbilitiesManager, CONFIG, SchematicsManager, PerkManager, LocationManager, limitString, LootTables, PassivesManager } from "../../index.js";
 import { bar_styles, make_bar } from "../Bars.js";
 import { ApplicationCommandHandler } from "../commands.js";
 import { attributeComponents, ceditMenu } from "../component_commands/cedit.js";
-import { abilitiesDescriptor, modifierDescriptor, passivesDescriptor, perksDescriptor } from "./handbook.js";
+import { abilitiesDescriptor, attackDescriptor, modifierDescriptor, passivesDescriptor, perksDescriptor } from "./handbook.js";
 
 export default new ApplicationCommandHandler(
   {
@@ -60,8 +62,12 @@ export default new ApplicationCommandHandler(
                 value: "stats"
               },
               {
-                name: "Items",
+                name: "Equipped Items",
                 value: "items"
+              },
+              {
+                name: "Backpacked Items",
+                value: "backpack"
               },
               {
                 name: "Schematics",
@@ -637,53 +643,23 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
           Weapons **${weaponAmount}**/**${Creature.MAX_EQUIPPED_WEAPONS + 1}**
           Utility **${utilAmount}**/**${Creature.MAX_EQUIPPED_UTILITY}**`;
         }(creature)
-      ).addFields([
-        {
-          name: "Equipped",
-          value: function(creature: Creature) {
-            var str = "";
+      )
+      
+      const items = creature.items;
+      total = creature.items.length;
 
-            total = creature.items.length;
+      for (var i = index * PER_INDEX_PAGE; i < items.length && i < PER_INDEX_PAGE * (index + 1); i++) {
+        const item = items[i];
 
-            for (var i = index * PER_INDEX_PAGE; i < creature.items.length && i < PER_INDEX_PAGE * (index + 1); i++) {
-              const item = creature.items[i];
-              // @ts-expect-error
-              str += `<**${i+1}**> **${item.displayName}** \`${item.$.id}\`\n**${capitalize(item.$.type)}**${item.$.subtype ? `, ${capitalize(item.$.subtype)}` : ""}\n*${item.$.info.lore}*\n\n`
-            }
-
-            return str.trim();
-          }(creature) || "Empty",
-          inline: true
-        },
-        {
-          name: "Backpack",
-          value: function(creature: Creature) {
-            var str = "";
-
-            if (creature.$.items.backpack.length > total) {
-              total = creature.$.items.backpack.length
-            }
-
-            for (var i = index * PER_INDEX_PAGE; i < creature.$.items.backpack.length && i < PER_INDEX_PAGE * (index + 1); i++) {
-              const item = ItemManager.map.get(creature.$.items.backpack[i]);
-              if (!item) continue;
-
-              let lore = item.$.info.lore;
-              // @ts-expect-error
-              if (item.$.info.replacers) {
-                // @ts-expect-error
-                lore = replaceLore(lore, item.$.info.replacers, creature);
-              }
-
-              // @ts-expect-error
-              str += `<**${i+1}**> **${item.displayName} **\`${item.$.id}\`\n**${capitalize(item.$.type)}**${item.$.subtype ? `, ${capitalize(item.$.subtype)}` : ""}\n*${lore}*\n\n`
-            }
-
-            return str;
-          }(creature) || "Empty",
-          inline: true
-        }
-      ]).addField(
+        embed.addField(
+          // @ts-expect-error
+          `<**${i+1}**> **${item.displayName}** \`${item.$.id}\`\n**${capitalize(item.$.type)}**${item.$.subtype ? `, ${capitalize(item.$.subtype)}` : ""}`,
+          describeItem(item, creature) + "\n\n",
+          true
+        )
+      }
+      
+      embed.addField(
         "Crafting Materials",
         function () {
           var str = "";
@@ -699,6 +675,32 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
         }()
       )
     } break;
+    case "backpack": {
+      scrollable = true;
+
+      const _items = creature.$.items.backpack;
+      const items: Item[] = [];
+      for (const i of _items) {
+        const item = ItemManager.map.get(i);
+        if (item)
+          items.push(item);
+      }
+
+      if (items.length > total) {
+        total = items.length
+      }
+
+      for (var i = index * PER_INDEX_PAGE; i < items.length && i < PER_INDEX_PAGE * (index + 1); i++) {
+        const item = items[i];
+
+        embed.addField(
+          // @ts-expect-error
+          `<**${i+1}**> **${item.displayName}** \`${item.$.id}\`\n**${capitalize(item.$.type)}**${item.$.subtype ? `, ${capitalize(item.$.subtype)}` : ""}`,
+          describeItem(item, creature) + "\n\n",
+          true
+        )
+      }
+    } break;
     case "abilities": {
       scrollable = true;
 
@@ -712,7 +714,10 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
 
           array.push({
             name: `<${i+1}> \`${ability.$.id}\` ${ability.$.info.name}`,
-            value: `${replaceLore(ability.$.info.lore, ability.$.info.lore_replacers, creature)}\n\n**${ability.$.haste ?? 1}** Haste`
+            value: `${replaceLore(ability.$.info.lore, ability.$.info.lore_replacers, creature)}\n\n` +
+            `**${ability.$.haste ?? 1}** Haste\n**${ability.$.min_targets}**${ability.$.max_targets ? `to **${ability.$.max_targets}**` : ""} Targets\n` +
+            `**${ability.$.cost}** Mana\n` +
+            `${ability.$.attackLike ? "**Treated like Attack**" : ""}`
           })
         }
 
@@ -1006,29 +1011,31 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
 const BAR_STYLE = bar_styles[0];
 const BAR_LENGTH = 20;
 
+export function tableDescriptor(table: LootTable) {
+  var str = "";
+  for (const p in table.probabilities) {
+    const pool = table.probabilities[p];
+    str += `- Rolls **${table.$.pools[p].min_rolls}**${table.$.pools[p].max_rolls > table.$.pools[p].min_rolls ? `-**${table.$.pools[p].max_rolls}**` : ""} times\n`
+
+    for (const i of pool) {
+      const item = ItemManager.map.get(i.id);
+      if (!item) continue;
+
+      str += `**${Math.round(1000 * i.chance) / 10}%** x **${item.displayName}** \`${item.$.id}\`\n`
+    }
+
+    str += "\n";
+  }
+  return str.trim();
+}
+
 export function schematicDescriptor(item: Schematic) {
   var str = `*${item.$.info.lore}*\n`;
 
   const table = LootTables.map.get(item.$.table);
   if (!table) return str;
 
-  str += function () {
-    var str = "";
-    for (const p in table.probabilities) {
-      const pool = table.probabilities[p];
-      str += `- Rolls **${table.$.pools[p].min_rolls}**${table.$.pools[p].max_rolls > table.$.pools[p].min_rolls ? `-**${table.$.pools[p].max_rolls}**` : ""} times\n`
-
-      for (const i of pool) {
-        const item = ItemManager.map.get(i.id);
-        if (!item) continue;
-
-        str += `**${Math.round(1000 * i.chance) / 10}%** x **${item.displayName}** \`${item.$.id}\`\n`
-      }
-
-      str += "\n";
-    }
-    return str;
-  }()
+  str += tableDescriptor(table);
   if (item.$.requirements.perks && item.$.requirements.perks.size > 0) {
     str +=
       "**Required Perks**\n" +
@@ -1076,5 +1083,109 @@ export function schematicDescriptor(item: Schematic) {
       }() || "Invalid") + "\n" 
   }
 
-  return str;
+  return str.trim();
+}
+
+export function describeItem(item: Item, creature?: Creature) {
+  var str = "";
+  
+  let lore = item.$.info.lore
+  // @ts-expect-error
+  if (item.$.info.replacers) {
+    // @ts-expect-error
+    lore = replaceLore(lore, item.$.info.replacers, creature);
+  }
+
+  str += `*${lore}*\n`;
+  
+  const scrap: string[] = [];
+  if (item.$.scrap) {
+    for (const mat in item.$.scrap.materials) {
+      // @ts-expect-error
+      scrap.push(`**${item.$.scrap.materials[mat]}** ${capitalize(mat)}`)
+    }
+    str += `\nScraps for: ${scrap.join(", ")}\n`
+  }
+
+  if (item.$.type === "consumable") {
+    const table = LootTables.map.get(item.$.returnTable ?? "");
+    if (table)
+      str += `\nAfter Use:\n${tableDescriptor(table)}\n\n`;
+  } else {
+    if (item.$.perks) {
+      const perks: string[] = [];
+      for (const p of item.$.perks) {
+        let perk: CreaturePerk | undefined;
+        if (typeof p === "string") {
+          perk = PerkManager.map.get(p)
+        } else {
+          perk = p;
+        }
+
+        if (!perk) continue;
+        
+        perks.push(perk.$.info.name);
+      }
+
+      str += `**Perks**: **${perks.join("**, **")}**\n`;
+    }
+    if (item.$.passives) {
+      const passives: string[] = [];
+      for (const p of item.$.passives) {
+        let perk: PassiveEffect | undefined;
+        if (typeof p === "string") {
+          perk = PassivesManager.map.get(p)
+        } else {
+          perk = p;
+        }
+
+        if (!perk) continue;
+        
+        passives.push(perk.$.info.name);
+      }
+
+      str += `**Passives**: **${passives.join("**, **")}**\n`;
+    }
+    if (item.$.abilities) {
+      const abilities: string[] = [];
+      for (const p of item.$.abilities) {
+        let perk: CreatureAbility | undefined;
+        if (typeof p === "string") {
+          perk = AbilitiesManager.map.get(p)
+        } else {
+          perk = p;
+        }
+
+        if (!perk) continue;
+        
+        abilities.push(perk.$.info.name);
+      }
+
+      str += `**Abilities**: **${abilities.join("**, **")}**\n`;
+    }
+    if (item.$.unique) {
+      str += `Unique Flags: ${function () {
+        var s = "";
+
+        const uniques: string[] = Array.from(item.$.unique);
+        for (const u of uniques) {
+          s += capitalize(u.replaceAll(/_/gi, " ")) + ", ";
+        }
+        
+        return s.substring(0, s.length - 2);
+      }()}`
+    }
+
+    switch (item.$.type) {
+      case "weapon": {
+        str += 
+          `\nWeapon Type: **${DamageMethod[item.$.attack.type]}**\n` +
+          `- **Crit** Attack\n${attackDescriptor(item.$.attack.crit)}\n` +
+          `- **Normal** Attack\n${attackDescriptor(item.$.attack.normal)}\n` +
+          `- **Weak** Attack\n${attackDescriptor(item.$.attack.weak)}\n`
+      } break;
+    }
+  }
+
+  return str.trim();
 }

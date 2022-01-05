@@ -14,6 +14,7 @@ import { CreatureSkill } from "../../game/Skills";
 import { CreatureSpecies } from "../../game/Species";
 import { ModifierType } from "../../game/Stats";
 import { ApplicationCommandHandler } from "../commands";
+import { tableDescriptor } from "./char";
 
 const ITEMS_PER_PAGE = 25;
 
@@ -138,7 +139,8 @@ export default new ApplicationCommandHandler(
       default: return;
       case "items":
         list = ItemManager.map;
-        title = "Items";
+        title = "Items (Confidential)";
+        confidential = true;
         break;
       case "species":
         list = SpeciesManager.map;
@@ -154,7 +156,8 @@ export default new ApplicationCommandHandler(
         break;
       case "abilities":
         list = AbilitiesManager.map;
-        title = "Abilities";
+        title = "Abilities (Confidential)";
+        confidential = true;
         break;
       case "effects":
         list = EffectManager.map;
@@ -170,7 +173,8 @@ export default new ApplicationCommandHandler(
         break;
       case "schematics":
         list = SchematicsManager.map;
-        title = "Schematics";
+        title = "Schematics (Confidential)";
+        confidential = true;
         break;
       case "locations":
         list = LocationManager.map;
@@ -184,15 +188,15 @@ export default new ApplicationCommandHandler(
         break;
     }
     
-    const _defer = await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ ephemeral: true });
 
     if (confidential) {
       const member = await (await Bot.guilds.fetch(CONFIG.guild?.id ?? ""))?.members.fetch(interaction.user).catch(() => undefined)
       if (!member?.roles.cache.has(CONFIG.guild?.gm_role ?? "")) {
         interaction.editReply({
           content: 
-            "You cannot access details about Locations.\n" +
-            "If you want to know about the Location your character is in, check out `/char info page:location`"
+            "You cannot access details about this.\n" +
+            "If you want to know about the items in this type that your character has, check out `/char info`"
         })
         return;
       }
@@ -344,20 +348,12 @@ export default new ApplicationCommandHandler(
                 
                 embed.setDescription(replaceLore(embed.description ?? "", item.$.info.replacers));
 
-                if (item.$.returnItems) {
+                const table = LootTables.map.get(item.$.returnTable ?? "");
+
+                if (table) {
                   embed.addField(
                     "Return After Use",
-                    function (){
-                      const array: string[] = [];
-
-                      for (const i of item.$.returnItems) {
-                        const ret = ItemManager.map.get(i);
-                        
-                        array.push(`**${ret?.$.info.name}** \`${i}\``)
-                      }
-
-                      return array.join(", ");
-                    }()
+                    tableDescriptor(table)
                   )
                 }
               }
@@ -602,12 +598,11 @@ export default new ApplicationCommandHandler(
   }
 )
 
-function attackDescriptor(attacks: AttackData[]) {
+export function attackDescriptor(attacks: AttackData[]) {
   var str = "";
 
   for (const attackdata of attacks) {
-    str += `Sources:
-    ${function () {
+    str += `${function () {
       var str = "";
 
       for (const source of attackdata.sources) {
@@ -615,11 +610,7 @@ function attackDescriptor(attacks: AttackData[]) {
       }
 
       return str;
-    }()}
-    **${attackdata.modifiers?.accuracy ?? 0}** Accuracy
-    **${attackdata.modifiers?.lethality ?? 0}** Lethality
-    **${attackdata.modifiers?.defiltering ?? 0}** Defiltering
-    **${attackdata.modifiers?.cutting ?? 0}** Cutting\n\n`;
+    }()}**${attackdata.modifiers?.accuracy ?? 0}** Accuracy | **${attackdata.modifiers?.lethality ?? 0}** Lethality | **${attackdata.modifiers?.defiltering ?? 0}** Defiltering | **${attackdata.modifiers?.cutting ?? 0}** Cutting\n`;
   }
 
   return str;

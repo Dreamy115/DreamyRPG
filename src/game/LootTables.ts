@@ -30,16 +30,17 @@ export default class LootTableManager {
 export class LootTable {
   $: {
     id: string
-    pools: LootPool[]
+    note?: string // Note for GMs to differenciate
+    pools: Map<string,LootPool[]> // Mapping PERK IDs to loot pools
   }
 
   constructor(data: LootTable["$"]) {
     this.$ = data;
   }
 
-  get probabilities() {
+  static getProbabilities(pools: LootPool[]) {
     const array: {id: string, chance: number}[][] = [];
-    for (const pool of this.$.pools) {
+    for (const pool of pools) {
       const items: {id: string, chance: number}[] = [];
       
       let totalweight: number = 0;
@@ -60,10 +61,10 @@ export class LootTable {
     return array;
   }
 
-  generate() {
+  static generate(pools: LootPool[]) {
     const items: string[] = [];
     
-    for (const pool of this.$.pools) {
+    for (const pool of pools) {
       const rolls = pool.max_rolls > pool.min_rolls
       ? pool.min_rolls + (diceRoll(pool.max_rolls + 1 - pool.min_rolls) - 1)
       : pool.min_rolls;
@@ -93,6 +94,14 @@ export class LootTable {
     }
     
     return items;
+  }
+
+  getHighestFromPerks(perks: Set<string>): LootPool[] {
+    for (const [key, pools] of this.$.pools) {
+      if (perks.has(key)) return pools;
+    }
+    // @ts-expect-error
+    return this.$.pools.get("");
   }
 }
 

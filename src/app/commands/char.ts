@@ -351,14 +351,18 @@ export default new ApplicationCommandHandler(
         const schem = SchematicsManager.map.get(interaction.options.getString("recipe_id", true));
         if (!schem) return;
 
-        interaction.reply({
-          ephemeral: true,
+        const [creature,] = await Promise.all([
+          Creature.fetch(interaction.user.id, db).catch(() => null),
+          interaction.deferReply({ephemeral: true})
+        ]);
+
+        interaction.editReply({
           content: "Please Confirm",
           embeds: [
             new MessageEmbed()
               .setTitle(`${ItemQualityEmoji[schem.$.info.quality]} **${schem.$.info.name}**`)
               .setFooter(schem.$.id)
-              .setDescription(schematicDescriptor(schem))
+              .setDescription(schematicDescriptor(schem, creature?.perkIDs))
           ],
           components: [
             new MessageActionRow().setComponents([
@@ -1054,7 +1058,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
           const item = SchematicsManager.map.get(schem);
           if (!item) continue;
 
-          str += `<**${i+1}**> **${item.displayName}** \`${item.$.id}\`\n` + schematicDescriptor(item);
+          str += `<**${i+1}**> **${item.displayName}** \`${item.$.id}\`\n` + schematicDescriptor(item, creature.perkIDs);
         }
 
         return str;
@@ -1071,7 +1075,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
 
         embed.addField(
           "Flags",
-          `**${location.$.temperature}**°C (**${cToF(location.$.temperature)}**°F) Temperature\n` +
+          `**${location.$.temperature}**°C (**${Math.round(10 * cToF(location.$.temperature)) / 10}**°F) Temperature\n` +
           `${location.$.shop !== undefined ? "⬜" : "🔳"} - \`/char shop\` ${location.$.shop !== undefined ? "available" : "unavailable"}\n` + 
           `${location.$.hasEnhancedCrafting ? "⬜" : "🔳"} - ${location.$.hasEnhancedCrafting ? "Enhanced Crafting" : "Limited Crafting"}\n`
         )
@@ -1120,11 +1124,13 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
 const BAR_STYLE = bar_styles[0];
 const BAR_LENGTH = 20;
 
-export function tableDescriptor(table: LootTable) {
+export function tableDescriptor(table: LootTable, perks?: Set<string>) {
+  const pools = table.getHighestFromPerks(perks ?? new Set());
+
   var str = "";
-  for (const p in table.probabilities) {
-    const pool = table.probabilities[p];
-    str += `- Rolls **${table.$.pools[p].min_rolls}**${table.$.pools[p].max_rolls > table.$.pools[p].min_rolls ? `-**${table.$.pools[p].max_rolls}**` : ""} times\n`
+  for (const p in LootTable.getProbabilities(pools)) {
+    const pool = LootTable.getProbabilities(pools)[p];
+    str += `- Rolls **${pools[p].min_rolls}**${pools[p].max_rolls > pools[p].min_rolls ? `-**${pools[p].max_rolls}**` : ""} times\n`
 
     for (const i of pool) {
       const item = ItemManager.map.get(i.id);
@@ -1138,13 +1144,13 @@ export function tableDescriptor(table: LootTable) {
   return str.trim();
 }
 
-export function schematicDescriptor(item: Schematic) {
+export function schematicDescriptor(item: Schematic, perks?: Set<string>) {
   var str = `*${item.$.info.lore}*\n`;
 
   const table = LootTables.map.get(item.$.table);
   if (!table) return str;
 
-  str += tableDescriptor(table) + "\n";
+  str += tableDescriptor(table, perks) + "\n";
   if (item.$.requirements.perks && item.$.requirements.perks.size > 0) {
     str +=
       "**Required Perks**\n" +

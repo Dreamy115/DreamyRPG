@@ -769,6 +769,14 @@ export default class Creature {
     return [...perks];
   }
 
+  get perkIDs() {
+    const set = new Set<string>();
+    for (const perk of this.perks) {
+      set.add(perk.$.id)
+    }
+    return set;
+  }
+
   get skills(): CreatureSkill[] {
     const set = new Set<CreatureSkill>();
     

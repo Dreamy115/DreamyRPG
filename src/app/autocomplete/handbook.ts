@@ -70,13 +70,8 @@ export async function getAutocompleteListOfItems(value: string, type: string): P
       if (!item) continue;
 
       if (input_regex.test(item.$.id ?? "")) { 
-        let total_entries = 0;
-        for (const pool of item.$.pools) {
-          total_entries += pool.entries.length;
-        }
-
         choices.push({
-          name: `${item.$.id} - ${item.$.pools.length} Pools, ${total_entries} Entries`,
+          name: `${item.$.id} - ${item.$.note}`,
           value: item.$.id ?? "null"
         })
       }

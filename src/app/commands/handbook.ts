@@ -239,44 +239,60 @@ export default new ApplicationCommandHandler(
           if (table) {
             embed
             .setTitle("Recipe")
-            .addField(
-              "Results",
-              function () {
-                var str = "";
-                for (const p in table.probabilities) {
-                  const pool = table.probabilities[p];
-                  str += `- Rolls **${table.$.pools[p].min_rolls}**${table.$.pools[p].max_rolls > table.$.pools[p].min_rolls ? `-**${table.$.pools[p].max_rolls}**x` : ""}\n`
+            .setDescription("From most priority to least")
 
-                  for (const i of pool) {
-                    const item = ItemManager.map.get(i.id);
-                    if (!item) continue;
+            for (const [k, pools] of table.$.pools) {
+              embed.addField(
+                `${k || "Default"}`,
+                function () {
+                  var str = "";
+                  for (const p in LootTable.getProbabilities(pools)) {
+                    const pool = LootTable.getProbabilities(pools)[p];
+                    str += `- Rolls **${pools[p].min_rolls}**${pools[p].max_rolls > pools[p].min_rolls ? `-**${pools[p].max_rolls}**x` : ""}\n`
 
-                    str += `**${Math.round(1000 * i.chance) / 10}%** x **${item.displayName}** \`${item.$.id}\`\n`
+                    for (const i of pool) {
+                      const item = ItemManager.map.get(i.id);
+                      if (!item) continue;
+
+                      str += `**${Math.round(1000 * i.chance) / 10}%** x **${item.displayName}** \`${item.$.id}\`\n`
+                    }
+
+                    str += "\n"
                   }
-
-                  str += "\n"
-                }
-                return str;
-              }()
-            )
+                  return str;
+                }()
+              )
+            }
           } else {
             embed
             .setTitle("Invalid Recipe")
           }
         } else if (item instanceof LootTable) {
-          for (const p in item.$.pools) {
-            const pool = item.$.pools[p];
+          embed.setTitle(`Loot Table ${item.$.id}`)
+          if (item.$.note) {
+            embed.setDescription(item.$.note);
+          }
+          for (const [k, pools] of item.$.pools) {
             embed.addField(
-              `Pool ${p}`,
+              `${k || "Default"}`,
               function () {
-                var str = `Rolls **${pool.min_rolls}-${pool.max_rolls}**\n`;
+                var s = ``;
+                for (const p in pools) {
+                  const pool = pools[p];
 
-                for (const e in pool.entries) {
-                  const entry = pool.entries[e];
-                  str += `Entry [**${e}**] - **${entry.weight}** Weight\n\`${entry.items.join("`, `")}\`\n\n`;
+                  s += `- Pool ${p}\n`
+                  s += function () {
+                    var str = `Rolls **${pool.min_rolls}-${pool.max_rolls}**\n`;
+    
+                    for (const e in pool.entries) {
+                      const entry = pool.entries[e];
+                      str += `Entry [**${e}**] - **${entry.weight}** Weight\n\`${entry.items.join("`, `")}\`\n`;
+                    }
+    
+                    return str += "\n";
+                  }()
                 }
-
-                return str;
+                return s;
               }()
             )
           }
@@ -358,7 +374,7 @@ export default new ApplicationCommandHandler(
                 }
               }
             }
-            if (item.$.type !== "consumable")
+            if (item.$.type !== "consumable" && item.$.type !== "generic")
               embed.addFields([
                 { 
                   name: "Passives",

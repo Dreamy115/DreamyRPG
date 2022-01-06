@@ -5,6 +5,7 @@ import Creature, { HealType } from "../../game/Creature";
 import { AbilityUseLog } from "../../game/CreatureAbilities";
 import { DamageCause, DamageGroup, damageLogEmbed, DamageMethod, DamageType, ShieldReaction } from "../../game/Damage";
 import { Item, ItemQualityEmoji } from "../../game/Items";
+import { LootTable } from "../../game/LootTables";
 import { TrackableStat } from "../../game/Stats";
 import { infoEmbed } from "../commands/char";
 import { ComponentCommandHandler } from "../component_commands";
@@ -325,13 +326,14 @@ export default new ComponentCommandHandler(
                   const recipe = SchematicsManager.map.get(args.shift() ?? "");
                   if (!recipe?.$.id) return;
                   
-                  const results = LootTables.map.get(recipe.$.table)?.generate();
-                  if (!results) {
+                  const pools = LootTables.map.get(recipe.$.table)?.getHighestFromPerks(creature.perkIDs);
+                  if (!pools) {
                     interaction.editReply({
                       content: "LootTable error"
                     })
                     return;
                   }
+                  const results = LootTable.generate(pools);
           
                   try {
                     if (!creature.schematics.has(recipe.$.id)) throw new Error("Doesn't have the schematic");
@@ -560,7 +562,7 @@ export default new ComponentCommandHandler(
                       const table = LootTables.map.get(item.$.returnTable ?? "");
 
                       if (table) {
-                        const returns = table.generate();
+                        const returns = LootTable.generate(table.getHighestFromPerks(creature.perkIDs));
                         creature.$.items.backpack.splice(index, 1, ...returns);
 
                         log.returns = [];

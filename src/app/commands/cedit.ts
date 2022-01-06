@@ -4,6 +4,7 @@ import { CraftingMaterials } from "../../game/Crafting";
 import Creature, { HealType } from "../../game/Creature";
 import { replaceLore } from "../../game/CreatureAbilities";
 import { DamageType, DamageMethod, ShieldReaction, DamageCause, DamageGroup, damageLogEmbed } from "../../game/Damage";
+import { LootTable } from "../../game/LootTables";
 import { ApplicationCommandHandler } from "../commands";
 import { ceditMenu, gm_ceditMenu } from "../component_commands/cedit";
 
@@ -672,7 +673,7 @@ export default new ApplicationCommandHandler({
       const table = LootTables.map.get(interaction.options.getString("loottable", true));
       if (!table) return;
 
-      const items = table.generate();
+      const items = LootTable.generate(table.getHighestFromPerks(creature.perkIDs));
 
       creature.$.items.backpack.push(...items);
       creature.put(db);

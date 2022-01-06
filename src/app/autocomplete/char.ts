@@ -1,6 +1,6 @@
 import { ApplicationCommandOptionChoice } from "discord.js";
 import Mongoose from "mongoose";
-import { ItemManager, SchematicsManager } from "../..";
+import { ItemManager, PerkManager, SchematicsManager } from "../..";
 import Creature from "../../game/Creature";
 import { Item } from "../../game/Items";
 import { AutocompleteHandler } from "../autocomplete";
@@ -29,8 +29,38 @@ export default new AutocompleteHandler(
             if (
               search.test(schem) || search.test(recipe.$.info.name)
             ) {
+
+              let info = "";
+
+              try {
+                if (recipe.$.requirements.enhancedCrafting && !creature.location?.$.hasEnhancedCrafting) throw new Error("Missing Enhanced Crafting");
+      
+                var perks = creature.perks;
+                for (const p of recipe.$.requirements.perks ?? []) {
+                  const perk = PerkManager.map.get(p);
+                  if (!perk) continue;
+      
+                  if (!perks.find((v) => v.$.id === perk.$.id)) throw new Error(`Missing Perk`)
+                }
+                for (const mat in recipe.$.requirements.materials) {
+                  // @ts-expect-error
+                  const material: number = recipe.$.requirements.materials[mat];
+      
+                  // @ts-expect-error
+                  if (creature.$.items.crafting_materials[mat] < material) throw new Error(`Need more ${capitalize(mat)}`)
+                }
+                for (const i of recipe.$.requirements.items ?? []) {
+                  const item = ItemManager.map.get(i);
+                  if (!item) continue;
+      
+                  if (!creature.$.items.backpack.includes(item.$.id ?? "")) throw new Error(`Missing ${item.$.info.name} (${item.$.id})`)
+                }
+              } catch (e: any) {
+                info = `⚠️ [${e.message}] `;
+              }
+
               array.push({
-                name: `${recipe.$.info.name} (${recipe.$.id})`,
+                name: `${info}${recipe.$.info.name} (${recipe.$.id})`,
                 value: recipe.$.id
               })
             }

@@ -342,7 +342,7 @@ export default new ComponentCommandHandler(
                       const perk = PerkManager.map.get(p);
                       if (!perk) continue;
           
-                      if (!perks.find((v) => v.$.id === perk.$.id)) throw new Error(`Must have ${perk.$.info.name} (${perk.$.id}) perk`)
+                      if (!perks.find((v) => v.$.id === perk.$.id)) throw new Error(`Must have ${perk.$.info.name} \`${perk.$.id}\` perk`)
                     }
                     for (const mat in recipe.$.requirements.materials) {
                       // @ts-expect-error
@@ -355,7 +355,7 @@ export default new ComponentCommandHandler(
                       const item = ItemManager.map.get(i);
                       if (!item) continue;
           
-                      if (!creature.$.items.backpack.includes(item.$.id ?? "")) throw new Error(`Item ${item.$.info.name} (${item.$.id}) is missing (must be unequipped to count)`)
+                      if (!creature.$.items.backpack.includes(item.$.id ?? "")) throw new Error(`Item ${item.$.info.name} \`${item.$.id}\` is missing (must be unequipped to count)`)
                     }
                   } catch (e: any) {
                     interaction.editReply({

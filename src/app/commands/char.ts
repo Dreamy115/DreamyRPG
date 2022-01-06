@@ -1144,7 +1144,7 @@ export function schematicDescriptor(item: Schematic) {
   const table = LootTables.map.get(item.$.table);
   if (!table) return str;
 
-  str += tableDescriptor(table);
+  str += tableDescriptor(table) + "\n";
   if (item.$.requirements.perks && item.$.requirements.perks.size > 0) {
     str +=
       "**Required Perks**\n" +
@@ -1177,7 +1177,7 @@ export function schematicDescriptor(item: Schematic) {
   }
   if (item.$.requirements.items && item.$.requirements.items.length > 0) {
     str +=
-      "**Item Ingredients**" +
+      "**Item Ingredients**\n" +
       (function () {
         var str = "";
 
@@ -1220,7 +1220,7 @@ export function describeItem(item: Item, creature?: Creature) {
     const table = LootTables.map.get(item.$.returnTable ?? "");
     if (table)
       str += `\nAfter Use:\n${tableDescriptor(table)}\n\n`;
-  } else {
+  } else if (item.$.type !== "generic") {
     if (item.$.perks) {
       const perks: string[] = [];
       for (const p of item.$.perks) {

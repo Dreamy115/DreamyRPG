@@ -25,9 +25,10 @@ export default class CraftingManager {
         }
       }
 
-      for (const f of free) {
-        this.free.add(f);
-      }
+      if (free)
+        for (const f of Array.from(free)) {
+          this.free.add(String(f));
+        }
     }
   }
 }

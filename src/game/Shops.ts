@@ -45,12 +45,16 @@ export class Shop {
   }
 }
 
-export type ShopContent = ShopContentItem | ShopContentService; 
+export type ShopContent = ShopContentItem | ShopContentService | ShopContentSchematic; 
 interface ShopContentBase {
   cost: CraftingMaterials
 }
 interface ShopContentItem extends ShopContentBase {
   type: "item"
+  id: string
+}
+interface ShopContentSchematic extends ShopContentBase {
+  type: "schematic"
   id: string
 }
 interface ShopContentService extends ShopContentBase {

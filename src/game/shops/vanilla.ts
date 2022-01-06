@@ -41,6 +41,17 @@ export default [
         },
         type: "item",
         id: "rough_bandage"
+      },
+      {
+        cost: {
+          biomaterial: 0,
+          cells: 3,
+          fabric: 0,
+          metal: 0,
+          plastic: 0
+        },
+        type: "schematic",
+        id: "rough_bandage"
       }
     ]
   })

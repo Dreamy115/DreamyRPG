@@ -272,7 +272,6 @@ export default new ApplicationCommandHandler(
         const embed = new MessageEmbed()
           .setTitle(location.shop.$.info.name)
           .setDescription(location.shop.$.info.lore)
-          .setFooter(location.shop.$.id)
           .setColor("AQUA")
 
         const components: MessageActionRow[] = [
@@ -283,10 +282,23 @@ export default new ApplicationCommandHandler(
           ])
         ]; 
 
-        for (var i = 25 * Math.abs((interaction.options.getInteger("page", false) ?? 1) - 1); i < 25; i++) {
+        let start_index = 25 * Math.abs((interaction.options.getInteger("page", false) ?? 1) - 1);
+
+        var i = 0;
+        for (i = start_index; i < 25; i++) {
           // @ts-expect-error
           const content = location.shop.$.content[i];
           if (!content) break;
+
+          function cost() {
+            var arr: string[] = [];
+            for (const mat in content.cost) {
+              // @ts-expect-error
+              arr.push(`**${content.cost[mat]}** ${capitalize(mat)}`)
+            }
+
+            return arr.join(", ");
+          }
 
           switch (content.type) {
             default: continue;
@@ -302,15 +314,8 @@ export default new ApplicationCommandHandler(
 
               embed.addField(
                 `[${i}] Item - ${item.displayName} \`${item.$.id}\``,
-                `*${item.$.info.lore}*\n\n${function(){
-                  var arr: string[] = [];
-                  for (const mat in content.cost) {
-                    // @ts-expect-error
-                    arr.push(`**${content.cost[mat]}** ${capitalize(mat)}`)
-                  }
-
-                  return arr.join(", ");
-                }()}`
+                // @ts-expect-error
+                `*${item.$.info.replacers ? replaceLore(item.$.info.lore, item.$.info.replacers, creature) : item.$.info.lore}*\n\n${cost()}`
               )
             } break;
             case "service": {
@@ -323,19 +328,28 @@ export default new ApplicationCommandHandler(
 
               embed.addField(
                 `[${i}] Service - ${content.info.name}`,
-                `*${content.info.lore}*\n\n${function(){
-                  var arr: string[] = [];
-                  for (const mat in content.cost) {
-                    // @ts-expect-error
-                    arr.push(`**${content.cost[mat]}** ${capitalize(mat)}`)
-                  }
-
-                  return arr.join(", ");
-                }()}`
+                `*${content.info.lore}*\n\n${cost()}`
               )
-            }
+            } break;
+            case "schematic": {
+              const schem = SchematicsManager.map.get(content.id);
+              if (!schem) continue;
+              // @ts-expect-error
+              components[0].components[0]?.addOptions({
+                label: schem.$.info.name,
+                value: String(i),
+                description: `[${i}] Schematic`
+              })
+              
+              embed.addField(
+                `[${i}] Schematic - ${schem.displayName} \`${schem.$.id}\``,
+                `${schematicDescriptor(schem, creature.perkIDs)}\n\nCost: ${cost()}`
+              )
+            } break;
           }
         }
+
+        embed.setFooter(`${location.shop.$.id} | ${start_index + 1}-${i}/${location.shop.$.content?.length ?? 0}`)
 
         components[0].components[0]
           // @ts-expect-error

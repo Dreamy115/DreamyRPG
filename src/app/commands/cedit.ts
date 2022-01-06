@@ -338,6 +338,12 @@ export default new ApplicationCommandHandler({
               type: "STRING",
               autocomplete: true,
               required: true
+            },
+            {
+              name: "amount",
+              description: "Amount of the item to give",
+              type: "INTEGER",
+              required: false
             }
           ]
         },
@@ -790,7 +796,8 @@ export default new ApplicationCommandHandler({
     case "items": {
       switch (interaction.options.getSubcommand(true)) {
         case "add": {
-          creature.$.items.backpack.push(interaction.options.getString("item_id", true));
+          for (var i = 0; i < (interaction.options.getInteger("amount", false) ?? 1); i++)
+            creature.$.items.backpack.push(interaction.options.getString("item_id", true));
         } break;
         case "remove": {
           const index = creature.$.items.backpack.findIndex(v => v === interaction.options.getString("backpack_item", true));

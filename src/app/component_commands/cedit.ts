@@ -569,6 +569,8 @@ export default new ComponentCommandHandler(
                           if (item)
                             returns.push(item.displayName);
                         }
+                      } else {
+                        creature.$.items.backpack.splice(index, 1);
                       }
 
                       logs.push(log);
@@ -606,6 +608,9 @@ export default new ComponentCommandHandler(
                       ephemeral: true,
                       content: `**${errors.length}** item(s) errored and have not been used: **${errors.join("**, **")}**`
                     })
+
+                  creature.put(db);
+                  return;
                 } break;
                 case "scrap": {
                   if (!creature.$.info.locked && !creature.$.info.npc) {

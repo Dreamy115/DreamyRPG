@@ -622,7 +622,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
           "\n" +
           `**${creature.$.stats.tenacity.value}** Tenacity *(Taking **${Math.round(100 * reductionMultiplier(creature.$.stats.tenacity.value) * DAMAGE_TO_INJURY_RATIO)}%** health damage as **Injuries**)*` +
           "\n" +
-          `**${creature.$.stats.min_comfortable_temperature.value}**°C (**${cToF(creature.$.stats.min_comfortable_temperature.value)}**°F) Min Comfortable Temperature *(**${creature.deltaHeat}**°C Delta)*`
+          `**${creature.$.stats.min_comfortable_temperature.value}**°C (**${Math.round(10 * cToF(creature.$.stats.min_comfortable_temperature.value)) / 10}**°F) Min Comfortable Temperature *(**${creature.deltaHeat}**°C Delta)*`
         }
       ])
     } break;

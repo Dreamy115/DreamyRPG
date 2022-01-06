@@ -656,7 +656,7 @@ export default new ApplicationCommandHandler({
   }
 
   const [creature,] = await Promise.all([
-    Creature.fetch(interaction.options.getString("cid", true), db).catch(() => null),
+    Creature.fetch(interaction.options.getString("cid", true).split(" ", 2)[0], db).catch(() => null),
     interaction.deferReply({ephemeral: true})
   ]);
 
@@ -711,6 +711,9 @@ export default new ApplicationCommandHandler({
     } break;
     case "menu": {
       await interaction.editReply({
+        content: "OK"
+      })
+      await interaction.followUp({
         content: `Editing menu for **${creature.displayName}**`,
         components: ceditMenu(creature)
       })
@@ -718,6 +721,7 @@ export default new ApplicationCommandHandler({
         content: "Additional GM-Only editing *(May look more friendly, but CLI is easier, and has more functions. **I stronlgy advise using CLI instead**)*",
         components: gm_ceditMenu(creature.$._id)
       })
+      return;
     } break;
     case "tick": {
       for (var i = 0; i < interaction.options.getInteger("amount", true); i++)

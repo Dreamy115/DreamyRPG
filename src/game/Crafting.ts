@@ -4,13 +4,14 @@ import { ItemQuality, ItemQualityEmoji } from "./Items";
 
 export default class CraftingManager {
   map = new Map<string, Schematic>();
+  free = new Set<string>();
   async load(dir: fs.PathLike) {
     this.map.clear();
 
     for (const file of fs.readdirSync(dir)) {
       if (!file.endsWith(".js")) continue;
 
-      const {default: loadedFile} = await import(path.join(dir.toString(), file));
+      const {default: loadedFile, free} = await import(path.join(dir.toString(), file));
 
       if (loadedFile instanceof Schematic) {
         this.map.set(loadedFile.$.id, loadedFile);
@@ -23,9 +24,29 @@ export default class CraftingManager {
           }
         }
       }
+
+      if (free instanceof Schematic) {
+        this.map.set(free.$.id, free);
+        this.free.add(free.$.id);
+      } else {
+        if (free instanceof Array) {
+          for (const subfile of free) {
+            if (subfile instanceof Schematic) {
+              this.map.set(subfile.$.id, subfile);
+              this.free.add(subfile.$.id);
+            }
+          }
+        }
+      }
     }
   }
 }
+
+/*
+* Schematics can also be imported as "free" 
+* export const free
+* These will be given to all Creatures
+*/
 
 export class Schematic {
   $: {

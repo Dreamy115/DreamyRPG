@@ -36,7 +36,7 @@ export default class ItemsManager {
 }
 
 export class Item {
-  $: WearableItemData | WeaponItemData | ConsumableItemData
+  $: WearableItemData | WeaponItemData | ConsumableItemData | GenericItemData
   constructor(data: Item["$"]) {
     this.$ = data;
   }
@@ -85,6 +85,9 @@ export interface ConsumableItemData extends BaseItemData {
   returnTable?: string
 }
 
+export interface GenericItemData extends BaseItemData {
+  type: "generic"
+}
 
 export interface AttackSet {
   crit: AttackData[]

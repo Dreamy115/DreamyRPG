@@ -1,7 +1,7 @@
 import { Client, MessageEmbed } from "discord.js";
 import mongoose from "mongoose";
 import NodeCache from "node-cache";
-import { AbilitiesManager, capitalize, ClassManager, CONFIG, EffectManager, ItemManager, LocationManager, PassivesManager, PerkManager, shuffle, SkillManager, SpeciesManager } from "../index.js";
+import { AbilitiesManager, capitalize, ClassManager, CONFIG, EffectManager, ItemManager, LocationManager, PassivesManager, PerkManager, SchematicsManager, shuffle, SkillManager, SpeciesManager } from "../index.js";
 import { AppliedActiveEffect } from "./ActiveEffects.js";
 import { CraftingMaterials } from "./Crafting.js";
 import { CreatureAbility } from "./CreatureAbilities.js";
@@ -800,7 +800,7 @@ export default class Creature {
   }
 
   get schematics() {
-    return new Set([...(this.species?.$.schematics ?? []), ...(this.itemClass?.$.schematics ?? []), ...this.$.items.schematics])
+    return new Set([...SchematicsManager.free, ...(this.species?.$.schematics ?? []), ...(this.itemClass?.$.schematics ?? []), ...this.$.items.schematics])
   }
 
   get itemClass () {

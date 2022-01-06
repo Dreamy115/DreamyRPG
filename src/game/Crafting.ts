@@ -25,7 +25,7 @@ export default class CraftingManager {
         }
       }
 
-      for (const f of new free) {
+      for (const f of free) {
         this.free.add(f);
       }
     }

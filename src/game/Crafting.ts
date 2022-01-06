@@ -25,27 +25,17 @@ export default class CraftingManager {
         }
       }
 
-      if (free instanceof Schematic) {
-        this.map.set(free.$.id, free);
-        this.free.add(free.$.id);
-      } else {
-        if (free instanceof Array) {
-          for (const subfile of free) {
-            if (subfile instanceof Schematic) {
-              this.map.set(subfile.$.id, subfile);
-              this.free.add(subfile.$.id);
-            }
-          }
-        }
+      for (const f of new free) {
+        this.free.add(f);
       }
     }
   }
 }
 
 /*
-* Schematics can also be imported as "free" 
-* export const free
-* These will be given to all Creatures
+* You can import Set<string> or string[] as 'free'
+* export const free = new Set(["schematic_id"])
+* This makes it so the schematic is given to every Creature
 */
 
 export class Schematic {

@@ -1,6 +1,7 @@
 import { Client, MessageEmbed } from "discord.js";
 import mongoose from "mongoose";
 import NodeCache from "node-cache";
+import { bar_styles } from "../app/Bars.js";
 import { AbilitiesManager, capitalize, ClassManager, CONFIG, EffectManager, ItemManager, LocationManager, PassivesManager, PerkManager, SchematicsManager, shuffle, SkillManager, SpeciesManager } from "../index.js";
 import { AppliedActiveEffect } from "./ActiveEffects.js";
 import { CraftingMaterials } from "./Crafting.js";
@@ -46,8 +47,8 @@ export default class Creature {
         health: new TrackableStat(100),
         mana: new TrackableStat(25),
         mana_regen: new TrackableStat(10),
-        shield: new TrackableStat(1),
-        shield_regen: new TrackableStat(1),
+        shield: new TrackableStat(0),
+        shield_regen: new TrackableStat(0),
         parry: new TrackableStat(10),
         deflect: new TrackableStat(5),
         tenacity: new TrackableStat(42),
@@ -886,6 +887,13 @@ export default class Creature {
     return db.connection.collection(Creature.COLLECTION_NAME).deleteOne({_id: this.$._id});
   }
 
+  static readonly BAR_STYLES = {
+    Health: bar_styles[0],
+    Injuries: "░",
+    Shield: "⧮⧯",
+    Mana: bar_styles[2]
+  }
+
   static readonly MAX_EQUIPPED_WEAPONS = 2;
   static readonly MAX_EQUIPPED_UTILITY = 4;
   static readonly MAX_EQUIPPED_CLOTHING = 3;
@@ -896,7 +904,6 @@ export default class Creature {
   static readonly MIN_HAND_AMOUNT = 3;
   static readonly MAX_HAND_AMOUNT = 6;
 
-  // -----NNNWWWC
   static readonly ATTACK_VALUES = [
     undefined, null, null, null, null, null, DamageCause.Weak_Attack,
     DamageCause.Weak_Attack, DamageCause.Weak_Attack, DamageCause.Normal_Attack, DamageCause.Normal_Attack, DamageCause.Normal_Attack, DamageCause.Critical_Attack
@@ -967,6 +974,21 @@ export default class Creature {
       type: ModifierType.ADD_PERCENT,
       value: 0.135,
       stat: "tech"
+    },
+    {
+      type: ModifierType.ADD,
+      value: 1,
+      stat: "attack_cost"
+    },
+    {
+      type: ModifierType.ADD,
+      value: 1,
+      stat: "mana_regen"
+    },
+    {
+      type: ModifierType.ADD,
+      value: 1,
+      stat: "mana"
     }
   ]
   static readonly ATTRIBUTE_MODS: {[key: string]: PassiveModifier[]} = {

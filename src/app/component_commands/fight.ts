@@ -88,7 +88,24 @@ export default new ComponentCommandHandler(
 
     switch (args.shift()) {
       case "refresh": {
-        interaction.editReply(await fight.announceTurn(db, Bot))
+        const channel = interaction.guild
+        // @ts-expect-error
+        ? await interaction.guild.channels.fetch(interaction.message.channelId ?? interaction.message.channel_id)
+        // @ts-expect-error
+        : await Bot.channels.fetch(interaction.message.channel_id)
+    
+        if (!channel?.isText?.()) throw new Error("Channel isn't text")
+    
+        const msg = await channel.messages.fetch(interaction.message.id);
+
+        const payload = await fight.announceTurn(db, Bot);
+
+        msg.edit(payload).catch(() => {
+          msg.delete();
+          channel.send(payload);
+        })
+
+        interaction.editReply({content: "OK"});
       } break;
       case "endturn": {
         if (creature.$.abilities.stacks > 0) {

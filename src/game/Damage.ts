@@ -56,7 +56,7 @@ export enum ShieldReaction {
   "Normal", "Ignore", "Only"
 }
 
-export const DAMAGE_TO_INJURY_RATIO = 0.5;
+export const DAMAGE_TO_INJURY_RATIO = 0.66;
 export function reductionMultiplier(protection: number): number {
   return 100 / (100 + Math.max(0, protection));
 }

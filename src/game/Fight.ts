@@ -192,22 +192,22 @@ export class Fight {
                 str += 
                   `**${char.displayName}** (${CombatPosition[combatants.get(char.$._id)?.position ?? 0]})\n` +
                   `*(**${char.$.stats.health.value}** Health - **${char.$.vitals.injuries}** Injuries)*\n` +
-                  make_bar(100 * char.$.vitals.health / (char.$.stats.health.value - char.$.vitals.injuries), BAR_STYLE, Math.max(1, health_length_mod * Math.floor(BAR_LENGTH * health_injury_proportions))).str +
-                  (
-                    char.$.vitals.injuries > 0
-                    ? make_bar(100, "░", Math.max(1, health_length_mod * Math.ceil(BAR_LENGTH - (BAR_LENGTH * health_injury_proportions)))).str
-                    : ""
-                  ) +
-                  ` **Health** **${char.$.vitals.health}**/**${char.$.stats.health.value - char.$.vitals.injuries}** ` + 
-                  `(**${Math.round(100 * char.$.vitals.health / char.$.stats.health.value)}%**)\n` +
                   (
                     char.$.stats.shield.value > 0
-                    ? make_bar(100 * char.$.vitals.shield / char.$.stats.shield.value, BAR_STYLE, shield_length_mod * BAR_LENGTH).str +
+                    ? make_bar(100 * char.$.vitals.shield / char.$.stats.shield.value, Creature.BAR_STYLES.Shield, shield_length_mod * BAR_LENGTH).str +
                     ` **Shield** ${textStat(char.$.vitals.shield, char.$.stats.shield.value)} ` +
                     `**${char.$.stats.shield_regen.value}**/t`
                     : "No **Shield**"
                   ) + "\n" +
-                  make_bar(100 *char.$.vitals.mana / char.$.stats.mana.value, BAR_STYLE, BAR_LENGTH / 3).str +
+                  make_bar(100 * char.$.vitals.health / (char.$.stats.health.value - char.$.vitals.injuries), Creature.BAR_STYLES.Health, Math.max(1, health_length_mod * Math.floor(BAR_LENGTH * health_injury_proportions))).str +
+                  (
+                    char.$.vitals.injuries > 0
+                    ? make_bar(100, Creature.BAR_STYLES.Injuries, Math.max(1, health_length_mod * Math.ceil(BAR_LENGTH - (BAR_LENGTH * health_injury_proportions)))).str
+                    : ""
+                  ) +
+                  ` **Health** **${char.$.vitals.health}**/**${char.$.stats.health.value - char.$.vitals.injuries}** ` + 
+                  `(**${Math.round(100 * char.$.vitals.health / char.$.stats.health.value)}%**)\n` +
+                  make_bar(100 *char.$.vitals.mana / char.$.stats.mana.value, Creature.BAR_STYLES.Mana, BAR_LENGTH / 3).str +
                   ` **Mana** ${textStat(char.$.vitals.mana, char.$.stats.mana.value)} `+
                   `**${char.$.stats.mana_regen.value}**/t\n`
               }
@@ -388,4 +388,3 @@ export interface Combatant {
 }
 
 const BAR_LENGTH = 10;
-const BAR_STYLE = bar_styles[0];

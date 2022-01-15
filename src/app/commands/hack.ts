@@ -99,7 +99,7 @@ export default new ApplicationCommandHandler({
     numbers.push(arr);
   }
 
-  const time = ((diff - 1) * 45) + 60 + ((5 + diff * 5) * creature.$.attributes.INT.value);
+  const time = ((diff - 1) * 30) + 45 + ((5 + diff * 5) * creature.$.attributes.INT.value);
 
   HACK_playing.set(creature.$._id, {
     numbers,

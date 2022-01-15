@@ -40,7 +40,6 @@ export class CreatureClass {
     schematics?: Set<string>
     passives?: Set<(string | PassiveEffect)>
     abilities?: Set<string>
-    items?: string[]
     perks?: Set<(string | CreaturePerk)>
   }
 

@@ -94,7 +94,8 @@ export default new ComponentCommandHandler(
             });
 
             const input = await messageInput(channel, interaction.user.id);
-            if (input === "#") {
+            input.delete();
+            if (input.content === "#") {
               interaction.followUp({
                 ephemeral: true,
                 content: "Cancelled"
@@ -102,7 +103,7 @@ export default new ComponentCommandHandler(
               return;
             }
 
-            creature.$.info.display.name = input; 
+            creature.$.info.display.name = input.content; 
           } break;
           case "avatar": {
             await interaction.followUp({
@@ -113,7 +114,8 @@ export default new ComponentCommandHandler(
             if (!channel?.isText()) throw new Error("Invalid channel");
 
             const input = await messageInput(channel, interaction.user.id);
-            if (input === "#") {
+            input.delete();
+            if (input.content === "#") {
               interaction.followUp({
                 ephemeral: true,
                 content: "Cancelled"
@@ -121,7 +123,7 @@ export default new ComponentCommandHandler(
               return;
             }
 
-            creature.$.info.display.avatar = input; 
+            creature.$.info.display.avatar = input.content; 
           } break;
           case "species": {
             if (!interaction.isSelectMenu()) return;
@@ -164,7 +166,7 @@ export default new ComponentCommandHandler(
             if (args.shift() !== "confirm") {
               interaction.followUp({
                 content:
-                  "Are you sure? You will not be able to edit the Species or Class of your character anymore, but you'll gain the ability to use the character!\n" +
+                  "Are you sure? You will not be able to edit the Species of your character anymore, and you will lose the Class and all items, but you'll gain the ability to use the character!\n" +
                   "*This will also reset the progress on your character, but you shouldn't have any in the first place!*",
                 components: [new MessageActionRow().setComponents([new MessageButton()
                   .setCustomId(`cedit/${creature.$._id}/edit/lock/confirm`)
@@ -184,22 +186,8 @@ export default new ComponentCommandHandler(
                 return;
               }
 
-              const chosen_class = ClassManager.map.get(creature.$.info.class ?? "");
-              if (!chosen_class) {
-                interaction.followUp({
-                  ephemeral: true,
-                  content: "Invalid class!"
-                })
-                return;
-              }
-              if (chosen_class.$.compatibleSpecies.size > 0 && !chosen_class.$.compatibleSpecies.has(creature.$.info.species)) {
-                interaction.followUp({
-                  ephemeral: true,
-                  content: "Class incompatible with race"
-                })
-                return;
-              }
-
+              creature.wipeItems();
+              creature.$.info.class = undefined;
               creature.$.experience = {
                 level: 1
               }
@@ -209,42 +197,102 @@ export default new ComponentCommandHandler(
             }
           } break;
           case "class": {
-            if (!interaction.isSelectMenu()) return;
-
             if (creature.$.info.locked && !IS_GM) {
-              interaction.followUp({
-                ephemeral: true,
-                content: "You cannot change that when you've locked in"
-              });
-              return;
+              if (creature.$.info.class && ClassManager.map.has(creature.$.info.class)) {
+                interaction.followUp({
+                  ephemeral: true,
+                  content: "You cannot change the class."
+                });
+                return;
+              } else if (creature.$.experience.level < Creature.MIN_LEVEL_FOR_CLASS) {
+                interaction.followUp({
+                  ephemeral: true,
+                  content: `You must be level **${Creature.MIN_LEVEL_FOR_CLASS}** or higher to equip a class.`
+                });
+                return;
+              }
             }
 
-            const chosen_class = ClassManager.map.get(interaction.values[0]);
-            if (!chosen_class) {
+            if (interaction.isSelectMenu()) {
+              const chosen_class = ClassManager.map.get(interaction.values[0]);
+              if (!chosen_class) {
+                interaction.followUp({
+                  ephemeral: true,
+                  content: "Invalid class!"
+                })
+                return;
+              }
+
+              if (chosen_class.$.compatibleSpecies.size > 0 && !chosen_class.$.compatibleSpecies.has(creature.$.info.species)) {
+                interaction.followUp({
+                  ephemeral: true,
+                  content: "Class incompatible with race"
+                })
+                return;
+              }
+
+              if (creature.$.info.locked) {
+                interaction.followUp({
+                  ephemeral: true,
+                  content: 
+                    `Picked - **${chosen_class.$.info.name}** \`${chosen_class.$.id}\`\n` +
+                    "Please hit the button to confirm. You cannot change this later!\n" +
+                    "You can safely dismiss this message.",
+                  components: [
+                    new MessageActionRow().setComponents([
+                      new MessageButton()
+                        .setCustomId(`cedit/${creature.$._id}/edit/class/${chosen_class.$.id}`)
+                        .setLabel("Confirm")
+                        .setStyle("DANGER")
+                    ])
+                  ]
+                })
+              } else {
+                let dump = creature.dump();
+                // @ts-expect-error
+                dump.info.class = chosen_class.$.id;
+  
+                creature = new Creature(dump);
+  
+                interaction.followUp({
+                  ephemeral: true,
+                  content: "Class assigned!"
+                })
+                creature.put(db);
+                return;
+              }
+              return;
+            } else if (interaction.isButton()) {
+              const chosen_class = ClassManager.map.get(args.shift() ?? "");
+              if (!chosen_class) {
+                interaction.followUp({
+                  ephemeral: true,
+                  content: "Invalid class!"
+                })
+                return;
+              }
+
+              if (chosen_class.$.compatibleSpecies.size > 0 && !chosen_class.$.compatibleSpecies.has(creature.$.info.species)) {
+                interaction.followUp({
+                  ephemeral: true,
+                  content: "Class incompatible with race"
+                })
+                return;
+              }
+
+              let dump = creature.dump();
+              // @ts-expect-error
+              dump.info.class = chosen_class.$.id;
+
+              creature = new Creature(dump);
+
               interaction.followUp({
                 ephemeral: true,
-                content: "Invalid class!"
+                content: "Class assigned!"
               })
+              creature.put(db);
               return;
             }
-
-            if (chosen_class.$.compatibleSpecies.size > 0 && !chosen_class.$.compatibleSpecies.has(creature.$.info.species)) {
-              interaction.followUp({
-                ephemeral: true,
-                content: "Class incompatible with race"
-              })
-              return;
-            }
-
-            creature.wipeItems();
-
-            let dump = creature.dump();
-            // @ts-expect-error
-            dump.info.class = chosen_class.$.id;
-            // @ts-expect-error
-            dump.items.equipped = chosen_class.$.items ?? [];
-
-            creature = new Creature(dump);
           } break;
           case "weapon_switch": {
             if (interaction.isSelectMenu()) {
@@ -858,8 +906,9 @@ export default new ComponentCommandHandler(
                     "ex. `25,Health`"
                 });
 
-                var inputmsg = await messageInput(channel, interaction.user.id).catch(() => "#");
-                if (inputmsg === "#") {
+                var inputmsg = await messageInput(channel, interaction.user.id).catch(() => null);
+                inputmsg?.delete();
+                if (!inputmsg || inputmsg.content === "#") {
                   interaction.followUp({
                     ephemeral: true,
                     content: "Cancelled"
@@ -867,7 +916,7 @@ export default new ComponentCommandHandler(
                   return;
                 }
 
-                const input = inputmsg.split(",");
+                const input = inputmsg.content.split(",");
 
                 try {
                   // @ts-expect-error
@@ -894,7 +943,7 @@ export default new ComponentCommandHandler(
                         content: "Please input a comma separated list of item IDs, ex. \`starter_shield,starter_revolver\`"
                       });
 
-                      let items = (await messageInput(channel, interaction.user.id)).split(/,/g);
+                      let items = (await messageInput(channel, interaction.user.id)).content.split(/,/g);
 
                       var invalid_count = 0;
                       for (const i of items) {
@@ -962,7 +1011,7 @@ export default new ComponentCommandHandler(
                         content: "Please input a comma separated list of item IDs, ex. \`some_skill,another_skill\`"
                       });
 
-                      let skills = (await messageInput(channel, interaction.user.id)).split(/,/g);
+                      let skills = (await messageInput(channel, interaction.user.id)).content.split(/,/g);
 
                       var invalid_count = 0;
                       for (const i of skills) {
@@ -1054,9 +1103,10 @@ export default new ComponentCommandHandler(
                       ephemeral: true,
                       content: `Please type in the Effect id followed by severity, then amount of ticks. Ex. \`bleeding,2,5\``
                     });
-    
-                    var inputmsg = await messageInput(channel, interaction.user.id).catch(() => "#");
-                    if (inputmsg === "#") {
+
+                    var inputmsg = await messageInput(channel, interaction.user.id).catch(() => null);
+                    inputmsg?.delete();
+                    if (!inputmsg || inputmsg.content === "#") {
                       interaction.followUp({
                         ephemeral: true,
                         content: "Cancelled"
@@ -1064,7 +1114,7 @@ export default new ComponentCommandHandler(
                       return;
                     }
 
-                    const input = inputmsg.split(",");
+                    const input = inputmsg.content.split(",");
 
                     try {
                       const effect = {
@@ -1107,8 +1157,9 @@ export default new ComponentCommandHandler(
                         content: `Please type in the Effect id`
                       });
       
-                      var inputmsg = await messageInput(channel, interaction.user.id).catch(() => "#");
-                      if (inputmsg === "#") {
+                      var inputmsg = await messageInput(channel, interaction.user.id).catch(() => null);
+                      inputmsg?.delete();
+                      if (!inputmsg || inputmsg.content === "#") {
                         interaction.followUp({
                           ephemeral: true,
                           content: "Cancelled"
@@ -1117,7 +1168,7 @@ export default new ComponentCommandHandler(
                       }
 
                       const components = [wipeType(creature_id)];
-                      components[0].components[0].customId += `/${inputmsg}`
+                      components[0].components[0].customId += `/${inputmsg.content}`
 
                       interaction.followUp({
                         ephemeral: true,

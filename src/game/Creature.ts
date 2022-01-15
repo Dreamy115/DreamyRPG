@@ -31,7 +31,7 @@ export default class Creature {
         location: data.info?.location ?? "default",
         locked: data.info?.locked ?? false,
         species: data.info?.species ?? "default",
-        class: data.info?.class ?? "default",
+        class: data.info?.class,
         npc: data.info?.npc ?? false,
       },
       stats: {
@@ -893,6 +893,8 @@ export default class Creature {
     Shield: "⧮⧯",
     Mana: bar_styles[2]
   }
+
+  static readonly MIN_LEVEL_FOR_CLASS = 5;
 
   static readonly MAX_EQUIPPED_WEAPONS = 2;
   static readonly MAX_EQUIPPED_UTILITY = 4;

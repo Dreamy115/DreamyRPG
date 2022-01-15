@@ -118,7 +118,8 @@ export default new ApplicationCommandHandler({
     )
 
   await interaction.editReply({
-    embeds: [embed]
+    embeds: [embed],
+    content: "Hacking Minigame!"
   });
 
   var int = setInterval(() => {

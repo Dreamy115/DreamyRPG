@@ -56,10 +56,6 @@ if (!CONFIG.guild?.gm_role) throw new Error("guild/gm_role not defined in config
 //
 export const db = Mongoose.connect(CONFIG.database.uri).then((v) => {console.log(v.connection); return v});
 
-export const AppCmdManager = new ApplicationCommandManager();
-export const CmpCmdManager = new ComponentCommandManager();
-export const AutoManager = new AutocompleteManager();
-
 export const ItemManager = new ItemsManager();
 export const ClassManager = new CreatureClassManager();
 export const SpeciesManager = new CreatureSpeciesManager();
@@ -87,14 +83,14 @@ Bot.on("ready", async () => {
   console.log("Bot Ready;", Bot.user?.tag);
 
   // Loading Bot Stuff
-  await AppCmdManager.load(path.join(__dirname, "app/commands"));
-  await CmpCmdManager.load(path.join(__dirname, "app/component_commands"));
-  await AutoManager.load(path.join(__dirname, "app/autocomplete"));
+  await ApplicationCommandManager.load(path.join(__dirname, "app/commands"));
+  await ComponentCommandManager.load(path.join(__dirname, "app/component_commands"));
+  await AutocompleteManager.load(path.join(__dirname, "app/autocomplete"));
 
-  console.log(`/${Array.from(AppCmdManager.map.keys()).length} >${Array.from(CmpCmdManager.map.keys()).length} Commands loaded`);
+  console.log(`/${Array.from(ApplicationCommandManager.map.keys()).length} >${Array.from(ComponentCommandManager.map.keys()).length} Commands loaded`);
 
   const commandData: ApplicationCommandData[] = [];
-  for (const cmd of AppCmdManager.map.values()) {
+  for (const cmd of ApplicationCommandManager.map.values()) {
     commandData.push(cmd.data);
   }
 
@@ -108,7 +104,7 @@ Bot.on("ready", async () => {
   // Listeners
   Bot.on("interactionCreate", async (interaction) => {
     if (interaction.isCommand()) {
-      const command = AppCmdManager.map.get(interaction.commandName);
+      const command = ApplicationCommandManager.map.get(interaction.commandName);
       if (!command) {
         console.error(`Missing handler for /${interaction.commandName}`);
         return;
@@ -119,7 +115,7 @@ Bot.on("ready", async () => {
       console.log(`/${logCommandInteraction(interaction)}`, `@${interaction.user.id}`);
 
       console.time(`cmd-${executionId}`);
-      await command.run(interaction, Bot, await db);
+      await command.executor(interaction, Bot, await db);
       console.timeEnd(`cmd-${executionId}`);
 
     } else if (interaction.isMessageComponent()) {
@@ -127,7 +123,7 @@ Bot.on("ready", async () => {
       const commandName = args.shift();
       if (!commandName) return;
 
-      const command = CmpCmdManager.map.get(commandName);
+      const command = ComponentCommandManager.map.get(commandName);
       if (!command) {
         console.error(`Missing handler for /${commandName}`);
         return;
@@ -139,14 +135,14 @@ Bot.on("ready", async () => {
         console.log(`>${interaction.customId} @${interaction.user.id}`);
 
         console.time(`cmp-${executionId}`);
-        await command.run(interaction, Bot, await db, args);
+        await command.executor(interaction, Bot, await db, args);
       } catch (e) {
         console.error(e);
       } finally {
         console.timeEnd(`cmp-${executionId}`);
       }
     } else if (interaction.isAutocomplete()) {
-      const command = AutoManager.map.get(interaction.commandName);
+      const command = AutocompleteManager.map.get(interaction.commandName);
       if (!command) {
         console.error(`Missing handler for A/${interaction.commandName}`);
         return;
@@ -158,7 +154,7 @@ Bot.on("ready", async () => {
       console.log(`A/${logCommandInteraction(interaction)} | ${focus.name}`, `@${interaction.user.id}`);
 
       console.time(`aut-${executionId}`);
-      await command.run(interaction, Bot, await db);
+      await command.executor(interaction, Bot, await db);
       console.timeEnd(`aut-${executionId}`);
     }
   })

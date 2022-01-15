@@ -143,8 +143,9 @@ export default new ApplicationCommandHandler({
     const game = HACK_playing.get(creature.$._id);
     const input = await messageInput(channel, interaction.user.id, ).catch(() => null);
     if (!game?.numbers[0] || !input || !HACK_playing.has(creature.$._id)) return;
+    input.delete().catch(console.error);
 
-    if (input === "#") {
+    if (input.content === "#") {
       interaction.followUp({
         content: "Failed: Cancelled early."
       });
@@ -153,7 +154,7 @@ export default new ApplicationCommandHandler({
     }
 
     let guess: number[] = [];
-    for (const char of input) {
+    for (const char of input.content) {
       if (isNaN(Number(char))) {
         interaction.followUp({
           content: "Invalid guess! Must be numbers only. Example: **1234**"

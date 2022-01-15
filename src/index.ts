@@ -195,8 +195,7 @@ export async function messageInput(channel: TextBasedChannels, userid: Snowflake
 
   if (!input) throw new Error("No input");
 
-  input.delete();
-  return input.content;
+  return input;
 }
 export function capitalize(str: string): string {
   const array = str.split(/ +/g);

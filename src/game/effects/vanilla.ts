@@ -1,6 +1,7 @@
 import { ActiveEffect, DisplaySeverity } from "../ActiveEffects";
 import Creature from "../Creature";
 import { DamageCause, DamageMethod, DamageType, ShieldReaction } from "../Damage";
+import { PassiveEffect } from "../PassiveEffects";
 import { ModifierType } from "../Stats";
 
 export default [
@@ -45,6 +46,51 @@ export default [
       creature.$.stats.shield_regen.modifiers.push({
         type: ModifierType.CAP_MAX,
         value: 0
+      })
+    }
+  }),
+  new ActiveEffect({
+    id: "death",
+    consecutive_limit: 1,
+    display_severity: DisplaySeverity.NONE,
+    info: {
+      name: "Death",
+      lore: "This Creature's story is over...",
+      replacers: []
+    }
+  }),
+  new ActiveEffect({
+    id: "hypothermia",
+    consecutive_limit: 1,
+    display_severity: DisplaySeverity.NONE,
+    info: {
+      name: "Hypothermia",
+      lore: "This Creature is freezing! **2.5%** Health True Damage every tick. **-3** DEX, **-3** PER, **-3** STR",
+      replacers: []
+    },
+    preload(creature) {
+      creature.$.attributes.DEX.modifiers.push({
+        type: ModifierType.ADD,
+        value: -3
+      });
+      creature.$.attributes.PER.modifiers.push({
+        type: ModifierType.ADD,
+        value: -3
+      });
+      creature.$.attributes.STR.modifiers.push({
+        type: ModifierType.ADD,
+        value: -3
+      });
+    },
+    onTick(creature, {ticks, severity}) {
+      creature.applyDamage({
+        cause: DamageCause.DoT,
+        chance: 100,
+        method: DamageMethod.Direct,
+        shieldReaction: ShieldReaction.Ignore,
+        sources: [{type: DamageType.True, value: Math.max(1, 0.025 * creature.$.stats.health.value)}],
+        useDodge: false,
+        attacker: "Hypothermia",
       })
     }
   })

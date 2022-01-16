@@ -268,6 +268,17 @@ export default class Creature {
     if (isNaN(this.$.vitals.mana))
       this.$.vitals.mana = 0;
 
+    if (this.alive) {
+      if (this.$.vitals.injuries >= this.$.stats.health.value) {
+        this.applyActiveEffect({
+          id: "death",
+          severity: 1,
+          ticks: -1
+        }, true)
+      }
+    } else {
+      this.$.vitals.health = 0;
+    }
   }
 
   checkItemConflicts() {
@@ -646,8 +657,17 @@ export default class Creature {
         ticks: -1
       });
     }
+    const effects = this.$.active_effects.concat(location_effects);
 
-    return this.$.active_effects.concat(location_effects);
+    if (this.$.vitals.heat <= 0) {
+      effects.push({
+        id: "hypothermia",
+        ticks: 1,
+        severity: 1
+      })
+    }
+
+    return effects;
   }
 
   applyActiveEffect(effect: AppliedActiveEffect, override_existing = false): boolean {
@@ -660,9 +680,9 @@ export default class Creature {
         if (e.id === effect.id) count++;
       }
 
-    if (effectData.$.consecutive_limit > 0 && count > effectData.$.consecutive_limit) {
+    if (effectData.$.consecutive_limit > 0 && count >= effectData.$.consecutive_limit) {
       if (override_existing) {
-        this.active_effects[this.active_effects.findIndex((v) => v.id === effect.id)] = effect;
+        this.$.active_effects[this.$.active_effects.findIndex((v) => v.id === effect.id)] = effect;
       } else return false;
     } else {
       this.$.active_effects.push(effect);
@@ -674,7 +694,23 @@ export default class Creature {
   }
   clearActiveEffect(id: string, type: "expire" | "delete"): boolean {
     const index = this.$.active_effects.findIndex((v) => v.id === id);
-    if (index === -1) return false;
+    if (index === -1) {
+      const effect = this.active_effects.find((v) => v.id === id);
+      if (!effect) return false;
+
+      const effectData = EffectManager.map.get(effect.id);
+      switch (type) {
+        case "delete": {
+          effectData?.$.onDelete?.(this, effect);
+        } break;
+        case "expire": {
+          effect.ticks = 0;
+          effectData?.$.onTick?.(this, effect);
+        } break;
+      }
+
+      return true;
+    }
 
     const effect = this.$.active_effects.splice(index, 1)[0];
     const effectData = EffectManager.map.get(effect.id);
@@ -704,10 +740,10 @@ export default class Creature {
         this.clearActiveEffect(effect.id, "delete");
         continue;
       }
-
-      if (--effect.ticks <= 0) {
+      if (--effect.ticks === 0) {
         this.clearActiveEffect(effect.id, "expire");
       } else {
+        if (effect.ticks < 0) effect.ticks = -1;
         effectData.$.onTick?.(this, effect);
       }
     }

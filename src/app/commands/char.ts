@@ -608,7 +608,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
             `**${creature.$.stats.shield_regen.value}**/t`
             : "No **Shield**"
           ) + "\n" +
-          make_bar(100 * creature.$.vitals.health / (creature.$.stats.health.value - creature.$.vitals.injuries), Creature.BAR_STYLES.Health, Math.max(1, health_length_mod * Math.floor(BAR_LENGTH * health_injury_proportions))).str +
+          (make_bar(100 * creature.$.vitals.health / (creature.$.stats.health.value - creature.$.vitals.injuries), Creature.BAR_STYLES.Health, Math.max(1, health_length_mod * Math.floor(BAR_LENGTH * health_injury_proportions))).str ?? "") +
           (
             creature.$.vitals.injuries > 0
             ? make_bar(100, Creature.BAR_STYLES.Injuries, Math.max(1, health_length_mod * Math.ceil(BAR_LENGTH - (BAR_LENGTH * health_injury_proportions)))).str
@@ -858,7 +858,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
               case DisplaySeverity.ROMAN: return romanNumeral(effect.severity);
             }
           }()}`,
-          `*${replaceEffectLore(effectData.$.info.lore, effectData.$.info.replacers, effect)}*\n\n${effect.ticks === -1 ? "**Location Dependent**" : `for **${effect.ticks}** Ticks`} (\`${effect.id}\`)`
+          `*${replaceEffectLore(effectData.$.info.lore, effectData.$.info.replacers, effect)}*\n\n${effect.ticks === -1 ? "**Cannot Expire**" : `for **${effect.ticks}** Ticks`} (\`${effect.id}\`)`
         )
       }
 

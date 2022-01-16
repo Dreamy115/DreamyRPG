@@ -75,32 +75,18 @@ export default new ApplicationCommandHandler({
   if (sim_interval !== null)
     clearInterval(sim_interval);
   
-  sim_interval = setInterval(invokeSimulation(db, Bot), time * 1000);
-
-  interaction.reply({
-    content: "Done!",
-    ephemeral: true
-  })
-})
-
-export var sim_channel: NewsChannel | TextChannel | null = null;
-export var sim_interval: NodeJS.Timer | null = null;
-
-export function invokeSimulation(db: typeof Mongoose, Bot: Client) {
-  return async () => {
+  sim_interval = setInterval(async () => {
+    console.log("Ticking...")
     for await (const document of db.connection.collection(Creature.COLLECTION_NAME).find()) {
       try {
         // @ts-expect-error
         const creature = new Creature(document);
 
-        if (await creature.getFightID(db)) continue;
+        if (!(await creature.getFightID(db))) {
+          creature.tick();
+        }
 
-        const before = JSON.parse(JSON.stringify(creature.$));
-        creature.tick();
-        const after = JSON.parse(JSON.stringify(creature.$));
-
-        const patch = createPatch(before, after);
-        if (!creature.$.info.npc && sim_channel && patch.length > 0) {
+        if (!creature.$.info.npc && sim_channel) {
           const {embed} = await infoEmbed(creature, Bot, "stats");
           const msg = await sim_channel.messages.fetch(creature.$.sim_message ?? "").catch(() => null);
           if (msg) {
@@ -127,5 +113,13 @@ export function invokeSimulation(db: typeof Mongoose, Bot: Client) {
         console.error(e);
       }
     }
-  }
-} 
+  }, time * 1000);
+
+  interaction.reply({
+    content: "Done!",
+    ephemeral: true
+  })
+})
+
+export var sim_channel: NewsChannel | TextChannel | null = null;
+export var sim_interval: NodeJS.Timer | null = null;

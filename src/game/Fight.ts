@@ -33,6 +33,16 @@ export class Fight {
     }
   }
 
+  get creatures(): Set<string> {
+    const set = new Set<string>();
+    for (const p of this.$.parties) {
+      for (const c of p) {
+        set.add(c);
+      }
+    }
+    return set;
+  }
+
   async prepare(db: typeof Mongoose) {
     for (var p = 0; p < this.$.parties.length; p++) {
       const party = this.$.parties[p];

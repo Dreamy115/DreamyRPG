@@ -616,10 +616,12 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
           ) +
           ` **Health** **${creature.$.vitals.health}**/**${creature.$.stats.health.value - creature.$.vitals.injuries}** ` + 
           `(**${Math.round(100 * creature.$.vitals.health / creature.$.stats.health.value)}%**)\n` +
-          "\n" +
-          make_bar(100 *creature.$.vitals.mana / creature.$.stats.mana.value, Creature.BAR_STYLES.Mana, BAR_LENGTH / 3).str +
-          ` **Mana** ${textStat(creature.$.vitals.mana, creature.$.stats.mana.value)} `+
-          `**${creature.$.stats.mana_regen.value}**/t\n`
+          make_bar(100 * creature.$.vitals.mana / creature.$.stats.mana.value, Creature.BAR_STYLES.Mana, BAR_LENGTH / 3).str +
+          ` **Mana** ${textStat(creature.$.vitals.mana, creature.$.stats.mana.value)} ` +
+          `**${creature.$.stats.mana_regen.value}**/t\n\n` +
+          make_bar(100 * creature.$.vitals.heat / creature.$.stats.heat_capacity.value, Creature.BAR_STYLES.Heat, BAR_LENGTH / 3).str +
+          ` **Heat** ${textStat(creature.$.vitals.heat, creature.$.stats.heat_capacity.value)} ` +
+          `**${creature.deltaHeat}**/t`
         },
         {
           name: "Offense",

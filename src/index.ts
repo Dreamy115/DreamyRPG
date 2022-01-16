@@ -36,6 +36,7 @@ export const CONFIG: {
   guild?: {
     id?: string
     gm_role?: string
+    sim_channel?: string
   }
   cache?: {
     creatureTTL?: number

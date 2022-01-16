@@ -197,6 +197,14 @@ export default new ComponentCommandHandler(
             }
           } break;
           case "class": {
+            if (!IS_GM && await creature.getFightID(db)) {
+              interaction.followUp({
+                ephemeral: true,
+                content: "Cannot do that while fighting!"
+              });
+              return;
+            }
+
             if (creature.$.info.locked && !IS_GM) {
               if (creature.$.info.class && ClassManager.map.has(creature.$.info.class)) {
                 interaction.followUp({
@@ -371,6 +379,14 @@ export default new ComponentCommandHandler(
             if (interaction.isButton()) {
               switch (args.shift()) {
                 case "craft": {
+                  if (!IS_GM && await creature.getFightID(db)) {
+                    interaction.followUp({
+                      ephemeral: true,
+                      content: "Cannot do that while fighting!"
+                    });
+                    return;
+                  }
+
                   const recipe = SchematicsManager.map.get(args.shift() ?? "");
                   if (!recipe?.$.id) return;
                   
@@ -449,6 +465,14 @@ export default new ComponentCommandHandler(
                   return;
                 } break;
                 case "scrap": {
+                  if (!IS_GM && await creature.getFightID(db)) {
+                    interaction.followUp({
+                      ephemeral: true,
+                      content: "Cannot do that while fighting!"
+                    });
+                    return;
+                  }
+
                   if (!creature.$.info.locked && !creature.$.info.npc) {
                     interaction.editReply({
                       content: "You must lock in before scrapping or crafting items"
@@ -514,6 +538,14 @@ export default new ComponentCommandHandler(
                   return;
                 } break;
                 case "equip": {
+                  if (!IS_GM && await creature.getFightID(db)) {
+                    interaction.followUp({
+                      ephemeral: true,
+                      content: "Cannot do that while fighting!"
+                    });
+                    return;
+                  }
+
                   const items: MessageSelectOptionData[] = [];
 
                   for (const i of creature.$.items.backpack) {
@@ -543,6 +575,14 @@ export default new ComponentCommandHandler(
                   return;
                 } break;
                 case "unequip": {
+                  if (!IS_GM && await creature.getFightID(db)) {
+                    interaction.followUp({
+                      ephemeral: true,
+                      content: "Cannot do that while fighting!"
+                    });
+                    return;
+                  }
+
                   if (creature.$.items.equipped.length == 0) {
                     interaction.followUp({
                       ephemeral: true,
@@ -663,6 +703,14 @@ export default new ComponentCommandHandler(
                   return;
                 } break;
                 case "scrap": {
+                  if (!IS_GM && await creature.getFightID(db)) {
+                    interaction.followUp({
+                      ephemeral: true,
+                      content: "Cannot do that while fighting!"
+                    });
+                    return;
+                  }
+
                   if (!creature.$.info.locked && !creature.$.info.npc) {
                     interaction.editReply({
                       content: "You must lock in before scrapping or crafting items"
@@ -716,11 +764,27 @@ export default new ComponentCommandHandler(
                   });
                 } break;
                 case "unequip": {
+                  if (!IS_GM && await creature.getFightID(db)) {
+                    interaction.followUp({
+                      ephemeral: true,
+                      content: "Cannot do that while fighting!"
+                    });
+                    return;
+                  }
+
                   for (const i of interaction.values) {
                     creature.$.items.backpack.push(creature.$.items.equipped.splice(creature.$.items.equipped.findIndex(v => v === i),1)[0]);
                   }
                 } break;
                 case "equip": {
+                  if (!IS_GM && await creature.getFightID(db)) {
+                    interaction.followUp({
+                      ephemeral: true,
+                      content: "Cannot do that while fighting!"
+                    });
+                    return;
+                  }
+
                   for (const i of interaction.values) {
                     creature.$.items.equipped.push(creature.$.items.backpack.splice(creature.$.items.backpack.findIndex(v => v === i),1)[0]);
                   }
@@ -748,6 +812,14 @@ export default new ComponentCommandHandler(
                     content: "Cannot assign points if you have not locked in",
                     ephemeral: true
                   })
+                  return;
+                }
+
+                if (!IS_GM && await creature.getFightID(db)) {
+                  interaction.followUp({
+                    ephemeral: true,
+                    content: "Cannot do that while fighting!"
+                  });
                   return;
                 }
 
@@ -781,6 +853,14 @@ export default new ComponentCommandHandler(
                 }
               }
             } else {
+              if (!IS_GM && await creature.getFightID(db)) {
+                interaction.followUp({
+                  ephemeral: true,
+                  content: "Cannot do that while fighting!"
+                });
+                return;
+              }
+
               interaction.followUp({
                 ephemeral: true,
                 content: `Expendable points: **${creature.totalAttributePointsUsed}**/${creature.$.experience.level}\nPoint assignment is final!`,
@@ -791,6 +871,14 @@ export default new ComponentCommandHandler(
             }
           } break;
           case "buy": {
+            if (!IS_GM && await creature.getFightID(db)) {
+              interaction.followUp({
+                ephemeral: true,
+                content: "Cannot do that while fighting!"
+              });
+              return;
+            }
+
             if (!creature.$.info.locked) {
               interaction.editReply({
                 content: "Need to lock in before using shops."

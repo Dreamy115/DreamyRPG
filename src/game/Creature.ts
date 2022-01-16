@@ -2,11 +2,12 @@ import { Client, MessageEmbed } from "discord.js";
 import mongoose from "mongoose";
 import NodeCache from "node-cache";
 import { bar_styles } from "../app/Bars.js";
-import { AbilitiesManager, capitalize, ClassManager, CONFIG, EffectManager, ItemManager, LocationManager, PassivesManager, PerkManager, SchematicsManager, shuffle, SkillManager, SpeciesManager } from "../index.js";
+import { AbilitiesManager, capitalize, ClassManager, CONFIG, db, EffectManager, ItemManager, LocationManager, PassivesManager, PerkManager, SchematicsManager, shuffle, SkillManager, SpeciesManager } from "../index.js";
 import { AppliedActiveEffect } from "./ActiveEffects.js";
 import { CraftingMaterials } from "./Crafting.js";
 import { CreatureAbility } from "./CreatureAbilities.js";
 import { DamageCause, DamageGroup, DamageLog, DamageMethod as DamageMethod, DamageType, DAMAGE_TO_INJURY_RATIO, reductionMultiplier, ShieldReaction } from "./Damage.js";
+import { Fight } from "./Fight.js";
 import { AttackData, AttackSet, Item } from "./Items.js";
 import { PassiveEffect, PassiveModifier } from "./PassiveEffects.js";
 import { CreaturePerk } from "./Perks.js";
@@ -93,6 +94,7 @@ export default class Creature {
         hand: data.abilities?.hand ?? [],
         stacks: data.abilities?.stacks ?? 0
       },
+      sim_message: data.sim_message ?? null,
       active_effects: data.active_effects ?? [],
       vars: data.vars ?? {}
     }
@@ -148,6 +150,7 @@ export default class Creature {
     this.$.vitals.injuries *= this.$.stats.health.value;
     this.$.vitals.shield *= this.$.stats.shield.value;
     this.$.vitals.mana *= this.$.stats.mana.value;
+    this.$.vitals.heat *= this.$.stats.heat_capacity.value;
 
     this.vitalsIntegrity();
 
@@ -714,6 +717,8 @@ export default class Creature {
     this.$.vitals.shield += this.$.stats.shield_regen.value;
     this.$.vitals.mana += this.$.stats.mana_regen.value;
 
+    this.$.vitals.heat += this.deltaHeat;
+
     this.vitalsIntegrity();
   }
 
@@ -724,10 +729,22 @@ export default class Creature {
 
   get isAbleToFight(): boolean {
     if (this.$.vitals.health <= 0) return false;
+    if (!this.alive) return false;
 
     return true;
   }
+  get alive(): boolean {
+    return (this.active_effects.findIndex((v) => v.id === "death") !== -1);
+  }
+  async getFightID(db: typeof mongoose): Promise<string | null> {
+    for await (const document of db.connection.collection(Fight.COLLECTION_NAME).find()) {
+      const fight = new Fight(document);
 
+      if (fight.creatures.has(this.$._id))
+        return fight.$._id;
+    }
+    return null;
+  }
 
   clearAttributes() {
     for (const a in this.$.attributes) {
@@ -827,7 +844,8 @@ export default class Creature {
         health: this.$.vitals.health / this.$.stats.health.value,
         injuries: this.$.vitals.injuries / this.$.stats.health.value,
         mana: this.$.vitals.mana / this.$.stats.mana.value,
-        shield: this.$.vitals.shield / this.$.stats.shield.value
+        shield: this.$.vitals.shield / this.$.stats.shield.value,
+        heat: this.$.vitals.heat / this.$.stats.heat_capacity.value
       },
       attributes: {},
       experience: this.$.experience,
@@ -842,6 +860,7 @@ export default class Creature {
       },
       abilities: this.$.abilities,
       active_effects: this.$.active_effects,
+      sim_message: this.$.sim_message,
       vars: this.$.vars
     }
 
@@ -891,7 +910,8 @@ export default class Creature {
     Health: bar_styles[0],
     Injuries: "░",
     Shield: "⧮⧯",
-    Mana: bar_styles[2]
+    Mana: bar_styles[2],
+    Heat: bar_styles[3]
   }
 
   static readonly MIN_LEVEL_FOR_CLASS = 5;
@@ -1190,6 +1210,7 @@ export interface CreatureData {
     hand: string[]
     stacks: number
   }
+  sim_message: string | null
   active_effects: AppliedActiveEffect[]
   vars: {[key: string]: number}
 }
@@ -1241,6 +1262,7 @@ export interface CreatureDump {
     hand?: string[]
     stacks?: number
   }
+  sim_message?: string | null
   active_effects?: AppliedActiveEffect[]
   vars?: {[key: string]: number}
 }

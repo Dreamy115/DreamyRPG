@@ -770,7 +770,7 @@ export default class Creature {
     return true;
   }
   get alive(): boolean {
-    return (this.active_effects.findIndex((v) => v.id === "death") !== -1);
+    return (this.active_effects.findIndex((v) => v.id === "death") === -1);
   }
   async getFightID(db: typeof mongoose): Promise<string | null> {
     for await (const document of db.connection.collection(Fight.COLLECTION_NAME).find()) {

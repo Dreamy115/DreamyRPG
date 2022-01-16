@@ -30,6 +30,7 @@ export default new ComponentCommandHandler(
 
     const member = await guild.members.fetch(interaction.user.id).catch(() => null);
     let IS_GM = true;
+
     if (!member || !member.roles.cache.has(CONFIG.guild?.gm_role ?? "")) {
       IS_GM = false;
       if (creature_id !== interaction.user.id) {
@@ -83,6 +84,14 @@ export default new ComponentCommandHandler(
           interaction.editReply({
             content: "Invalid character"
           })
+          return;
+        }
+
+        if (!IS_GM && !creature.alive) {
+          interaction.followUp({
+            ephemeral: true,
+            content: "You're dead..."
+          });
           return;
         }
 

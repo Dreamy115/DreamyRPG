@@ -750,8 +750,10 @@ export default class Creature {
   }
 
   tickVitals() {
-    this.$.vitals.shield += this.$.stats.shield_regen.value;
-    this.$.vitals.mana += this.$.stats.mana_regen.value;
+    if (this.alive) {
+      this.$.vitals.shield += this.$.stats.shield_regen.value;
+      this.$.vitals.mana += this.$.stats.mana_regen.value;
+    }
 
     this.$.vitals.heat += this.deltaHeat;
 

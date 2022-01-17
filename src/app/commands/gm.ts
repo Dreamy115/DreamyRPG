@@ -416,17 +416,25 @@ export default new ApplicationCommandHandler(
               parties.push(p.split(/ *, */g))
             }
 
-            for (const p of parties) {
-              for (const c of p) {
-                const creature = await Creature.fetch(c, db, true);
-                const fid = await creature.getFightID(db);
-                if(fid) {
-                  interaction.editReply({
-                    content: `\`${creature.$._id}\` **${creature.displayName}** is already in fight \`${fid}\``
-                  })
-                  return;
+            try {
+              for (const p of parties) {
+                for (const c of p) {
+                  const creature = await Creature.fetch(c, db, true);
+                  const fid = await creature.getFightID(db);
+                  if(fid) {
+                    interaction.editReply({
+                      content: `\`${creature.$._id}\` **${creature.displayName}** is already in fight \`${fid}\``
+                    })
+                    return;
+                  }
                 }
               }
+            } catch (e) {
+              console.error(e);
+              interaction.editReply({
+                content: "Invalid Creaturelist"
+              })
+              return;
             }
 
             const fight = new Fight({

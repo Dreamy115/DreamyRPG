@@ -1,11 +1,12 @@
 import NodeCache from "node-cache";
-import { AbilitiesManager, CONFIG, limitString, removeMarkdown, shuffle } from "..";
+import { AbilitiesManager, CONFIG, EffectManager, limitString, removeMarkdown, shuffle } from "..";
 import Mongoose from "mongoose";
 import { Client, EmbedFieldData, InteractionReplyOptions, MessageActionRow, MessageButton, MessageEmbed, MessagePayload, MessageSelectMenu, MessageSelectOptionData, SnowflakeUtil, User } from "discord.js";
 import Creature, { HealType } from "./Creature";
 import { textStat } from "./Stats";
 import { replaceLore } from "./CreatureAbilities";
 import { bar_styles, make_bar } from "../app/Bars";
+import { DisplaySeverity, romanNumeral } from "./ActiveEffects";
 
 export class Fight {
   static cache = new NodeCache({
@@ -144,7 +145,8 @@ export class Fight {
     }
 
     if (able <= 1) {
-      return ableToFight.findIndex(b => b);
+      const index = ableToFight.findIndex(b => b);
+      if (index === -1) return -2;
     }
     return -1;
   }
@@ -200,16 +202,16 @@ export class Fight {
                 shield_length_mod = 1 - health_length_mod;
 
                 str += 
-                  `**${char.displayName}** (${CombatPosition[combatants.get(char.$._id)?.position ?? 0]})\n` +
+                  `- **${char.displayName}** (${CombatPosition[combatants.get(char.$._id)?.position ?? 0]})\n` +
                   `*(**${char.$.stats.health.value}** Health - **${char.$.vitals.injuries}** Injuries)*\n` +
                   (
                     char.$.stats.shield.value > 0
-                    ? make_bar(100 * char.$.vitals.shield / char.$.stats.shield.value, Creature.BAR_STYLES.Shield, shield_length_mod * BAR_LENGTH).str +
+                    ? (make_bar(100 * char.$.vitals.shield / char.$.stats.shield.value, Creature.BAR_STYLES.Shield, shield_length_mod * BAR_LENGTH).str || "") +
                     ` **Shield** ${textStat(char.$.vitals.shield, char.$.stats.shield.value)} ` +
                     `**${char.$.stats.shield_regen.value}**/t`
                     : "No **Shield**"
                   ) + "\n" +
-                  make_bar(100 * char.$.vitals.health / (char.$.stats.health.value - char.$.vitals.injuries), Creature.BAR_STYLES.Health, Math.max(1, health_length_mod * Math.floor(BAR_LENGTH * health_injury_proportions))).str +
+                  (make_bar(100 * char.$.vitals.health / (char.$.stats.health.value - char.$.vitals.injuries), Creature.BAR_STYLES.Health, Math.max(1, health_length_mod * Math.floor(BAR_LENGTH * health_injury_proportions))).str || "") +
                   (
                     char.$.vitals.injuries > 0
                     ? make_bar(100, Creature.BAR_STYLES.Injuries, Math.max(1, health_length_mod * Math.ceil(BAR_LENGTH - (BAR_LENGTH * health_injury_proportions)))).str
@@ -219,7 +221,24 @@ export class Fight {
                   `(**${Math.round(100 * char.$.vitals.health / char.$.stats.health.value)}%**)\n` +
                   make_bar(100 *char.$.vitals.mana / char.$.stats.mana.value, Creature.BAR_STYLES.Mana, BAR_LENGTH / 3).str +
                   ` **Mana** ${textStat(char.$.vitals.mana, char.$.stats.mana.value)} `+
-                  `**${char.$.stats.mana_regen.value}**/t\n`
+                  `**${char.$.stats.mana_regen.value}**/t\n` +
+                  (function () {
+                    const arr: string[] = [];
+                    for (const active of char.active_effects) {
+                      const effect = EffectManager.map.get(active.id);
+                      if (!effect) continue;
+
+                      arr.push(`${effect.$.info.name}${
+                        effect.$.display_severity === DisplaySeverity.ARABIC
+                        ? active.severity
+                        : effect.$.display_severity === DisplaySeverity.ROMAN
+                          ? romanNumeral(active.severity)
+                          : ""
+                      }**${active.ticks !== -1 ? ` *(${active.ticks}t)*` : ""}`)
+                    }
+                    if (arr.length > 0)
+                      return `**${arr.join(", **")}`
+                  }() || "") + "\n"
               }
 
               return str;
@@ -247,7 +266,7 @@ export class Fight {
 
     return {
       embeds: [embed],
-      content: `${owner ?? `<@&${CONFIG.guild?.gm_role}>`}`,
+      content: `${owner ?? `<@&${CONFIG.guild?.gm_role}>`}${creature.isAbleToFight ? "" : "(Down!)"}`,
       components: await this.getComponents(db)
     }
   }
@@ -260,7 +279,8 @@ export class Fight {
         new MessageButton()
           .setCustomId(`fight/${this.$._id}/attack`)
           .setLabel("Attack" + `(${creature?.$.stats.attack_cost.value})`)
-          .setStyle("PRIMARY"),
+          .setStyle("PRIMARY")
+          .setDisabled(!creature?.isAbleToFight),
         new MessageButton()
           .setCustomId(`cedit/${this.$.queue[0]}/edit/weapon_switch`)
           .setLabel("Switch Weapons")
@@ -274,6 +294,7 @@ export class Fight {
         new MessageSelectMenu()
           .setCustomId(`fight/${this.$._id}/ability`)
           .setPlaceholder(`Use Ability (${creature?.$.abilities.hand.length ?? 0}/${Creature.MAX_HAND_AMOUNT})`)
+          .setDisabled(!creature?.isAbleToFight)
           .setOptions(await async function () {
             const array: MessageSelectOptionData[] = [];
 

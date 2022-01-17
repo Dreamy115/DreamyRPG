@@ -121,9 +121,14 @@ export default new ComponentCommandHandler(
         
         const winning_party = await fight.checkWinningParty(db);
         if (winning_party !== -1) {
-          interaction.followUp({
-            content: `**Party ${winning_party}** is victorious`
-          })
+          if (winning_party === -2)
+            interaction.followUp({
+              content: `No one wins. Everyone's down.`
+            })
+          else
+            interaction.followUp({
+              content: `**Party ${winning_party}** is victorious`
+            })
           fight.delete(db);
           return;
         }
@@ -131,11 +136,12 @@ export default new ComponentCommandHandler(
         while (true) {
           await fight.advanceTurn(db);
           const char = await Creature.fetch(fight.$.queue[0], db).catch(() => null);
-          if (char?.isAbleToFight) {
+
+          if (char?.alive) {
             break;
           } else {
             interaction.followUp({
-              content: `**${char?.displayName}** is unable to fight.`
+              content: `**${char?.displayName}** is dead.`
             });
             await sleep(1500);
           }
@@ -143,6 +149,13 @@ export default new ComponentCommandHandler(
         await interaction.followUp(await fight.announceTurn(db, Bot));
       } break;
       case "attack": {
+        if (!creature.isAbleToFight) {
+          interaction.editReply({
+            content: "You cannot Attack while downed."
+          })
+          return;
+        }
+
         if (interaction.isButton()) {
           if (creature.$.abilities.stacks === 0) {
             if (creature.$.vitals.mana >= creature.$.stats.attack_cost.value) {
@@ -218,6 +231,13 @@ export default new ComponentCommandHandler(
         }
       } break;
       case "attack_out": {
+        if (!creature.isAbleToFight) {
+          interaction.editReply({
+            content: "You cannot Attack while downed."
+          })
+          return;
+        }
+
         if (interaction.isSelectMenu()) {
           const attack_type = Creature.ATTACK_VALUES[creature.$.abilities.stacks];
           if (attack_type === null || attack_type === undefined) {
@@ -330,6 +350,13 @@ export default new ComponentCommandHandler(
         }
       } break;
       case "ability": {
+        if (!creature.isAbleToFight) {
+          interaction.editReply({
+            content: "You cannot use Abilities while downed."
+          })
+          return;
+        }
+
         if (interaction.isSelectMenu()) {
           const arg = args.shift();
           if (arg) {

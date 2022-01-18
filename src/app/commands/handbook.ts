@@ -1,5 +1,5 @@
 import { ApplicationCommandOptionData, MessageActionRow, MessageButton, MessageEmbed } from "discord.js";
-import { AbilitiesManager, capitalize, ClassManager, CONFIG, EffectManager, ItemManager, LocationManager, LootTables, PassivesManager, PerkManager, SchematicsManager, SkillManager, SpeciesManager } from "../..";
+import { AbilitiesManager, capitalize, ClassManager, CONFIG, Directives, EffectManager, ItemManager, LocationManager, LootTables, PassivesManager, PerkManager, SchematicsManager, SkillManager, SpeciesManager } from "../..";
 import { ActiveEffect, DisplaySeverity, romanNumeral } from "../../game/ActiveEffects";
 import { CreatureClass } from "../../game/Classes";
 import { Schematic } from "../../game/Crafting";
@@ -70,7 +70,7 @@ const typeOption: ApplicationCommandOptionData = {
       value: "loottables"
     },
     {
-      name: "directives",
+      name: "Directives",
       value: "directives"
     }
   ]
@@ -191,6 +191,11 @@ export default new ApplicationCommandHandler(
         title = "Loot Tables (Confidential)";
         confidential = true;
         break;
+      case "directives":
+        list = Directives.map;
+        title = "All Directives",
+        confidential = true;
+        break;
     }
     
     await interaction.deferReply({ ephemeral: true });
@@ -238,39 +243,8 @@ export default new ApplicationCommandHandler(
           return;
         }
 
-        if (item instanceof GameDirective) {
-          embed.addFields([
-            { 
-              name: "Passives",
-              value: passivesDescriptor(Array.from(item.$.passives?.values() ?? [])) || "None"
-            },
-          ]);
-
-          if (item.$.effects) {
-            embed.addField(
-              "Global Effects",
-              function () {
-                var str = "";
-  
-                for (const active_effect of item.$.effects) {
-                  const effect_data = EffectManager.map.get(active_effect.id);
-                  if (!effect_data) continue;
-  
-                  str += `\`${effect_data.$.id}\` **${effect_data.$.info.name}${function(){
-                    switch (effect_data.$.display_severity) {
-                      case DisplaySeverity.NONE:
-                      default: return "";
-                      case DisplaySeverity.ARABIC: return " " + active_effect.severity;
-                      case DisplaySeverity.ROMAN: return " " + romanNumeral(active_effect.severity);
-                    }
-                  }()}**\n`;
-                }
-  
-                return str;
-              }() || "None"
-            )
-          }
-        } else if (item instanceof Schematic) {
+        
+        if (item instanceof Schematic) {
           const table = LootTables.map.get(item.$.table);
 
           if (table) {
@@ -361,8 +335,40 @@ export default new ApplicationCommandHandler(
               )
             }
           }
-
-          if (item instanceof Item) {
+          
+          if (item instanceof GameDirective) {
+            embed.addFields([
+              { 
+                name: "Passives",
+                value: passivesDescriptor(Array.from(item.$.passives?.values() ?? [])) || "None"
+              },
+            ]);
+  
+            if (item.$.effects) {
+              embed.addField(
+                "Global Effects",
+                function () {
+                  var str = "";
+    
+                  for (const active_effect of item.$.effects) {
+                    const effect_data = EffectManager.map.get(active_effect.id);
+                    if (!effect_data) continue;
+    
+                    str += `\`${effect_data.$.id}\` **${effect_data.$.info.name}${function(){
+                      switch (effect_data.$.display_severity) {
+                        case DisplaySeverity.NONE:
+                        default: return "";
+                        case DisplaySeverity.ARABIC: return " " + active_effect.severity;
+                        case DisplaySeverity.ROMAN: return " " + romanNumeral(active_effect.severity);
+                      }
+                    }()}**\n`;
+                  }
+    
+                  return str;
+                }() || "None"
+              )
+            }
+          } else if (item instanceof Item) {
             switch (item.$.type) {
               case "wearable": {
                 embed.addField(

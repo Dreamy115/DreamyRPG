@@ -8,6 +8,7 @@ package-lock.json
 
 # Configuration
 config.yml
+settings.yml
 
 # Winter Scenario Items
 *.ws*

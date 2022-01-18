@@ -21,6 +21,23 @@ import GameLocationManager from "./game/Locations.js";
 import LocationShopsManager from "./game/Shops.js";
 import LootTableManager from "./game/LootTables.js";
 
+export const ItemManager = new ItemsManager();
+export const ClassManager = new CreatureClassManager();
+export const SpeciesManager = new CreatureSpeciesManager();
+export const PassivesManager = new PassiveEffectManager();
+export const AbilitiesManager = new CreatureAbilitiesManager();
+export const EffectManager = new ActiveEffectManager();
+export const SkillManager = new CreatureSkillManager();
+export const PerkManager = new CreaturePerkManager();
+
+export const LocationManager = new GameLocationManager();
+export const ShopManager = new LocationShopsManager();
+export const SchematicsManager = new CraftingManager();
+
+export const LootTables = new LootTableManager();
+
+import { setSim } from "./app/commands/simulation.js";
+
 process.on("uncaughtException", (e) => {
   console.error(e);
 })
@@ -53,24 +70,47 @@ if (!CONFIG.client?.token) throw new Error("client/token not defined in configur
 if (!CONFIG.database?.uri) throw new Error("database/uri not defined in configuration file");
 if (!CONFIG.guild?.id) throw new Error("guild/id not defined in configuration file");
 if (!CONFIG.guild?.gm_role) throw new Error("guild/gm_role not defined in configuration file");
+//
+
+export const SETTINGS = new class Settings {
+  private data: {
+    simspeed?: number
+  }
+  get $(): Settings["data"] {
+    return this.data;
+  }
+  set $(val: Settings["data"]) {
+    fs.writeFileSync(path.join(__dirname, "../settings.yml"), YAML.stringify(val));
+    this.data = val ?? {};
+  }
+  constructor () {
+    this.data = YAML.parse(fs.readFileSync(path.join(__dirname, "../settings.yml")).toString()) ?? {};
+  }
+}
 
 //
 export const db = Mongoose.connect(CONFIG.database.uri).then((v) => {console.log(v.connection); return v});
 
-export const ItemManager = new ItemsManager();
-export const ClassManager = new CreatureClassManager();
-export const SpeciesManager = new CreatureSpeciesManager();
-export const PassivesManager = new PassiveEffectManager();
-export const AbilitiesManager = new CreatureAbilitiesManager();
-export const EffectManager = new ActiveEffectManager();
-export const SkillManager = new CreatureSkillManager();
-export const PerkManager = new CreaturePerkManager();
+export function gameLoad() {
+  console.log("Loading game items");
+  
+  ItemManager.load(path.join(__dirname, "game/items"));
+  ClassManager.load(path.join(__dirname, "game/classes"));
+  PassivesManager.load(path.join(__dirname, "game/passives"));
+  SpeciesManager.load(path.join(__dirname, "game/species"));
+  AbilitiesManager.load(path.join(__dirname, "game/abilities"));
+  EffectManager.load(path.join(__dirname, "game/effects"));
+  SkillManager.load(path.join(__dirname, "game/skills"));
+  PerkManager.load(path.join(__dirname, "game/perks"));
 
-export const LocationManager = new GameLocationManager();
-export const ShopManager = new LocationShopsManager();
-export const SchematicsManager = new CraftingManager();
+  LocationManager.load(path.join(__dirname, "game/locations"));
+  ShopManager.load(path.join(__dirname, "game/shops"));
+  SchematicsManager.load(path.join(__dirname, "game/schematics"));
 
-export const LootTables = new LootTableManager();
+  LootTables.load(path.join(__dirname, "game/loottables"));
+
+  console.log("Loading complete");
+}
 ///
 
 const Bot = new Client({
@@ -159,30 +199,14 @@ Bot.on("ready", async () => {
       console.timeEnd(`aut-${executionId}`);
     }
   })
+
+  // Sim
+  if ((SETTINGS.$.simspeed ?? 0) >= 10) {
+    setSim(guild, await db, Bot);
+  }
 })
 
 Bot.login(CONFIG.client.token);
-
-export function gameLoad() {
-  console.log("Loading game items");
-  
-  ItemManager.load(path.join(__dirname, "game/items"));
-  ClassManager.load(path.join(__dirname, "game/classes"));
-  PassivesManager.load(path.join(__dirname, "game/passives"));
-  SpeciesManager.load(path.join(__dirname, "game/species"));
-  AbilitiesManager.load(path.join(__dirname, "game/abilities"));
-  EffectManager.load(path.join(__dirname, "game/effects"));
-  SkillManager.load(path.join(__dirname, "game/skills"));
-  PerkManager.load(path.join(__dirname, "game/perks"));
-
-  LocationManager.load(path.join(__dirname, "game/locations"));
-  ShopManager.load(path.join(__dirname, "game/shops"));
-  SchematicsManager.load(path.join(__dirname, "game/schematics"));
-
-  LootTables.load(path.join(__dirname, "game/loottables"));
-
-  console.log("Loading complete");
-}
 
 export async function messageInput(channel: TextBasedChannels, userid: Snowflake, time = 30000) {
   const input = await channel.awaitMessages({

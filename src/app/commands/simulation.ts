@@ -1,6 +1,6 @@
-import { Client, NewsChannel, TextChannel } from "discord.js";
+import { Client, Guild, NewsChannel, TextChannel } from "discord.js";
 import Mongoose from "mongoose";
-import { CONFIG } from "../..";
+import { CONFIG, SETTINGS } from "../..";
 import Creature from "../../game/Creature";
 import { ApplicationCommandHandler } from "../commands";
 import { infoEmbed } from "./char";
@@ -61,15 +61,20 @@ export default new ApplicationCommandHandler({
     })
     return;
   }
+  SETTINGS.$ = Object.assign(SETTINGS.$, {simspeed: time});
 
+  setSim(guild, db, Bot);
+
+  interaction.reply({
+    content: "Done!",
+    ephemeral: true
+  })
+})
+
+export async function setSim(guild: Guild, db: typeof Mongoose, Bot: Client) {
   const channel = await guild.channels.fetch(CONFIG.guild?.sim_channel ?? "").catch(() => null);
   if (channel?.isText()) {
     sim_channel = channel;
-  } else {
-    interaction.reply({
-      content: "Invalid Sim-Channel... Proceeding without live-update.",
-      ephemeral: true
-    })
   }
 
   if (sim_interval !== null)
@@ -113,13 +118,8 @@ export default new ApplicationCommandHandler({
         console.error(e);
       }
     }
-  }, time * 1000);
-
-  interaction.reply({
-    content: "Done!",
-    ephemeral: true
-  })
-})
+  }, (SETTINGS.$.simspeed ?? 10) * 1000);
+}
 
 export var sim_channel: NewsChannel | TextChannel | null = null;
 export var sim_interval: NodeJS.Timer | null = null;

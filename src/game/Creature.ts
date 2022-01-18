@@ -747,7 +747,11 @@ export default class Creature {
       this.$.vitals.mana += this.$.stats.mana_regen.value;
     }
 
-    this.$.vitals.heat += this.deltaHeat;
+    if (this.deltaHeat >= 0) {
+      this.$.vitals.heat += Math.round(Math.log2(this.deltaHeat + 1));
+    } else{
+      this.$.vitals.heat += Math.round(-Math.log2(-this.deltaHeat + 1));
+    }
 
     this.vitalsIntegrity();
   }

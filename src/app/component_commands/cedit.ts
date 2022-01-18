@@ -826,6 +826,10 @@ export default new ComponentCommandHandler(
 
                         const item = creature.$.items.backpack.splice(index, 1)[0];
                         if (item) {
+                          const equipped = creature.$.items.slotted[data.$.slot];
+                          if (equipped) {
+                            creature.$.items.backpack.push(equipped);
+                          }
                           creature.$.items.slotted[data.$.slot] = item;
                         }
                       } break;

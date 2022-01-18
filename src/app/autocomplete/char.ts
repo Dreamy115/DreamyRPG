@@ -13,8 +13,25 @@ export default new AutocompleteHandler(
     const search = new RegExp(String(focused.value), "ig");
 
     switch (focused.name) {
+      case "recipient":
       case "id": {
         interaction.respond(await autocompleteCreatures(search, db));
+      } break;
+      case "backpack_item": {
+        const char = await Creature.fetch(interaction.user.id, db, true);
+        if (char) {
+          const array: ApplicationCommandOptionChoice[] = [];
+          for (const i of char.$.items.backpack) {
+            const item = ItemManager.map.get(i.id);
+            if (search.test(i.id) || search.test(item?.$.info.name ?? ""))
+              array.push({
+                name: `${i.id} - ${item?.$.info.name}`,
+                value: i.id
+              })
+            if (array.length >= 25) break;
+          }
+          interaction.respond(array);
+        }
       } break;
       case "recipe_id": {
         const creature = await Creature.fetch(interaction.user.id, db, true);

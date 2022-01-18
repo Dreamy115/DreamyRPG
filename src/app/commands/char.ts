@@ -72,6 +72,26 @@ export default new ApplicationCommandHandler(
         type: "SUB_COMMAND"
       },
       {
+        name: "give",
+        description: "Give an item from your backpack",
+        type: "SUB_COMMAND",
+        options: [
+          {
+            name: "backpack_item",
+            description: "The item you want to hand over",
+            type: "STRING",
+            required: true
+          },
+          {
+            name: "recipient",
+            description: "The person to give it to (Must be PC)",
+            type: "STRING",
+            required: true,
+            autocomplete: true
+          }
+        ]
+      },
+      {
         name: "info",
         description: "Show character make-up",
         type: "SUB_COMMAND",
@@ -246,6 +266,72 @@ export default new ApplicationCommandHandler(
             `**${attr.value < 0 ? "-" : "+"}${Math.abs(attr.value)}** Attribute\n` +
             `**${bonus < 0 ? "-" : "+"}${Math.abs(bonus)}** Bonus\n` +
             `as **${creature.displayName}**`
+        })
+      } break;
+      case "give": {
+        const [creature, target] = await Promise.all([
+          Creature.fetch(interaction.user.id, db),
+          Creature.fetch(interaction.options.getString("recipient", true), db).catch(() => null),
+          interaction.deferReply({ephemeral: true})
+        ])
+
+        if (!creature.alive) {
+          interaction.editReply({
+            content: "You're dead..."
+          })
+          return;
+        }
+
+        if (!creature.$.info.locked) {
+          interaction.editReply({
+            content: "Need to lock in before giving items."
+          })
+          return;
+        }
+
+        if (!target) {
+          interaction.editReply({
+            content: "Invalid creature."
+          })
+          return;
+        }
+        if (target?.$.info.npc || target?.location?.$.id !== creature.location?.$.id) {
+          interaction.editReply({
+            content: "You must be in the same location."
+          })
+          return;
+        }
+
+        const index = creature.$.items.backpack.findIndex(v => v.id === interaction.options.getString("backpack_item", true));
+        const item = creature.$.items.backpack.splice(index, 1)[0];
+        if (index === -1 || !item) {
+          interaction.editReply({
+            content: "Item not in backpack!"
+          })
+          return;
+        }
+        const itemdata = ItemManager.map.get(item.id);
+        if (!itemdata) {
+          creature.$.items.backpack.push(item);
+          interaction.editReply({
+            content: "Invalid item!"
+          })
+          return;
+        }
+
+        target.$.items.backpack.push(item);
+
+        await Promise.all([
+          creature.put(db),
+          target.put(db)
+        ])
+
+        await interaction.editReply({
+          content: "Transfer complete!"
+        });
+        interaction.followUp({
+          ephemeral: false,
+          content: `<@${creature?.$._id}> gave <@${target?.$._id}> **${itemdata.displayName}**!`
         })
       } break;
       case "shop": {

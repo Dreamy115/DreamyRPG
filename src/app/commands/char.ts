@@ -131,6 +131,10 @@ export default new ApplicationCommandHandler(
                 value: "abilities"
               },
               {
+                name: "Ultimate",
+                value: "ultimate"
+              },
+              {
                 name: "Effects",
                 value: "effects"
               },
@@ -836,6 +840,17 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
         )
       }
     } break;
+    case "ultimate": {
+      const ability = creature.ultimate;
+      if (ability)
+        embed.addField(
+          `Ultimate \`${ability.$.id}\` ${ability.$.info.name}`,
+          `${replaceLore(ability.$.info.lore, ability.$.info.lore_replacers, creature)}\n\n` +
+          `**${ability.$.min_targets}**${ability.$.max_targets ? `to **${ability.$.max_targets}**` : ""} Targets\n` +
+          `**${ability.$.cost}** Ult Stacks\n` +
+          `${ability.$.attackLike ? "**Treated like Attack**" : ""}`
+        )
+    } break;
     case "abilities": {
       scrollable = true;
 
@@ -850,7 +865,8 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
           array.push({
             name: `<${i+1}> \`${ability.$.id}\` ${ability.$.info.name}`,
             value: `${replaceLore(ability.$.info.lore, ability.$.info.lore_replacers, creature)}\n\n` +
-            `**${ability.$.haste ?? 1}** Haste\n**${ability.$.min_targets}**${ability.$.max_targets ? `to **${ability.$.max_targets}**` : ""} Targets\n` +
+            `**${ability.$.haste ?? 1}** Haste\n` +
+            `**${ability.$.min_targets}**${ability.$.max_targets ? `to **${ability.$.max_targets}**` : ""} Targets\n` +
             `**${ability.$.cost}** Mana\n` +
             `${ability.$.attackLike ? "**Treated like Attack**" : ""}`
           })

@@ -53,7 +53,7 @@ export default new AutocompleteHandler(
                   const item = ItemManager.map.get(i);
                   if (!item) continue;
       
-                  if (!creature.$.items.backpack.includes(item.$.id ?? "")) throw new Error(`Missing ${item.$.info.name} (${item.$.id})`)
+                  if (!creature.$.items.backpack.find(v => v.id === item.$.id)) throw new Error(`Missing ${item.$.info.name} (${item.$.id})`)
                 }
               } catch (e: any) {
                 info = `⚠️ [${e.message}] `;

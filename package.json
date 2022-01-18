@@ -1,6 +1,6 @@
 {
   "name": "dreamyrpg",
-  "version": "1.0.0pre",
+  "version": "1.1.0",
   "description": "",
   "main": "out/index.js",
   "scripts": {

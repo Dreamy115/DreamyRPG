@@ -4,7 +4,7 @@ import { CraftingMaterials } from "../../game/Crafting";
 import Creature, { HealType } from "../../game/Creature";
 import { AbilityUseLog } from "../../game/CreatureAbilities";
 import { DamageCause, DamageGroup, damageLogEmbed, DamageMethod, DamageType, ShieldReaction } from "../../game/Damage";
-import { Item, ItemQualityEmoji } from "../../game/Items";
+import { createItem, Item, ItemQualityEmoji } from "../../game/Items";
 import { LootTable } from "../../game/LootTables";
 import { TrackableStat } from "../../game/Stats";
 import { infoEmbed } from "../commands/char";
@@ -324,8 +324,8 @@ export default new ComponentCommandHandler(
 
               let item: Item | null = null;
               var index = 0;
-              for (index; creature.$.items.equipped.length > index; index++) {
-                const equipped = ItemManager.map.get(creature.$.items.equipped[index]);
+              for (index; creature.$.items.weapons.length > index; index++) {
+                const equipped = ItemManager.map.get(creature.$.items.weapons[index].id);
                 if (equipped?.$.type !== "weapon") continue;
 
                 item = equipped;
@@ -341,8 +341,8 @@ export default new ComponentCommandHandler(
               }
 
               if (creature.$.items.primary_weapon)
-                creature.$.items.equipped.push(creature.$.items.primary_weapon)
-              creature.$.items.primary_weapon = creature.$.items.equipped.splice(index, 1)[0];
+                creature.$.items.weapons.push(creature.$.items.primary_weapon)
+              creature.$.items.primary_weapon = creature.$.items.weapons.splice(index, 1)[0];
               creature = new Creature(creature.dump());
 
             } else if(interaction.isButton()) {
@@ -356,8 +356,8 @@ export default new ComponentCommandHandler(
                       .setOptions(function() {
                         const array: MessageSelectOptionData[] = [];
 
-                        for (const i of creature.$.items.equipped) {
-                          const item = ItemManager.map.get(i);
+                        for (const i of creature.$.items.weapons) {
+                          const item = ItemManager.map.get(i.id);
                           if (item?.$.type != "weapon") continue;
 
                           array.push({
@@ -430,7 +430,7 @@ export default new ComponentCommandHandler(
                       const item = ItemManager.map.get(i);
                       if (!item) continue;
           
-                      if (!creature.$.items.backpack.includes(item.$.id ?? "")) throw new Error(`Item ${item.$.info.name} \`${item.$.id}\` is missing (must be unequipped to count)`)
+                      if (!creature.$.items.backpack.find(v => v.id === item.$.id)) throw new Error(`Item ${item.$.info.name} \`${item.$.id}\` is missing (must be unequipped to count)`)
                     }
                   } catch (e: any) {
                     interaction.editReply({
@@ -443,7 +443,7 @@ export default new ComponentCommandHandler(
                     const item = ItemManager.map.get(i);
                     if (!item) continue;
           
-                    creature.$.items.backpack.splice(creature.$.items.backpack.findIndex(v => v === item.$.id), 1);
+                    creature.$.items.backpack.splice(creature.$.items.backpack.findIndex(v => v.id === item.$.id), 1);
                   }
                   for (const mat in recipe.$.requirements.materials) {
                     // @ts-expect-error
@@ -453,7 +453,7 @@ export default new ComponentCommandHandler(
                   for (const res of results) {
                     const result = ItemManager.map.get(res);
                     if (result)
-                     creature.$.items.backpack.push(result.$.id);
+                     creature.$.items.backpack.push(createItem(result));
                   }
           
                   await creature.put(db);
@@ -492,7 +492,7 @@ export default new ComponentCommandHandler(
                   const items: MessageSelectOptionData[] = [];
 
                   for (const i of creature.$.items.backpack) {
-                    const item = ItemManager.map.get(i);
+                    const item = ItemManager.map.get(i.id);
                     if (!item) continue;
 
                     items.push({
@@ -521,7 +521,7 @@ export default new ComponentCommandHandler(
                   const items: MessageSelectOptionData[] = [];
 
                   for (const i of creature.$.items.backpack) {
-                    const item = ItemManager.map.get(i);
+                    const item = ItemManager.map.get(i.id);
                     if (item?.$.type !== "consumable") continue;
 
                     items.push({
@@ -558,7 +558,7 @@ export default new ComponentCommandHandler(
                   const items: MessageSelectOptionData[] = [];
 
                   for (const i of creature.$.items.backpack) {
-                    const item = ItemManager.map.get(i);
+                    const item = ItemManager.map.get(i.id);
                     if (!item || item.$.type === "consumable") continue;
 
                     items.push({
@@ -592,7 +592,7 @@ export default new ComponentCommandHandler(
                     return;
                   }
 
-                  if (creature.$.items.equipped.length == 0) {
+                  if (creature.inventoryItems.length === 0) {
                     interaction.followUp({
                       ephemeral: true,
                       content: "No items equipped"
@@ -609,9 +609,9 @@ export default new ComponentCommandHandler(
                         .setOptions(function() {
                           const array: MessageSelectOptionData[] = [];
 
-                          const items = creature.$.items.equipped;
+                          const items = creature.inventoryItems;
                           for (var i = 0; i < items.length; i++) {
-                            const item = ItemManager.map.get(items[i]);
+                            const item = ItemManager.map.get(items[i].id);
                             if (!item) continue;
 
                             array.push({
@@ -651,7 +651,7 @@ export default new ComponentCommandHandler(
                     try {
                       if (item?.$.type !== "consumable") throw new Error(`Item ${i} isn't consumable or doesn't exist`);
 
-                      const index = creature.$.items.backpack.findIndex((v) => v === item.$.id);
+                      const index = creature.$.items.backpack.findIndex((v) => v.id === item.$.id);
                       if (index === -1) throw new Error("Creature doesn't have item " + item.$.id);
                     
                       const log = await item.$.onUse(creature);
@@ -660,7 +660,15 @@ export default new ComponentCommandHandler(
 
                       if (table) {
                         const returns = LootTable.generate(table.getHighestFromPerks(creature.perkIDs));
-                        creature.$.items.backpack.splice(index, 1, ...returns);
+                        creature.$.items.backpack.splice(index, 1, ...function() {
+                          const arr = [];
+
+                          for (const r of returns) {
+                            arr.push(createItem(r))
+                          }
+
+                          return arr;
+                        }());
 
                         log.returns = [];
                         for (const i of returns) {
@@ -731,7 +739,7 @@ export default new ComponentCommandHandler(
                   let count = 0;
 
                   for (const i of interaction.values) {
-                    const index = creature.$.items.backpack.findIndex(v => v === i);
+                    const index = creature.$.items.backpack.findIndex(v => v.id === i);
                     if (index === -1) continue;
 
                     const item = ItemManager.map.get(i);
@@ -782,7 +790,19 @@ export default new ComponentCommandHandler(
                   }
 
                   for (const i of interaction.values) {
-                    creature.$.items.backpack.push(creature.$.items.equipped.splice(creature.$.items.equipped.findIndex(v => v === i),1)[0]);
+                    const data = ItemManager.map.get(i);
+                    switch (data?.$.type) {
+                      case "weapon": {
+                        creature.$.items.backpack.push(creature.$.items.weapons.splice(creature.$.items.weapons.findIndex(v => v.id === i), 1)[0]);
+                      } break;
+                      case "wearable": {
+                        const item = creature.$.items.slotted[data.$.slot];
+                        if (item) {
+                          creature.$.items.backpack.push(item);
+                        }
+                        creature.$.items.slotted[data.$.slot] = null;
+                      } break;
+                    }
                   }
                 } break;
                 case "equip": {
@@ -795,7 +815,21 @@ export default new ComponentCommandHandler(
                   }
 
                   for (const i of interaction.values) {
-                    creature.$.items.equipped.push(creature.$.items.backpack.splice(creature.$.items.backpack.findIndex(v => v === i),1)[0]);
+                    const data = ItemManager.map.get(i);
+                    switch (data?.$.type) {
+                      case "weapon": {
+                        creature.$.items.weapons.push(creature.$.items.backpack.splice(creature.$.items.backpack.findIndex(v => v.id === i), 1)[0]);
+                      } break;
+                      case "wearable": {
+                        const index = creature.$.items.backpack.findIndex(v => v.id === i);
+                        if (index === -1) continue;
+
+                        const item = creature.$.items.backpack.splice(index, 1)[0];
+                        if (item) {
+                          creature.$.items.slotted[data.$.slot] = item;
+                        }
+                      } break;
+                    }
                   }
                   creature.checkItemConflicts();
                 }
@@ -946,7 +980,7 @@ export default new ComponentCommandHandler(
                     log = {
                       text: `Received **${item?.$.info.name}** item`
                     }
-                    creature.$.items.backpack.push(thing.id);
+                    creature.$.items.backpack.push(createItem(thing.id));
                   } break;
                   case "service": {
                     try {
@@ -1050,7 +1084,7 @@ export default new ComponentCommandHandler(
                           continue;
                         }
 
-                        creature.$.items.backpack.push(item.$.id);
+                        creature.$.items.backpack.push(createItem(item.$.id));
                       }
 
                       if (invalid_count > 0)
@@ -1063,7 +1097,7 @@ export default new ComponentCommandHandler(
                       const items: MessageSelectOptionData[] = [];
 
                       for (const i of creature.$.items.backpack) {
-                        const item = ItemManager.map.get(i);
+                        const item = ItemManager.map.get(i.id);
                         if (!item) continue;
 
                         items.push({
@@ -1093,7 +1127,7 @@ export default new ComponentCommandHandler(
                   switch (args.shift()) {
                     case "remove": {
                       for (const i of interaction.values) {
-                        creature.$.items.backpack.splice(creature.$.items.backpack.findIndex((v) => v === i),1);
+                        creature.$.items.backpack.splice(creature.$.items.backpack.findIndex((v) => v.id === i),1);
                       }
                     } break;
                   }

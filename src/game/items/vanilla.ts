@@ -13,8 +13,7 @@ export default [
       quality: ItemQuality.Common
     },
     type: "wearable",
-    subtype: "utility",
-    unique: new Set(["shield"]),
+    slot: "shield",
     passives: new Set([
       new PassiveEffect({
         info: {

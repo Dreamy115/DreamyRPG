@@ -4,7 +4,7 @@ import path from "path";
 import { PassiveEffect } from "./PassiveEffects";
 import { DamageMethod, DamageType } from "./Damage";
 import { CreaturePerk } from "./Perks";
-import Creature from "./Creature";
+import Creature, { InventoryItem } from "./Creature";
 import { AbilityUseLog, LoreReplacer } from "./CreatureAbilities";
 import { CraftingMaterials } from "./Crafting";
 
@@ -62,11 +62,10 @@ interface PassiveItemData extends BaseItemData {
   passives?: Set<PassiveEffect|string>
   abilities?: Set<string>
   perks?: Set<(string | CreaturePerk)>
-  unique?: Set<string>
 }
 export interface WearableItemData extends PassiveItemData {
   type: "wearable"
-  subtype: "utility" | "clothing"
+  slot: ItemSlot
 }
 export interface WeaponItemData extends PassiveItemData {
   type: "weapon"
@@ -133,3 +132,26 @@ export const ItemQualityColor = [
   "#F5CA31",
   "#FC392B"
 ]
+
+export type ItemSlot = "shield" | "jacket" | "backpack" | "headgear" | "vest" | "utility";
+export const EmptySlots: Record<ItemSlot, null> = {
+  backpack: null,
+  headgear: null,
+  jacket: null,
+  shield: null,
+  utility: null,
+  vest: null
+}
+Object.freeze(EmptySlots);
+
+export function createItem(data: Item|string): InventoryItem {
+  if (data instanceof Item) {
+    return {
+      id: data.$.id
+    }
+  } else {
+    return {
+      id: data
+    }
+  }
+}

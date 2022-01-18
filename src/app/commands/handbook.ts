@@ -330,7 +330,7 @@ export default new ApplicationCommandHandler(
               case "wearable": {
                 embed.addField(
                   "Type",
-                  `**Wearable, ${capitalize(item.$.subtype.replaceAll(/_/g, " "))}**`
+                  `**Wearable, ${capitalize(item.$.slot.replaceAll(/_/g, " "))}**`
                 )
               } break;
               case "weapon": {

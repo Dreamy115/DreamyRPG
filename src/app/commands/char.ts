@@ -1,11 +1,11 @@
 import { ApplicationCommandOptionChoice, Client, EmbedFieldData, MessageActionRow, MessageAttachment, MessageButton, MessageEmbed, MessageSelectMenu } from "discord.js";
 import { DisplaySeverity, replaceEffectLore, romanNumeral } from "../../game/ActiveEffects.js";
 import { Schematic } from "../../game/Crafting.js";
-import Creature, { diceRoll } from "../../game/Creature.js";
+import Creature, { diceRoll, InventoryItem } from "../../game/Creature.js";
 import { CreatureAbility, replaceLore } from "../../game/CreatureAbilities.js";
 import { reductionMultiplier, DAMAGE_TO_INJURY_RATIO, DamageMethod, DamageType } from "../../game/Damage.js";
 import { CombatPosition } from "../../game/Fight.js";
-import { AttackData, Item, ItemQualityEmoji } from "../../game/Items.js";
+import { AttackData, EmptySlots, Item, ItemQualityEmoji } from "../../game/Items.js";
 import { cToF } from "../../game/Locations.js";
 import { LootTable } from "../../game/LootTables.js";
 import { PassiveEffect, PassiveModifier } from "../../game/PassiveEffects.js";
@@ -681,50 +681,27 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
         )  
       }    
     } break;
-    case "items": {
-      scrollable = true;
-
-      embed.setDescription(
-        function(creature: Creature) {
-          let utilAmount = 0;
-          let clothingAmount = 0;
-          let weaponAmount = 0;
-
-          for (const item of creature.items) {
-            switch (item.$.type) {
-              case "wearable":
-                switch (item.$.subtype) {
-                  case "clothing":
-                    clothingAmount++;
-                    break;
-                  case "utility":
-                    utilAmount++;
-                    break;
-                }
-                break;
-              case "weapon":
-                weaponAmount++;
-                break;
-            }
-          }
-
-          return `Clothing **${clothingAmount}**/**${Creature.MAX_EQUIPPED_CLOTHING}**
-          Weapons **${weaponAmount}**/**${Creature.MAX_EQUIPPED_WEAPONS + 1}**
-          Utility **${utilAmount}**/**${Creature.MAX_EQUIPPED_UTILITY}**`;
-        }(creature)
-      )
-      
-      const items = creature.items;
-      total = creature.items.length;
-
-      for (var i = index * PER_INDEX_PAGE; i < items.length && i < PER_INDEX_PAGE * (index + 1); i++) {
-        const item = items[i];
+    case "items": {   
+      const weapons = new Array<InventoryItem | null>().concat(creature.$.items.primary_weapon, ...creature.$.items.weapons); 
+      for (var w = 0; w < (Creature.MAX_EQUIPPED_WEAPONS + 1); w++) {
+        const weapon = weapons[w];
+        const data = ItemManager.map.get(weapon?.id ?? "");
 
         embed.addField(
+          w === 0
+          ? "Primary Weapon"
+          : `Backup Weapon ${w}`,
+          describeItem(weapon ?? undefined, creature) || "Not Equipped",
+          true
+        )
+      }
+
+      for (const slot in EmptySlots) {
+        embed.addField(
+          capitalize(slot),
           // @ts-expect-error
-          `<**${i+1}**> **${item.displayName}** \`${item.$.id}\`\n**${capitalize(item.$.type)}**${item.$.subtype ? `, ${capitalize(item.$.subtype)}` : ""}`,
-          describeItem(item, creature) + "\n\n",
-          item.$.type !== "weapon"
+          describeItem(creature.$.items.slotted[slot], creature) || "Not Equipped",
+          true
         )
       }
       
@@ -750,7 +727,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
       const _items = creature.$.items.backpack;
       const items: Item[] = [];
       for (const i of _items) {
-        const item = ItemManager.map.get(i);
+        const item = ItemManager.map.get(i.id);
         if (item)
           items.push(item);
       }
@@ -764,8 +741,8 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
 
         embed.addField(
           // @ts-expect-error
-          `<**${i+1}**> **${item.displayName}** \`${item.$.id}\`\n**${capitalize(item.$.type)}**${item.$.subtype ? `, ${capitalize(item.$.subtype)}` : ""}`,
-          describeItem(item, creature) + "\n\n",
+          `<**${i+1}**> **${item.displayName}** \`${item.$.id}\`\n**${capitalize(item.$.type)}**${item.$.slot ? `, ${capitalize(item.$.slot)}` : ""}`,
+          describeItem(_items[i], creature) + "\n\n",
           item.$.type !== "weapon"
         )
       }
@@ -1220,9 +1197,12 @@ export function schematicDescriptor(item: Schematic, perks?: Set<string>) {
   return str.trim();
 }
 
-export function describeItem(item: Item, creature?: Creature) {
+export function describeItem(invitem?: InventoryItem, creature?: Creature) {
   var str = "";
   
+  const item = ItemManager.map.get(invitem?.id ?? "");
+  if (!item) return null;
+
   let lore = item.$.info.lore
   // @ts-expect-error
   if (item.$.info.replacers) {
@@ -1296,18 +1276,6 @@ export function describeItem(item: Item, creature?: Creature) {
       }
 
       str += `**Abilities**: **${abilities.join("**, **")}**\n`;
-    }
-    if (item.$.unique) {
-      str += `Unique Flags: ${function () {
-        var s = "";
-
-        const uniques: string[] = Array.from(item.$.unique);
-        for (const u of uniques) {
-          s += capitalize(u.replaceAll(/_/gi, " ")) + ", ";
-        }
-        
-        return s.substring(0, s.length - 2);
-      }()}`
     }
 
     switch (item.$.type) {

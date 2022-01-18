@@ -8,7 +8,7 @@ import { CraftingMaterials } from "./Crafting.js";
 import { CreatureAbility } from "./CreatureAbilities.js";
 import { DamageCause, DamageGroup, DamageLog, DamageMethod as DamageMethod, DamageType, DAMAGE_TO_INJURY_RATIO, reductionMultiplier, ShieldReaction } from "./Damage.js";
 import { Fight } from "./Fight.js";
-import { AttackData, AttackSet, Item } from "./Items.js";
+import { AttackData, AttackSet, Item, ItemSlot } from "./Items.js";
 import { PassiveEffect, PassiveModifier } from "./PassiveEffects.js";
 import { CreaturePerk } from "./Perks.js";
 import { CreatureSkill } from "./Skills.js";
@@ -80,7 +80,9 @@ export default class Creature {
         heat: (data.vitals?.heat ?? 1)
       },
       items: {
-        equipped: data.items?.equipped ?? [],
+        // @ts-expect-error
+        slotted: {},
+        weapons: data.items?.weapons ?? [],
         backpack: data.items?.backpack ?? [],
         primary_weapon: data.items?.primary_weapon ?? null,
         skills: new Set(data.items?.skills ?? []),
@@ -97,6 +99,11 @@ export default class Creature {
       sim_message: data.sim_message ?? null,
       active_effects: data.active_effects ?? [],
       vars: data.vars ?? {}
+    }
+
+    for (const i in data.items?.slotted) {
+      // @ts-expect-error
+      this.$.items.slotted[i] = data.items.slotted[i];
     }
 
     this.checkItemConflicts();
@@ -242,7 +249,7 @@ export default class Creature {
     if (!this.$.items.primary_weapon)
       return this.defaultAttackSet;
     
-    const weapon = ItemManager.map.get(this.$.items.primary_weapon);
+    const weapon = ItemManager.map.get(this.$.items.primary_weapon.id);
     if (weapon?.$.type !== "weapon")
       return this.defaultAttackSet;
     
@@ -282,54 +289,28 @@ export default class Creature {
   }
 
   checkItemConflicts() {
-    let utilAmount = 0;
-    let clothingAmount = 0;
     let weaponAmount = 0;
 
-    const uniques: string[] = [];
-    if (this.$.items.primary_weapon && ItemManager.map.get(this.$.items.primary_weapon)?.$.type !== "weapon") {
+    if (this.$.items.primary_weapon && ItemManager.map.get(this.$.items.primary_weapon.id)?.$.type !== "weapon") {
       this.$.items.backpack.push(this.$.items.primary_weapon);
       this.$.items.primary_weapon = null;
     }
 
-    for (var i = 0; i < this.$.items.equipped.length; i++) {
-      const item = ItemManager.map.get(this.$.items.equipped[i]);
-      if (!item) continue;
+    for (var i = 0; i < this.$.items.weapons.length; i++) {
+      if (weaponAmount >= Creature.MAX_EQUIPPED_WEAPONS || ItemManager.map.get(this.$.items.weapons[i]?.id)?.$.type !== "weapon") {
+        this.$.items.backpack.push(this.$.items.weapons.splice(i, 1)[0]);
+        i--;
+      }  
+    }
 
+    for (const slot in this.$.items.slotted) {
+      // @ts-expect-error
+      const item = ItemManager.map.get(this.$.items.slotted[slot]?.id);
+      if (item?.$.type !== "wearable" || item.$.slot !== slot) {
         // @ts-expect-error
-        for (const u of item.$.unique ?? []) {
-          if (uniques.includes(u)) {
-            this.$.items.backpack.push(this.$.items.equipped.splice(i, 1)[0]);
-            i--;
-            break;
-          } else {
-            uniques.push(u);
-          }
-        }
-
-      switch (item.$.type) {
-        case "wearable": {
-          switch (item.$.subtype) {
-            case "clothing": {
-              if (clothingAmount >= Creature.MAX_EQUIPPED_CLOTHING) {
-                this.$.items.backpack.push(this.$.items.equipped.splice(i, 1)[0]);
-                i--;
-              }
-            } break;
-            case "utility": {
-              if (utilAmount >= Creature.MAX_EQUIPPED_UTILITY) {
-                this.$.items.backpack.push(this.$.items.equipped.splice(i, 1)[0]);
-                i--;
-              }
-            }
-          }
-        } break;
-        case "weapon": {
-          if (weaponAmount >= Creature.MAX_EQUIPPED_WEAPONS) {
-            this.$.items.backpack.push(this.$.items.equipped.splice(i, 1)[0]);
-            i--;
-          }
-        } break;
+        this.$.items.backpack.push(this.$.items.slotted[slot]);
+        // @ts-expect-error
+        this.$.items.slotted[slot] = null;
       }
     }
   }
@@ -338,7 +319,9 @@ export default class Creature {
     this.$.items = {
       backpack: [],
       crafting_materials: new CraftingMaterials({}),
-      equipped: [],
+      weapons: [],
+      // @ts-expect-error
+      slotted: {},
       primary_weapon: null,
       skills: new Set(),
       schematics: new Set()
@@ -391,7 +374,7 @@ export default class Creature {
     } 
 
 
-    for (const item of this.items) {
+    for (const item of this.itemsData) {
       // @ts-expect-error
       globalOrLocalPusherArray(abilities, Array.from(item.$.abilities?.values() ?? []), AbilitiesManager);
     }
@@ -427,7 +410,7 @@ export default class Creature {
     } 
 
 
-    for (const item of this.items) {
+    for (const item of this.itemsData) {
       // @ts-expect-error
       globalOrLocalPusherSet(passives, item.$.passives ?? new Set(), PassivesManager);
     }
@@ -447,12 +430,12 @@ export default class Creature {
     return [...passives];
   }
 
-  get items(): Item[] {
+  get itemsData(): Item[] {
     const items: Item[] = [];
 
-    const ids = this.itemIDs;
+    const ids = this.inventoryItems;
     for (const i of ids) {
-      const item = ItemManager.map.get(i);
+      const item = ItemManager.map.get(i.id);
       if (!item) continue;
 
       items.push(item);
@@ -460,8 +443,17 @@ export default class Creature {
 
     return items;
   }
-  get itemIDs(): string[] {
-    const array = new Array().concat(this.$.items.primary_weapon, this.$.items.equipped);
+  get inventoryItems(): InventoryItem[] {
+    const array: InventoryItem[] = new Array().concat(this.$.items.primary_weapon, this.$.items.weapons, function(creature: Creature) {
+      const arr: InventoryItem[] = [];
+
+      for (const slot in creature.$.items.slotted) {
+        // @ts-expect-error
+        arr.push(creature.$.items.slotted[slot].id);
+      }
+
+      return arr;
+    }(this));
     for (var i = 0; i < array.length; i++) {
       if (array[i]) continue;
 
@@ -816,7 +808,7 @@ export default class Creature {
       globalOrLocalPusherSet(perks, skill.$.perks ?? new Set(), PerkManager);
     }
 
-    const items = this.items;
+    const items = this.itemsData;
     for (const item of items) {
       // @ts-expect-error
       globalOrLocalPusherSet(perks, item.$.perks ?? new Set(), PerkManager)
@@ -885,13 +877,15 @@ export default class Creature {
         shield: this.$.vitals.shield / this.$.stats.shield.value,
         heat: this.$.vitals.heat / this.$.stats.heat_capacity.value
       },
+      // @ts-expect-error
       attributes: {},
       experience: this.$.experience,
       items: {
         backpack: this.$.items.backpack,
         // @ts-expect-error
         crafting_materials: this.$.items.crafting_materials,
-        equipped: this.$.items.equipped,
+        slotted: this.$.items.slotted,
+        weapons: this.$.items.weapons,
         primary_weapon: this.$.items.primary_weapon,
         schematics: [...this.$.items.schematics],
         skills: [...this.$.items.skills]
@@ -1191,54 +1185,17 @@ export interface CreatureData {
     class?: string
     npc: boolean
   }
-  stats: {
-    accuracy: TrackableStat
-    armor: TrackableStat
-    filter: TrackableStat
-    lethality: TrackableStat
-    defiltering: TrackableStat
-    cutting: TrackableStat
-    melee: TrackableStat
-    ranged: TrackableStat
-    health: TrackableStat
-    mana: TrackableStat
-    mana_regen: TrackableStat
-    shield: TrackableStat
-    shield_regen: TrackableStat
-    parry: TrackableStat
-    deflect: TrackableStat
-    tenacity: TrackableStat
-    tech: TrackableStat
-    vamp: TrackableStat
-    siphon: TrackableStat
-    initiative: TrackableStat
-    min_comfortable_temperature: TrackableStat
-    heat_capacity: TrackableStat
-    attack_cost: TrackableStat
-  }
-  attributes: {
-    STR: TrackableStat
-    FOR: TrackableStat
-    REJ: TrackableStat
-    PER: TrackableStat
-    INT: TrackableStat
-    DEX: TrackableStat
-    CHA: TrackableStat
-  }
+  stats: Record<Stats, TrackableStat>
+  attributes: Record<Attributes, TrackableStat>
   experience: {
     level: number
   }
-  vitals: {
-    health: number
-    mana: number
-    shield: number
-    injuries: number
-    heat: number
-  }
+  vitals: Record<Vitals, number>
   items: {
-    primary_weapon: string | null
-    backpack: string[]
-    equipped: string[]
+    primary_weapon: InventoryItem | null
+    backpack: InventoryItem[]
+    weapons: InventoryItem[]
+    slotted: Record<ItemSlot, InventoryItem | null | undefined>
     skills: Set<string>
     schematics: Set<string>
     crafting_materials: CraftingMaterials
@@ -1250,7 +1207,7 @@ export interface CreatureData {
   }
   sim_message: string | null
   active_effects: AppliedActiveEffect[]
-  vars: {[key: string]: number}
+  vars: Record<string, number | undefined>
 }
 /**
  * Data kept in database
@@ -1268,29 +1225,16 @@ export interface CreatureDump {
     class?: string
     npc?: boolean
   }
-  vitals?: {
-    health?: number
-    mana?: number
-    shield?: number
-    injuries?: number
-    heat?: number
-  }
-  attributes?: {
-    STR?: number
-    FOR?: number
-    REJ?: number
-    PER?: number
-    INT?: number
-    DEX?: number
-    CHA?: number
-  }
+  vitals?: Record<Vitals, undefined | number>
+  attributes?: Record<Attributes, undefined | number>
   experience?: {
     level?: number
   }
   items?: {
-    primary_weapon?: string | null
-    backpack?: string[]
-    equipped?: string[]
+    primary_weapon?: InventoryItem | null
+    backpack?: InventoryItem[]
+    weapons?: InventoryItem[]
+    slotted?: Record<ItemSlot, InventoryItem | null | undefined>
     skills?: string[]
     schematics?: string[]
     crafting_materials?: {[key: string]: number}
@@ -1302,7 +1246,7 @@ export interface CreatureDump {
   }
   sim_message?: string | null
   active_effects?: AppliedActiveEffect[]
-  vars?: {[key: string]: number}
+  vars?: Record<string, number | undefined>
 }
 
 export enum HealType {
@@ -1335,3 +1279,15 @@ function globalOrLocalPusherSet<T>(array: Set<T>, input: Set<T | string>, manage
 export function diceRoll(size = 6): number {
   return Math.floor(Math.random() * size) + 1;
 }
+
+export interface InventoryItem {
+  id: string
+}
+
+export type Attributes = "STR" | "FOR" | "REJ" | "PER" | "INT" | "DEX" | "CHA";
+
+export type Vitals = "health" | "mana" | "shield" | "injuries" | "heat";
+
+export type Stats = "accuracy" | "armor" | "filter" | "lethality" | "defiltering" | "cutting" | "melee" | 
+"ranged" | "health" | "mana" | "mana_regen" | "shield" | "shield_regen" | "parry" | "deflect" | "tenacity" | 
+"tech" | "vamp" | "siphon" | "initiative" | "min_comfortable_temperature" | "heat_capacity" | "attack_cost";

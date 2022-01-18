@@ -1,9 +1,10 @@
 import { ApplicationCommandOptionChoice, MessageEmbed } from "discord.js";
 import { capitalize, CONFIG, ItemManager, LootTables } from "../..";
 import { CraftingMaterials } from "../../game/Crafting";
-import Creature, { HealType } from "../../game/Creature";
+import Creature, { HealType, InventoryItem } from "../../game/Creature";
 import { replaceLore } from "../../game/CreatureAbilities";
 import { DamageType, DamageMethod, ShieldReaction, DamageCause, DamageGroup, damageLogEmbed } from "../../game/Damage";
+import { createItem } from "../../game/Items";
 import { LootTable } from "../../game/LootTables";
 import { ApplicationCommandHandler } from "../commands";
 import { ceditMenu, gm_ceditMenu } from "../component_commands/cedit";
@@ -675,7 +676,15 @@ export default new ApplicationCommandHandler({
 
       const items = LootTable.generate(table.getHighestFromPerks(creature.perkIDs));
 
-      creature.$.items.backpack.push(...items);
+      creature.$.items.backpack.push(...function() {
+        const arr: InventoryItem[] = [];
+
+        for (const i of items) {
+          arr.push(createItem(i));
+        }
+
+        return arr;
+      }());
       creature.put(db);
 
       await interaction.editReply({content: "OK"});
@@ -802,10 +811,10 @@ export default new ApplicationCommandHandler({
       switch (interaction.options.getSubcommand(true)) {
         case "add": {
           for (var i = 0; i < (interaction.options.getInteger("amount", false) ?? 1); i++)
-            creature.$.items.backpack.push(interaction.options.getString("item_id", true));
+            creature.$.items.backpack.push(createItem(interaction.options.getString("item_id", true)));
         } break;
         case "remove": {
-          const index = creature.$.items.backpack.findIndex(v => v === interaction.options.getString("backpack_item", true));
+          const index = creature.$.items.backpack.findIndex(v => v.id === interaction.options.getString("backpack_item", true));
           if (index === -1) {
             interaction.followUp({
               ephemeral: true,

@@ -81,11 +81,11 @@ export default new AutocompleteHandler(
         if (char) {
           const array: ApplicationCommandOptionChoice[] = [];
           for (const i of char.$.items.backpack) {
-            const item = ItemManager.map.get(i);
-            if (search.test(i) || search.test(item?.$.info.name ?? ""))
+            const item = ItemManager.map.get(i.id);
+            if (search.test(i.id) || search.test(item?.$.info.name ?? ""))
               array.push({
-                name: `${i} - ${item?.$.info.name}`,
-                value: i
+                name: `${i.id} - ${item?.$.info.name}`,
+                value: i.id
               })
             if (array.length >= 25) break;
           }

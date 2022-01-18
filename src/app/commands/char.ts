@@ -771,22 +771,25 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
       const weapons = new Array<InventoryItem | null>().concat(creature.$.items.primary_weapon, ...creature.$.items.weapons); 
       for (var w = 0; w < (Creature.MAX_EQUIPPED_WEAPONS + 1); w++) {
         const weapon = weapons[w];
-        const data = ItemManager.map.get(weapon?.id ?? "");
+        const itemdata = ItemManager.map.get(weapon?.id ?? "");
 
         embed.addField(
           w === 0
           ? "Primary Weapon"
           : `Backup Weapon ${w}`,
-          describeItem(weapon ?? undefined, creature) || "Not Equipped",
+          `${itemdata ? `**${itemdata.displayName}**` : ""}\n${describeItem(weapon ?? undefined, creature) ?? ""}`.trim() || "Not Equipped",
           true
         )
       }
 
       for (const slot in SlotDescriptions) {
+        // @ts-expect-error
+        const item: InventoryItem | null = creature.$.items.slotted[slot];
+        const itemdata = ItemManager.map.get(item?.id ?? "");
+        
         embed.addField(
           capitalize(slot),
-          // @ts-expect-error
-          describeItem(creature.$.items.slotted[slot], creature) || "Not Equipped",
+          `${itemdata ? `**${itemdata.displayName}**` : ""}\n${describeItem(item ?? undefined, creature) ?? ""}`.trim() || "Not Equipped",
           true
         )
       }

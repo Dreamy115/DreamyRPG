@@ -349,6 +349,149 @@ export default new ComponentCommandHandler(
           interaction.followUp(await fight.announceTurn(db, Bot))
         }
       } break;
+      case "ult": {
+        if (interaction.isSelectMenu()) {
+          const arg = args.shift();
+          if (arg) {
+            const target_ids = interaction.values;
+
+            const ability = creature.ultimate;
+            if (!ability) {
+              interaction.followUp({
+                ephemeral: true,
+                content: "Invalid Ultimate or not equipped"
+              });
+              return;
+            }
+
+            if (creature.$.abilities.ult_stacks < creature.$.stats.ult_stack_target.value) {
+              interaction.followUp({
+                ephemeral: true,
+                content: "Not enough stacks"
+              })
+              return;
+            }
+
+            const test: void | Error = await ability.$.test(creature).catch(e => typeof e === "string" ? new Error(e) : e);
+            if (test instanceof Error) {
+              interaction.followUp({
+                ephemeral: true,
+                content: `Cannot use ultimate: ${test.message}`
+              });
+              return;
+            }
+
+            const targets: Creature[] = []
+            for (const tid of target_ids) {
+              if (target_choices.findIndex((v) => v.value === tid) !== -1) {
+                targets.push(await Creature.fetch(tid, db))
+              } else {
+                interaction.followUp({
+                  ephemeral: true,
+                  content: "Invalid targets"
+                });
+                return;
+              }
+            }
+
+            const accuracy_mods: number[] = [];
+            for (const target of targets) {
+              const combatant = combatants.get(target.$._id);
+
+              if (ability.$.attackLike) {
+                accuracy_mods.push(
+                  combatant
+                  ? getAccuracyMod(self_combatant, combatant)
+                  : 1
+                )
+              } else {
+                accuracy_mods.push(1);
+              }
+            }
+
+            try {
+              const uselog = await ability.$.use(creature, targets, accuracy_mods);
+              creature.$.vitals.mana -= ability.$.cost;
+              creature.$.abilities.hand.splice(creature.$.abilities.hand.findIndex((v) => v === ability.$.id), 1);
+
+              const damage_embeds = [];
+              for (const log of uselog.damageLogs ?? []) {
+                damage_embeds.push(damageLogEmbed(log));
+              }
+
+              interaction.editReply({
+                content: Math.round(Math.random() * 100) == 1 ? "200 OK" : "OK"
+              });
+              await interaction.followUp({
+                ephemeral: false,
+                content: uselog.text,
+                embeds: damage_embeds.length > 0 ? damage_embeds : undefined
+              })
+
+              var _promises: Promise<unknown>[] = [creature.put(db)];
+              for (const target of targets) {
+                _promises.push(target.put(db));
+              }
+
+              await Promise.all(_promises);
+              interaction.followUp(await fight.announceTurn(db, Bot));
+            } catch (e) {
+              console.error(e);
+              interaction.followUp({
+                ephemeral: true,
+                // @ts-expect-error
+                content: e?.message ?? e
+              });
+            }
+          } else {
+            const ability = creature.ultimate;
+            if (!ability) {
+              interaction.followUp({
+                ephemeral: true,
+                content: "Invalid Ultimate or not equipped"
+              });
+              return;
+            }
+
+            if (creature.$.abilities.ult_stacks < creature.$.stats.ult_stack_target.value) {
+              interaction.followUp({
+                ephemeral: true,
+                content: "Not enough stacks"
+              })
+              return;
+            }
+
+            const test: void | Error = await ability.$.test(creature).catch(e => typeof e === "string" ? new Error(e) : e);
+            if (test instanceof Error) {
+              interaction.followUp({
+                ephemeral: true,
+                content: `Cannot use ultimate: ${test.message}`
+              });
+              return;
+            }
+
+            if (ability.$.min_targets > target_choices.length) {
+              interaction.followUp({
+                ephemeral: true,
+                content: `Not enough fighters to satisfy Ultimate Ability minimum target requirement *(${target_choices.length}/${ability.$.min_targets})*`
+              })
+              return;
+            }
+
+            interaction.followUp({
+              ephemeral: true,
+              content: "Pick your targets",
+              components: [new MessageActionRow().setComponents([new MessageSelectMenu()
+                .setCustomId(`fight/${fight.$._id}/ult/${ability.$.id}`)
+                .setMinValues(ability.$.min_targets)
+                .setMaxValues(Math.min(ability.$.max_targets ?? ability.$.min_targets, target_choices.length))
+                .setPlaceholder("Creatures")
+                .setOptions(target_choices)
+              ])]
+            })
+          }
+        }
+      } break;
       case "ability": {
         if (!creature.isAbleToFight) {
           interaction.editReply({
@@ -474,6 +617,15 @@ export default new ComponentCommandHandler(
                 ephemeral: true,
                 content: "Not enough mana"
               })
+              return;
+            }
+
+            const test: void | Error = await ability.$.test(creature).catch(e => typeof e === "string" ? new Error(e) : e);
+            if (test instanceof Error) {
+              interaction.followUp({
+                ephemeral: true,
+                content: `Cannot use ability: ${test.message}`
+              });
               return;
             }
 

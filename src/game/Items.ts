@@ -36,7 +36,7 @@ export default class ItemsManager {
 }
 
 export class Item {
-  $: WearableItemData | WeaponItemData | ConsumableItemData | GenericItemData
+  $: WearableItemData | WeaponItemData | ConsumableItemData | GenericItemData | UltimateWearableItemData
   constructor(data: Item["$"]) {
     this.$ = data;
   }
@@ -65,7 +65,12 @@ interface PassiveItemData extends BaseItemData {
 }
 export interface WearableItemData extends PassiveItemData {
   type: "wearable"
-  slot: ItemSlot
+  slot: Exclude<ItemSlot, "ultimate">
+}
+export interface UltimateWearableItemData extends PassiveItemData {
+  type: "wearable"
+  slot: "ultimate"
+  ultimate: string
 }
 export interface WeaponItemData extends PassiveItemData {
   type: "weapon"
@@ -133,16 +138,22 @@ export const ItemQualityColor = [
   "#FC392B"
 ]
 
-export type ItemSlot = "shield" | "jacket" | "backpack" | "headgear" | "vest" | "utility";
-export const EmptySlots: Record<ItemSlot, null> = {
-  backpack: null,
-  headgear: null,
-  jacket: null,
-  shield: null,
-  utility: null,
-  vest: null
+export type ItemSlot = 
+  "shield" | "jacket" | "backpack" | 
+  "headgear" | "vest" | "utility" |
+  "gloves" | "nanites" | "ultimate"
+export const SlotDescriptions: Record<ItemSlot, string> = {
+  backpack: "A bag to keep your stuff in.",
+  headgear: "Something to protect your noggin.",
+  jacket: "Tired of the cold? Put on one of these!",
+  vest: "Protection for your torso.",
+  gloves: "Don't get frostbite! Put something on your paws.",
+  shield: "Fends off stray bullets. Those aimed at you as well.",
+  utility: "Want more stuff to do? Try this.",
+  nanites: "Enhance your body.",
+  ultimate: "Unleash your superpower!",
 }
-Object.freeze(EmptySlots);
+Object.freeze(SlotDescriptions);
 
 export function createItem(data: Item|string): InventoryItem {
   if (data instanceof Item) {

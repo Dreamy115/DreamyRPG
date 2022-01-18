@@ -5,7 +5,7 @@ import Creature, { diceRoll, InventoryItem } from "../../game/Creature.js";
 import { CreatureAbility, replaceLore } from "../../game/CreatureAbilities.js";
 import { reductionMultiplier, DAMAGE_TO_INJURY_RATIO, DamageMethod, DamageType } from "../../game/Damage.js";
 import { CombatPosition } from "../../game/Fight.js";
-import { AttackData, EmptySlots, Item, ItemQualityEmoji } from "../../game/Items.js";
+import { AttackData, SlotDescriptions, Item, ItemQualityEmoji } from "../../game/Items.js";
 import { cToF } from "../../game/Locations.js";
 import { LootTable } from "../../game/LootTables.js";
 import { PassiveEffect, NamedModifier } from "../../game/PassiveEffects.js";
@@ -782,7 +782,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
         )
       }
 
-      for (const slot in EmptySlots) {
+      for (const slot in SlotDescriptions) {
         embed.addField(
           capitalize(slot),
           // @ts-expect-error

@@ -46,6 +46,7 @@ export class CreatureAbility {
     haste?: number
     cost: number
     use: (caster: Creature, targets: Creature[], accuracy_mods: number[]) => Promise<AbilityUseLog>
+    test: (caster: Creature) => Promise<void> // Resolve if can use, Reject if cannot use currently
   }
 
   constructor(data: CreatureAbility["$"]) {

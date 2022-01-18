@@ -37,6 +37,7 @@ export default class Creature {
         npc: data.info?.npc ?? false,
       },
       stats: {
+        ult_stack_target: new TrackableStat(0),
         attack_cost: new TrackableStat(6),
         accuracy: new TrackableStat(95),
         armor: new TrackableStat(24),
@@ -93,6 +94,7 @@ export default class Creature {
         }()
       },
       abilities: {
+        ult_stacks: data.abilities?.ult_stacks ?? 0,
         deck: data.abilities?.deck ?? [],
         hand: data.abilities?.hand ?? [],
         stacks: data.abilities?.stacks ?? 0
@@ -129,6 +131,8 @@ export default class Creature {
       // @ts-expect-error
       this.applyModifiersToBaseStats(Creature.ATTRIBUTE_MODS[a], Math.round(this.$.attributes[a].value));
     }
+
+    this.$.stats.ult_stack_target.base = this.ultimate?.$.cost ?? 0;
 
     // CAPPING
     this.$.stats.vamp.modifiers.push({
@@ -359,6 +363,17 @@ export default class Creature {
       this.$.abilities.deck.push(ability.$.id);
     }
     shuffle(this.$.abilities.deck);
+  }
+
+  get ultimate(): CreatureAbility | null {
+    const item = this.$.items.slotted.ultimate;
+    const itemdata = ItemManager.map.get(item?.id ?? "");
+    if (!item || !itemdata) return null;
+
+    if (itemdata.$.type !== "wearable" || itemdata.$.slot !== "ultimate") return null;
+    const ability = AbilitiesManager.map.get(itemdata.$.ultimate);
+
+    return ability ?? null;
   }
 
   get abilities(): CreatureAbility[] {
@@ -1229,6 +1244,7 @@ export interface CreatureData {
     crafting_materials: CraftingMaterials
   }
   abilities: {
+    ult_stacks: number
     deck: string[]
     hand: string[]
     stacks: number
@@ -1268,6 +1284,7 @@ export interface CreatureDump {
     crafting_materials?: {[key: string]: number}
   }
   abilities?: {
+    ult_stacks?: number
     deck?: string[]
     hand?: string[]
     stacks?: number
@@ -1318,4 +1335,4 @@ export type Vitals = "health" | "mana" | "shield" | "injuries" | "heat";
 
 export type Stats = "accuracy" | "armor" | "filter" | "lethality" | "defiltering" | "cutting" | "melee" | 
 "ranged" | "health" | "mana" | "mana_regen" | "shield" | "shield_regen" | "parry" | "deflect" | "tenacity" | 
-"tech" | "vamp" | "siphon" | "initiative" | "min_comfortable_temperature" | "heat_capacity" | "attack_cost";
+"tech" | "vamp" | "siphon" | "initiative" | "min_comfortable_temperature" | "heat_capacity" | "attack_cost" | "ult_stack_target";

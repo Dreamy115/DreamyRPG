@@ -304,6 +304,17 @@ export class Fight {
 
               const index = array.findIndex((v) => v.value === ability.$.id)
               if (index === -1) {
+                const test: void | Error = await ability.$.test(creature).catch(e => typeof e === "string" ? new Error(e) : e);
+                if (test instanceof Error) {
+                  array.push({
+                    label: `${ability.$.info.name} (${ability.$.cost} Mana) []`,
+                    emoji: "⚠️",
+                    value: ability.$.id,
+                    description: limitString(removeMarkdown(replaceLore(ability.$.info.lore, ability.$.info.lore_replacers)), 100)
+                  })
+                  continue;
+                }
+
                 array.push({
                   label: `${ability.$.info.name} (${ability.$.cost} Mana) []`,
                   value: ability.$.id,
@@ -327,6 +338,11 @@ export class Fight {
         new MessageButton()
           .setCustomId(`cedit/${creature?.$._id}/edit/item/use`)
           .setLabel("Consume Item")
+          .setStyle("PRIMARY"),
+        new MessageButton()
+          .setCustomId(`fight/${this.$._id}/ult`)
+          .setLabel(`${creature?.ultimate ? `Use Ultimate (${creature.$.abilities.ult_stacks}/${creature.$.stats.ult_stack_target.value})` : "No Ultimate"}`)
+          .setDisabled(!(creature?.ultimate && creature.$.abilities.ult_stacks >= creature.$.stats.ult_stack_target.value))
           .setStyle("PRIMARY"),
         new MessageButton()
           .setCustomId(`fight/${this.$._id}/refresh`)

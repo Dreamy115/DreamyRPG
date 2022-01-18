@@ -1,9 +1,6 @@
 import fs from "fs";
 import path from "path";
 import { ShopManager } from "..";
-import { AppliedActiveEffect } from "./ActiveEffects";
-import { CraftingMaterials } from "./Crafting";
-import Creature from "./Creature";
 
 export default class GameLocationManager {
   map = new Map<string, GameLocation>();

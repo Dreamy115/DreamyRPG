@@ -8,8 +8,9 @@ import { CraftingMaterials } from "./Crafting.js";
 import { CreatureAbility } from "./CreatureAbilities.js";
 import { DamageCause, DamageGroup, DamageLog, DamageMethod as DamageMethod, DamageType, DAMAGE_TO_INJURY_RATIO, reductionMultiplier, ShieldReaction } from "./Damage.js";
 import { Fight } from "./Fight.js";
+import { GameDirective } from "./GameDirectives.js";
 import { AttackData, AttackSet, Item, ItemSlot } from "./Items.js";
-import { PassiveEffect, PassiveModifier } from "./PassiveEffects.js";
+import { PassiveEffect, NamedModifier } from "./PassiveEffects.js";
 import { CreaturePerk } from "./Perks.js";
 import { CreatureSkill } from "./Skills.js";
 import { Modifier, ModifierType, textStat, TrackableStat } from "./Stats.js";
@@ -175,7 +176,7 @@ export default class Creature {
     this.vitalsIntegrity();
   }
 
-  applyModifiersToBaseStats(list: PassiveModifier[], amount: number) {
+  applyModifiersToBaseStats(list: NamedModifier[], amount: number) {
     for (const mod of list) {
       // @ts-expect-error
       const stat: TrackableStat = this.$.stats[mod.stat];
@@ -404,6 +405,11 @@ export default class Creature {
       globalOrLocalPusherSet(passives, species.$.passives ?? new Set(), PassivesManager);
     }
 
+    // GLOBAL from Directives
+    for (const directive of GameDirective.enabled) {
+      globalOrLocalPusherSet(passives, directive.$.passives ?? new Set(), PassivesManager);
+    }
+
     const kit = ClassManager.map.get(this.$.info.class ?? "");
     if (kit) {
       globalOrLocalPusherSet(passives, kit.$.passives ?? new Set(), PassivesManager);
@@ -465,7 +471,7 @@ export default class Creature {
   }
   
 
-  applyNamedModifier(mod: PassiveModifier) {
+  applyNamedModifier(mod: NamedModifier) {
     // @ts-ignore
     let stat = this.$.stats[mod.stat] ?? this.$.attributes[mod.stat];
     if (stat) {
@@ -649,7 +655,20 @@ export default class Creature {
         ticks: -1
       });
     }
-    const effects = this.$.active_effects.concat(location_effects);
+
+    const global_effects: AppliedActiveEffect[] = [];
+    for (const directive of GameDirective.enabled) {
+      for (const e of directive.$.effects ?? []) {
+        location_effects.push({
+          id: e.id,
+          severity: e.severity,
+          ticks: -1
+        });
+      }
+    }
+
+
+    const effects = [...global_effects, ...this.$.active_effects, ...location_effects]
 
     if (this.$.vitals.heat <= 0) {
       effects.push({
@@ -804,6 +823,11 @@ export default class Creature {
 
     const race = SpeciesManager.map.get(this.$.info.species);
     globalOrLocalPusherSet(perks, race?.$.perks ?? new Set(), PerkManager);
+
+    // GLOBAL from Directives
+    for (const directive of GameDirective.enabled) {
+      globalOrLocalPusherSet(perks, directive.$.perks ?? new Set(), PerkManager);
+    }
 
     const kit = ClassManager.map.get(this.$.info.class ?? "");
     globalOrLocalPusherSet(perks, kit?.$.perks ?? new Set(), PerkManager);
@@ -967,7 +991,7 @@ export default class Creature {
     DamageCause.Weak_Attack, DamageCause.Weak_Attack, DamageCause.Normal_Attack, DamageCause.Normal_Attack, DamageCause.Normal_Attack, DamageCause.Critical_Attack
   ]
 
-  static readonly LEVEL_MODS: PassiveModifier[] = [
+  static readonly LEVEL_MODS: NamedModifier[] = [
     {
       type: ModifierType.ADD_PERCENT,
       value: 0.15,
@@ -1049,7 +1073,7 @@ export default class Creature {
       stat: "mana"
     }
   ]
-  static readonly ATTRIBUTE_MODS: {[key: string]: PassiveModifier[]} = {
+  static readonly ATTRIBUTE_MODS: {[key: string]: NamedModifier[]} = {
     STR: [
       {
         type: ModifierType.ADD_PERCENT,

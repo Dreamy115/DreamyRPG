@@ -8,7 +8,7 @@ import { CombatPosition } from "../../game/Fight.js";
 import { AttackData, EmptySlots, Item, ItemQualityEmoji } from "../../game/Items.js";
 import { cToF } from "../../game/Locations.js";
 import { LootTable } from "../../game/LootTables.js";
-import { PassiveEffect, PassiveModifier } from "../../game/PassiveEffects.js";
+import { PassiveEffect, NamedModifier } from "../../game/PassiveEffects.js";
 import { CreaturePerk } from "../../game/Perks.js";
 import { textStat, ModifierType, TrackableStat } from "../../game/Stats.js";
 import { SpeciesManager, ClassManager, capitalize, ItemManager, EffectManager, AbilitiesManager, CONFIG, SchematicsManager, PerkManager, LocationManager, limitString, LootTables, PassivesManager } from "../../index.js";
@@ -950,13 +950,14 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
         function() {
           var str = "";
 
-          const array: PassiveModifier[] = [];
+          const array: NamedModifier[] = [];
           for (const s in creature.$.stats) {
             // @ts-ignore
             const stat = creature.$.stats[s];
             
             for (const mod of stat.modifiers) {
               array.push({
+                // @ts-expect-error
                 stat: s,
                 type: mod.type,
                 value: mod.value
@@ -969,6 +970,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
             
             for (const mod of attr.modifiers) {
               array.push({
+                // @ts-expect-error
                 stat: a,
                 type: mod.type,
                 value: mod.value

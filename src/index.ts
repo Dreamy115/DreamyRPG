@@ -20,6 +20,7 @@ import CraftingManager from "./game/Crafting.js";
 import GameLocationManager from "./game/Locations.js";
 import LocationShopsManager from "./game/Shops.js";
 import LootTableManager from "./game/LootTables.js";
+import DirectiveManager from "./game/GameDirectives.js";
 
 export const ItemManager = new ItemsManager();
 export const ClassManager = new CreatureClassManager();
@@ -75,6 +76,7 @@ if (!CONFIG.guild?.gm_role) throw new Error("guild/gm_role not defined in config
 export const SETTINGS = new class Settings {
   private data: {
     simspeed?: number
+    directives?: Set<string>
   }
   get $(): Settings["data"] {
     return this.data;
@@ -88,6 +90,7 @@ export const SETTINGS = new class Settings {
   }
 }
 
+export const Directives = new DirectiveManager();
 //
 export const db = Mongoose.connect(CONFIG.database.uri).then((v) => {console.log(v.connection); return v});
 
@@ -108,6 +111,8 @@ export function gameLoad() {
   SchematicsManager.load(path.join(__dirname, "game/schematics"));
 
   LootTables.load(path.join(__dirname, "game/loottables"));
+  
+  Directives.load(path.join(__dirname, "game/game_modes"));
 
   console.log("Loading complete");
 }

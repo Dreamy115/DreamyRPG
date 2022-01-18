@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 
-import Creature from "./Creature";
+import Creature, { Attributes, Stats } from "./Creature";
 import { Modifier } from "./Stats";
 
 export default class PassiveEffectManager {
@@ -54,7 +54,7 @@ export class PassiveEffect {
     preload?: (creature: Creature) => void
     // postload is called while parsing, AFTER vitals are loaded.
     postload?: (creature: Creature) => void
-    modifiers?: PassiveModifier[]
+    modifiers?: NamedModifier[]
 
     beforeDamageTaken?: (creature: Creature) => void
     afterDamageTaken?: (creature: Creature) => void
@@ -67,6 +67,6 @@ export class PassiveEffect {
   }
 }
 
-export interface PassiveModifier extends Modifier {
-  stat: string
+export interface NamedModifier extends Modifier {
+  stat: Stats | Attributes
 }

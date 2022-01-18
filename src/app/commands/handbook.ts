@@ -5,10 +5,11 @@ import { CreatureClass } from "../../game/Classes";
 import { Schematic } from "../../game/Crafting";
 import { CreatureAbility, replaceLore } from "../../game/CreatureAbilities";
 import { DamageMethod, DamageType } from "../../game/Damage";
+import { GameDirective } from "../../game/GameDirectives";
 import { AttackData, Item, ItemQualityColor, ItemQualityEmoji } from "../../game/Items";
 import { cToF, GameLocation } from "../../game/Locations";
 import { LootTable } from "../../game/LootTables";
-import { PassiveEffect, PassiveModifier } from "../../game/PassiveEffects";
+import { PassiveEffect, NamedModifier } from "../../game/PassiveEffects";
 import { CreaturePerk } from "../../game/Perks";
 import { CreatureSkill } from "../../game/Skills";
 import { CreatureSpecies } from "../../game/Species";
@@ -67,6 +68,10 @@ const typeOption: ApplicationCommandOptionData = {
     {
       name: "Loot Tables",
       value: "loottables"
+    },
+    {
+      name: "directives",
+      value: "directives"
     }
   ]
 }
@@ -233,7 +238,39 @@ export default new ApplicationCommandHandler(
           return;
         }
 
-        if (item instanceof Schematic) {
+        if (item instanceof GameDirective) {
+          embed.addFields([
+            { 
+              name: "Passives",
+              value: passivesDescriptor(Array.from(item.$.passives?.values() ?? [])) || "None"
+            },
+          ]);
+
+          if (item.$.effects) {
+            embed.addField(
+              "Global Effects",
+              function () {
+                var str = "";
+  
+                for (const active_effect of item.$.effects) {
+                  const effect_data = EffectManager.map.get(active_effect.id);
+                  if (!effect_data) continue;
+  
+                  str += `\`${effect_data.$.id}\` **${effect_data.$.info.name}${function(){
+                    switch (effect_data.$.display_severity) {
+                      case DisplaySeverity.NONE:
+                      default: return "";
+                      case DisplaySeverity.ARABIC: return " " + active_effect.severity;
+                      case DisplaySeverity.ROMAN: return " " + romanNumeral(active_effect.severity);
+                    }
+                  }()}**\n`;
+                }
+  
+                return str;
+              }() || "None"
+            )
+          }
+        } else if (item instanceof Schematic) {
           const table = LootTables.map.get(item.$.table);
 
           if (table) {
@@ -632,7 +669,7 @@ export function attackDescriptor(attacks: AttackData[]) {
   return str;
 }
 
-export function modifierDescriptor(modifiers: PassiveModifier[]) {
+export function modifierDescriptor(modifiers: NamedModifier[]) {
   var str = "";
   if (modifiers.length > 0) {
     for (const mod of modifiers) {
@@ -694,4 +731,6 @@ export function perksDescriptor(perks: (string | CreaturePerk)[]) {
   return str;
 }
 
-export type ManagedItems = Item | CreatureClass | CreatureSpecies | PassiveEffect | CreatureAbility | ActiveEffect | CreatureSkill | CreaturePerk | Schematic | GameLocation | LootTable;
+export type ManagedItems = 
+  Item | CreatureClass | CreatureSpecies | PassiveEffect | CreatureAbility | GameDirective |
+  ActiveEffect | CreatureSkill | CreaturePerk | Schematic | GameLocation | LootTable;

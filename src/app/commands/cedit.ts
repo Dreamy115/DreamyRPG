@@ -16,7 +16,7 @@ export default new ApplicationCommandHandler({
   options: [
     {
       name: "menu",
-      description: "Editing GUI if you reaaally need it",
+      description: "Editing GUI for the regular things",
       type: "SUB_COMMAND",
       options: [
         {
@@ -726,10 +726,6 @@ export default new ApplicationCommandHandler({
       await interaction.followUp({
         content: `Editing menu for **${creature.displayName}**`,
         components: ceditMenu(creature)
-      })
-      interaction.followUp({
-        content: "Additional GM-Only editing *(May look more friendly, but CLI is easier, and has more functions. **I stronlgy advise using CLI instead**)*",
-        components: gm_ceditMenu(creature.$._id)
       })
       return;
     } break;

@@ -14,7 +14,7 @@ import { textStat, ModifierType, TrackableStat } from "../../game/Stats.js";
 import { SpeciesManager, ClassManager, capitalize, ItemManager, EffectManager, AbilitiesManager, CONFIG, SchematicsManager, PerkManager, LocationManager, limitString, LootTables, PassivesManager } from "../../index.js";
 import { bar_styles, make_bar } from "../Bars.js";
 import { ApplicationCommandHandler } from "../commands.js";
-import { attributeComponents, ceditMenu } from "../component_commands/cedit.js";
+import { attributeComponents, ceditMenu, consumeMenu, scrapMenu } from "../component_commands/cedit.js";
 import { abilitiesDescriptor, attackDescriptor, modifierDescriptor, passivesDescriptor, perksDescriptor } from "./handbook.js";
 
 export default new ApplicationCommandHandler(
@@ -80,7 +80,8 @@ export default new ApplicationCommandHandler(
             name: "backpack_item",
             description: "The item you want to hand over",
             type: "STRING",
-            required: true
+            required: true,
+            autocomplete: true
           },
           {
             name: "recipient",
@@ -183,6 +184,16 @@ export default new ApplicationCommandHandler(
         type: "SUB_COMMAND"
       },
       {
+        name: "scrap_item",
+        description: "Scrap an item",
+        type: "SUB_COMMAND"
+      },
+      {
+        name: "consume_item",
+        description: "Consume an item",
+        type: "SUB_COMMAND"
+      },
+      {
         name: "craft",
         description: "Craft an item",
         type: "SUB_COMMAND",
@@ -234,6 +245,47 @@ export default new ApplicationCommandHandler(
     if (!interaction.isCommand()) return;
 
     switch (interaction.options.getSubcommand(true)) {
+      case "scrap_item": {
+        const [creature,guild] = await Promise.all([
+          Creature.fetch(interaction.user.id, db).catch(() => null),
+          Bot.guilds.fetch(CONFIG.guild?.id ?? ""),
+          interaction.deferReply({ephemeral: true})
+        ]);
+
+        if (!creature) {
+          interaction.editReply({
+            content: "Must own a Creature!"
+          })
+          return;
+        }
+
+        await guild.roles.fetch();
+    
+        const member = await guild.members.fetch(interaction.user.id).catch(() => null);
+        let IS_GM = true;
+        if (!member || !member.roles.cache.has(CONFIG.guild?.gm_role ?? "")) {
+          IS_GM = false;
+        } 
+
+        await scrapMenu(interaction, creature, db, IS_GM)
+        return
+      } break;
+      case "consume_item": {
+        const [creature,] = await Promise.all([
+          Creature.fetch(interaction.user.id, db).catch(() => null),
+          interaction.deferReply({ephemeral: true})
+        ]);
+
+        if (!creature) {
+          interaction.editReply({
+            content: "Must own a Creature!"
+          })
+          return;
+        }
+
+        consumeMenu(interaction, creature);
+        return;
+      } break;
       case "rollfor": {
         const [creature,] = await Promise.all([
           Creature.fetch(interaction.options.getString("id", false) ?? interaction.user.id, db).catch(() => null),

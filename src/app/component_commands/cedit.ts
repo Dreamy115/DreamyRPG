@@ -1,4 +1,5 @@
-import { MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu, MessageSelectOptionData } from "discord.js";
+import { ButtonInteraction, CommandInteraction, MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu, MessageSelectOptionData } from "discord.js";
+import Mongoose from "mongoose";
 import { capitalize, ClassManager, CONFIG, ItemManager, limitString, LootTables, messageInput, PerkManager, removeMarkdown, SchematicsManager, SkillManager, SpeciesManager } from "../..";
 import { CraftingMaterials } from "../../game/Crafting";
 import Creature, { HealType } from "../../game/Creature";
@@ -474,76 +475,11 @@ export default new ComponentCommandHandler(
                   return;
                 } break;
                 case "scrap": {
-                  if (!IS_GM && await creature.getFightID(db)) {
-                    interaction.followUp({
-                      ephemeral: true,
-                      content: "Cannot do that while fighting!"
-                    });
-                    return;
-                  }
-
-                  if (!creature.$.info.locked && !creature.$.info.npc) {
-                    interaction.editReply({
-                      content: "You must lock in before scrapping or crafting items"
-                    })
-                    return;
-                  }
-
-                  const items: MessageSelectOptionData[] = [];
-
-                  for (const i of creature.$.items.backpack) {
-                    const item = ItemManager.map.get(i.id);
-                    if (!item) continue;
-
-                    items.push({
-                      label: item.$.info.name,
-                      emoji: ItemQualityEmoji[item.$.info.quality],
-                      value: item.$.id ?? ""
-                    })
-                  }
-
-                  if (items.length == 0) {
-                    interaction.followUp({
-                      ephemeral: true,
-                      content: "Backpack is empty!"
-                    });
-                    return;
-                  }
-
-                  interaction.followUp({
-                    ephemeral: true,
-                    content: "Items to scrap...",
-                    components: backpackItemComponents(creature_id, items, `cedit/${creature_id}/edit/item/scrap`)
-                  })
+                  await scrapMenu(interaction, creature, db, IS_GM);
                   return;
                 } break;
                 case "use": {
-                  const items: MessageSelectOptionData[] = [];
-
-                  for (const i of creature.$.items.backpack) {
-                    const item = ItemManager.map.get(i.id);
-                    if (item?.$.type !== "consumable") continue;
-
-                    items.push({
-                      label: item.$.info.name,
-                      emoji: ItemQualityEmoji[item.$.info.quality],
-                      value: item.$.id ?? ""
-                    })
-                  }
-
-                  if (items.length == 0) {
-                    interaction.followUp({
-                      ephemeral: true,
-                      content: "No consumables!"
-                    });
-                    return;
-                  }
-
-                  interaction.followUp({
-                    ephemeral: true,
-                    content: "Consumables...",
-                    components: backpackItemComponents(creature_id, items, `cedit/${creature_id}/edit/item/use`)
-                  });
+                  await consumeMenu(interaction, creature);
                   return;
                 } break;
                 case "equip": {
@@ -579,7 +515,7 @@ export default new ComponentCommandHandler(
                   interaction.followUp({
                     ephemeral: true,
                     content: "Backpack contents...",
-                    components: backpackItemComponents(creature_id, items, `cedit/${creature_id}/edit/item/equip`)
+                    components: backpackItemComponents(items, `cedit/${creature_id}/edit/item/equip`)
                   })
                   return;
                 } break;
@@ -1021,341 +957,6 @@ export default new ComponentCommandHandler(
               }
             }            
           } break;
-          case "gm": {
-            if (!IS_GM) {
-              interaction.followUp({
-                ephemeral: true,
-                content: "Not enough permissions (Must be GM)"
-              });
-              return;
-            }
-
-            switch (args.shift()) {
-              case "heal": {
-                await interaction.followUp({
-                  ephemeral: true,
-                  content: 
-                    "Please input heal string using this syntax: `<amount>,<type>` without spaces, whole numbers, and without %.\n" +
-                    "Possible values:\n" +
-                    "`<amount>` - A positive integer\n`<type` - `Health` `Mana` `Shield` `Overheal` `Injuries`\n" +
-                    "ex. `25,Health`"
-                });
-
-                var inputmsg = await messageInput(channel, interaction.user.id).catch(() => null);
-                inputmsg?.delete();
-                if (!inputmsg || inputmsg.content === "#") {
-                  interaction.followUp({
-                    ephemeral: true,
-                    content: "Cancelled"
-                  });
-                  return;
-                }
-
-                const input = inputmsg.content.split(",");
-
-                try {
-                  // @ts-expect-error
-                  creature.heal(Number(input[0]), HealType[input[1]]);
-                } catch (e) {
-                  console.error(e);
-                  interaction.followUp({
-                    ephemeral: true,
-                    content: "Error!"
-                  });
-                  return;
-                }
-
-              } break;
-              case "tick": {
-                creature.tick();
-              }
-              case "item": {
-                if (interaction.isButton()) {
-                  switch (args.shift()) {
-                    case "add": {
-                      await interaction.followUp({
-                        ephemeral: true,
-                        content: "Please input a comma separated list of item IDs, ex. \`starter_shield,starter_revolver\`"
-                      });
-
-                      let items = (await messageInput(channel, interaction.user.id)).content.split(/,/g);
-
-                      var invalid_count = 0;
-                      for (const i of items) {
-                        const item = ItemManager.map.get(i);
-                        if (!item?.$.id) {
-                          invalid_count++;
-                          continue;
-                        }
-
-                        creature.$.items.backpack.push(createItem(item.$.id));
-                      }
-
-                      if (invalid_count > 0)
-                        interaction.followUp(({
-                          ephemeral: true,
-                          content: `${invalid_count} items were invalid and have not been added!`
-                        }))
-                    } break;
-                    case "remove": {
-                      const items: MessageSelectOptionData[] = [];
-
-                      for (const i of creature.$.items.backpack) {
-                        const item = ItemManager.map.get(i.id);
-                        if (!item) continue;
-
-                        items.push({
-                          label: item.$.info.name,
-                          emoji: ItemQualityEmoji[item.$.info.quality],
-                          value: item.$.id ?? ""
-                        })
-                      }
-
-                      if (items.length == 0) {
-                        interaction.followUp({
-                          ephemeral: true,
-                          content: "Backpack is empty!"
-                        });
-                        return;
-                      }
-
-                      interaction.followUp({
-                        ephemeral: true,
-                        content: "Select items from backpack. (To remove equipped items de-equip them first)",
-                        components: backpackItemComponents(creature_id, items, `cedit/${creature_id}/edit/gm/item/remove`)
-                      })
-                      return;
-                    } break;
-                  }
-                } else if (interaction.isSelectMenu()) {
-                  switch (args.shift()) {
-                    case "remove": {
-                      for (const i of interaction.values) {
-                        creature.$.items.backpack.splice(creature.$.items.backpack.findIndex((v) => v.id === i),1);
-                      }
-                    } break;
-                  }
-                }
-              } break;
-              case "skill": {
-                if (interaction.isButton()) {
-                  switch (args.shift()) {
-                    case "add": {
-                      await interaction.followUp({
-                        ephemeral: true,
-                        content: "Please input a comma separated list of item IDs, ex. \`some_skill,another_skill\`"
-                      });
-
-                      let skills = (await messageInput(channel, interaction.user.id)).content.split(/,/g);
-
-                      var invalid_count = 0;
-                      for (const i of skills) {
-                        const skill = SkillManager.map.get(i);
-                        if (!skill?.$.id) {
-                          invalid_count++;
-                          continue;
-                        }
-
-                        creature.$.items.skills.add(skill.$.id);
-                      }
-
-                      const unique_collisions: string[] = [];
-                      const uniques: string[] = [];
-                      for (const s of creature.$.items.skills) {
-                        const skill = SkillManager.map.get(s);
-                        if (!skill) continue;
-
-                        for (const u of skill.$.unique ?? []) {
-                          if (uniques.includes(u)) {
-                            if (!unique_collisions.includes(u))
-                              unique_collisions.push(u);
-                          } else {
-                            uniques.push(u);
-                          }
-                        }
-                      }
-
-                      if (unique_collisions.length > 0) {
-                        interaction.followUp({
-                          ephemeral: true,
-                          content: 
-                            `**WARNING!** multiple skills have the same unique flags and therefore are violating __uniqueness__!` + 
-                            `These will not work together, and only one of them for each unique flag will work!\n` +
-                            `Remove one of the colliding skills if you want to avoid unexpected behavior\n` +
-                            `Violated uniques: **${unique_collisions.join("**, **")}**`
-                        })
-                      }
-
-                      if (invalid_count > 0)
-                        interaction.followUp({
-                          ephemeral: true,
-                          content: `${invalid_count} skills were invalid or the creature already has them and have not been added!`
-                        })
-                    } break;
-                    case "remove": {
-                      const skills: MessageSelectOptionData[] = [];
-
-                      for (const s of creature.$.items.skills) {
-                        const skill = SkillManager.map.get(s);
-                        if (!skill) continue;
-
-                        skills.push({
-                          label: skill.$.info.name,
-                          value: skill.$.id ?? ""
-                        })
-                      }
-
-                      if (skills.length == 0) {
-                        interaction.followUp({
-                          ephemeral: true,
-                          content: "Skill list is empty!"
-                        });
-                        return;
-                      }
-
-                      interaction.followUp({
-                        ephemeral: true,
-                        content: "Select skills from creature.",
-                        components: backpackItemComponents(creature_id, skills, `cedit/${creature_id}/edit/gm/skill/remove`)
-                      })
-                      return;
-                    } break;
-                  }
-                } else if (interaction.isSelectMenu()) {
-                  switch (args.shift()) {
-                    case "remove": {
-                      for (const i of interaction.values) {
-                        creature.$.items.skills.delete(i);
-                      }
-                    } break;
-                  }
-                }
-              } break;
-              case "effect": {
-                switch (args.shift()) {
-                  case "apply": {
-                    await interaction.followUp({
-                      ephemeral: true,
-                      content: `Please type in the Effect id followed by severity, then amount of ticks. Ex. \`bleeding,2,5\``
-                    });
-
-                    var inputmsg = await messageInput(channel, interaction.user.id).catch(() => null);
-                    inputmsg?.delete();
-                    if (!inputmsg || inputmsg.content === "#") {
-                      interaction.followUp({
-                        ephemeral: true,
-                        content: "Cancelled"
-                      });
-                      return;
-                    }
-
-                    const input = inputmsg.content.split(",");
-
-                    try {
-                      const effect = {
-                        id: input[0],
-                        severity: Number(input[1]),
-                        ticks: Number(input[2])
-                      }
-
-                      if (isNaN(effect.ticks) || isNaN(effect.severity)) throw new Error("Effect composition error.");
-
-                      if (!creature.applyActiveEffect(effect, true)) throw new Error("Error applying effect!")
-                    } catch (e) {
-                      console.error(e);
-                      interaction.followUp({
-                        ephemeral: true,
-                        content: "Error!"
-                      });
-                      return;
-                    }
-
-                  } break;
-                  case "clear_all": {
-                    if (interaction.isButton()) {
-                      interaction.followUp({
-                        ephemeral: true,
-                        content: "Please select wipe type",
-                        components: [wipeType(creature_id)]
-                      })
-                      return;
-                    } else if (interaction.isSelectMenu()) {
-                      // @ts-ignore
-                      creature.clearAllEffects(interaction.values[0]);
-                    }
-                  } break;
-                  case "clear": {
-                    if (interaction.isButton()) {
-                      `cedit/${creature_id}/edit/gm/effect/clear`
-                      await interaction.followUp({
-                        ephemeral: true,
-                        content: `Please type in the Effect id`
-                      });
-      
-                      var inputmsg = await messageInput(channel, interaction.user.id).catch(() => null);
-                      inputmsg?.delete();
-                      if (!inputmsg || inputmsg.content === "#") {
-                        interaction.followUp({
-                          ephemeral: true,
-                          content: "Cancelled"
-                        });
-                        return;
-                      }
-
-                      const components = [wipeType(creature_id)];
-                      components[0].components[0].customId += `/${inputmsg.content}`
-
-                      interaction.followUp({
-                        ephemeral: true,
-                        content: "Please select wipe type",
-                        components
-                      })
-                      return;
-                    } else if (interaction.isSelectMenu()) {
-                      // @ts-ignore
-                      if(!creature.clearActiveEffect(args.shift(), interaction.values[0])) {
-                        interaction.followUp({
-                          ephemeral: true,
-                          content: "Errored. Perhaps the effect does not exist or isn't applied to this Creature?"
-                        })
-                        return;
-                      } 
-                    }
-                  } break;
-                }
-              } break;
-              case "exp": {
-                switch (args.shift()) {
-                  default: return;
-                  case "lv": {
-                    switch (args.shift()) {
-                      default: return;
-                      case "+": {
-                        creature.$.experience.level++;
-                      } break;
-                      case "-": {
-                        creature.$.experience.level--;
-                      } break;
-                      case "set": {
-                        interaction.followUp({
-                          content: "Please input a positive integer in chat",
-                          ephemeral: true
-                        })
-                        const input = Math.round(Number(await messageInput(channel, interaction.user.id)));
-                        if (isNaN(input) || input < 1) {
-                          interaction.editReply({
-                            content: "Invalid level. Must be a positive integer."
-                          })
-                          return;
-                        }
-                        creature.$.experience.level = input;
-                      } break;
-                    } break;
-                  } break;
-                }
-              } break;
-            } break;
-          } break;
         }
 
         await creature.put(db);
@@ -1570,11 +1171,12 @@ export function wipeType(creature_id: string) {
   ])
 }
 
-export function backpackItemComponents(creature_id: string, items: MessageSelectOptionData[], goto: string) {
+export function backpackItemComponents(items: MessageSelectOptionData[], goto: string) {
   const array: MessageActionRow[] = [];
   
   for (var i = 0; i < items.length;) {
     const subitems: MessageSelectOptionData[] = [];
+    const map_count = new Map<number, number>();
     for (var j = 0; j < 25; j++) {
       if (!items[i]) break;
 
@@ -1582,10 +1184,15 @@ export function backpackItemComponents(creature_id: string, items: MessageSelect
       if (index == -1) {
         subitems.push(items[i]);
       } else {
-        subitems[index].description = "Multiple of the same item found, command affects only one"
+        map_count.set(index, Number(map_count.get(index) ?? 1) + 1);
       }
       i++;
     }
+
+    for (const [index, count] of map_count) {
+      subitems[index].label += ` x${count}`;
+    }
+
     array.push(
       new MessageActionRow().addComponents([
         new MessageSelectMenu()
@@ -1620,4 +1227,86 @@ export function attributeComponents(creature: Creature, prefix: string, customid
     array.push(row);
 
   return array;  
+}
+
+export async function scrapMenu(interaction: ButtonInteraction | CommandInteraction, creature: Creature, db: typeof Mongoose, IS_GM: boolean) {
+  if (!IS_GM && await creature.getFightID(db)) {
+    interaction.followUp({
+      ephemeral: true,
+      content: "Cannot do that while fighting!"
+    });
+    return;
+  }
+
+  if (!creature.$.info.locked && !creature.$.info.npc) {
+    interaction.editReply({
+      content: "You must lock in before scrapping or crafting items"
+    })
+    return;
+  }
+
+  const items: MessageSelectOptionData[] = [];
+
+  for (const i of creature.$.items.backpack) {
+    const item = ItemManager.map.get(i.id);
+    if (!item) continue;
+
+    const scrap: string[] = [];
+    if (item.$.scrap) {
+      for (const mat in item.$.scrap.materials) {
+        // @ts-expect-error
+        scrap.push(`${item.$.scrap.materials[mat]} ${capitalize(mat)}`)
+      }
+    }
+
+    items.push({
+      label: item.$.info.name,
+      emoji: ItemQualityEmoji[item.$.info.quality],
+      description: scrap.join(", "),
+      value: item.$.id ?? ""
+    })
+  }
+
+  if (items.length == 0) {
+    interaction.followUp({
+      ephemeral: true,
+      content: "Backpack is empty!"
+    });
+    return;
+  }
+
+  interaction.followUp({
+    ephemeral: true,
+    content: "Items to scrap...",
+    components: backpackItemComponents(items, `cedit/${creature.$._id}/edit/item/scrap`)
+  })
+}
+
+export async function consumeMenu(interaction: ButtonInteraction | CommandInteraction, creature: Creature) {
+  const items: MessageSelectOptionData[] = [];
+
+  for (const i of creature.$.items.backpack) {
+    const item = ItemManager.map.get(i.id);
+    if (item?.$.type !== "consumable") continue;
+
+    items.push({
+      label: item.$.info.name,
+      emoji: ItemQualityEmoji[item.$.info.quality],
+      value: item.$.id ?? ""
+    })
+  }
+
+  if (items.length == 0) {
+    interaction.followUp({
+      ephemeral: true,
+      content: "No consumables!"
+    });
+    return;
+  }
+
+  interaction.followUp({
+    ephemeral: true,
+    content: "Consumables...",
+    components: backpackItemComponents(items, `cedit/${creature.$._id}/edit/item/use`)
+  });
 }

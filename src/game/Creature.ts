@@ -470,7 +470,7 @@ export default class Creature {
 
       for (const slot in creature.$.items.slotted) {
         // @ts-expect-error
-        arr.push(creature.$.items.slotted[slot].id);
+        arr.push(creature.$.items.slotted[slot]);
       }
 
       return arr;

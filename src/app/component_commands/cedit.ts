@@ -767,6 +767,9 @@ export default new ComponentCommandHandler(
                             creature.$.items.backpack.push(equipped);
                           }
                           creature.$.items.slotted[data.$.slot] = item;
+                          
+                          if (data.$.slot === "ultimate")
+                            creature.$.abilities.ult_stacks = 0;
                         }
                       } break;
                     }

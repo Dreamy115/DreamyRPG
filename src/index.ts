@@ -286,3 +286,7 @@ export function logCommandInteraction(interaction: CommandInteraction | Autocomp
 
   return str.trim();
 }
+
+export function rotateLine(x: number, scale: number, y: number) {
+  return ((x - y) * scale) + y;
+}

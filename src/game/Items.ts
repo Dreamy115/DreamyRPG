@@ -97,7 +97,7 @@ export interface AttackSet {
   crit: AttackData[]
   normal: AttackData[]
   weak: AttackData[]
-  type: DamageMethod
+  type: Exclude<DamageMethod, DamageMethod.Direct>
 }
 export interface AttackData {
   modifiers?: {

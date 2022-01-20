@@ -45,8 +45,9 @@ export default class Creature {
         defiltering: new TrackableStat(0),
         cutting: new TrackableStat(0),
         filter: new TrackableStat(16),
-        melee: new TrackableStat(14),
-        ranged: new TrackableStat(14),
+        melee: new TrackableStat(100),
+        ranged: new TrackableStat(100),
+        damage: new TrackableStat(14),
         health: new TrackableStat(100),
         mana: new TrackableStat(25),
         mana_regen: new TrackableStat(10),
@@ -1001,8 +1002,9 @@ export default class Creature {
   static readonly MIN_LEVEL_FOR_CLASS = 5;
 
   static readonly MAX_EQUIPPED_WEAPONS = 2;
-  static readonly MAX_EQUIPPED_UTILITY = 4;
-  static readonly MAX_EQUIPPED_CLOTHING = 3;
+  
+  static readonly PROFICIENCY_ACCURACY_SCALE = 0.5
+  static readonly PROFICIENCY_DAMAGE_SCALE = 1;
 
   static readonly ATTACK_MAX_STACKS = 12;
   static readonly ATTACK_STACK_DIE_SIZE = 6;
@@ -1342,6 +1344,6 @@ export type Attributes = "STR" | "FOR" | "REJ" | "PER" | "INT" | "DEX" | "CHA";
 
 export type Vitals = "health" | "mana" | "shield" | "injuries" | "heat";
 
-export type Stats = "accuracy" | "armor" | "filter" | "lethality" | "defiltering" | "cutting" | "melee" | 
+export type Stats = "accuracy" | "armor" | "filter" | "lethality" | "defiltering" | "cutting" | "melee" | "damage" |
 "ranged" | "health" | "mana" | "mana_regen" | "shield" | "shield_regen" | "parry" | "deflect" | "tenacity" | 
 "tech" | "vamp" | "siphon" | "initiative" | "min_comfortable_temperature" | "heat_capacity" | "attack_cost" | "ult_stack_target";

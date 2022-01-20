@@ -11,7 +11,7 @@ import { LootTable } from "../../game/LootTables.js";
 import { PassiveEffect, NamedModifier } from "../../game/PassiveEffects.js";
 import { CreaturePerk } from "../../game/Perks.js";
 import { textStat, ModifierType, TrackableStat } from "../../game/Stats.js";
-import { SpeciesManager, ClassManager, capitalize, ItemManager, EffectManager, AbilitiesManager, CONFIG, SchematicsManager, PerkManager, LocationManager, limitString, LootTables, PassivesManager } from "../../index.js";
+import { SpeciesManager, ClassManager, capitalize, ItemManager, EffectManager, AbilitiesManager, CONFIG, SchematicsManager, PerkManager, LocationManager, limitString, LootTables, PassivesManager, rotateLine } from "../../index.js";
 import { bar_styles, make_bar } from "../Bars.js";
 import { ApplicationCommandHandler } from "../commands.js";
 import { attributeComponents, ceditMenu, consumeMenu, scrapMenu } from "../component_commands/cedit.js";
@@ -757,7 +757,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
             : ""
           ) +
           ` **Health** **${creature.$.vitals.health}**/**${creature.$.stats.health.value - creature.$.vitals.injuries}** ` + 
-          `(**${Math.round(100 * creature.$.vitals.health / creature.$.stats.health.value)}%**)\n` +
+          `(**${(100 * creature.$.vitals.health / creature.$.stats.health.value).toFixed(0)}%**)\n` +
           make_bar(100 * creature.$.vitals.mana / creature.$.stats.mana.value, Creature.BAR_STYLES.Mana, BAR_LENGTH / 3).str +
           ` **Mana** ${textStat(creature.$.vitals.mana, creature.$.stats.mana.value)} ` +
           `**${creature.$.stats.mana_regen.value}**/t\n\n` +
@@ -769,7 +769,8 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
           name: "Offense",
           value: 
             `**${creature.$.stats.accuracy.value}%** Accuracy *(Hit Chance)*\n` +
-            `Melee **${creature.$.stats.melee.value}** | **${creature.$.stats.ranged.value}** Ranged *(Attack Power)*\n` +
+            `Melee **${creature.$.stats.melee.value}%** | **${creature.$.stats.ranged.value}%** Ranged *(Weapon Proficiency)*\n` +
+            `**${creature.$.stats.damage.value}** Damage Rating *(Melee **${(creature.$.stats.damage.value * rotateLine(creature.$.stats.melee.value / 100, Creature.PROFICIENCY_DAMAGE_SCALE, 1)).toFixed(1)}** | **${(creature.$.stats.damage.value * rotateLine(creature.$.stats.ranged.value / 100, Creature.PROFICIENCY_DAMAGE_SCALE, 1)).toFixed(1)}** Ranged)*\n` +
             `**${creature.$.stats.tech.value}** Tech *(Ability Power)*\n` +
             "\n" +
             `**${creature.$.stats.lethality.value}** Lethality | **${creature.$.stats.defiltering.value}** Defiltering | **${creature.$.stats.cutting.value}** Cutting\n` +
@@ -782,13 +783,13 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
         {
           name: "Defense",
           value:
-          `**${creature.$.stats.armor.value}** Armor *(**${Math.round(100 * (1 - reductionMultiplier(creature.$.stats.armor.value)))}%** Reduced Physical Damage)*\n` +
-          `**${creature.$.stats.filter.value}** Filter *(**${Math.round(100 * (1 - reductionMultiplier(creature.$.stats.filter.value)))}%** Reduced Energy Damage)*\n` +
+          `**${creature.$.stats.armor.value}** Armor *(**${(100 * (1 - reductionMultiplier(creature.$.stats.armor.value))).toFixed(1)}%** Reduced Physical Damage)*\n` +
+          `**${creature.$.stats.filter.value}** Filter *(**${(100 * (1 - reductionMultiplier(creature.$.stats.filter.value))).toFixed(1)}%** Reduced Energy Damage)*\n` +
           `Parry **${creature.$.stats.parry.value}%** | **${creature.$.stats.deflect.value}%** Deflect *(Reduces hit chance from **Melee** | **Ranged**)*\n` +
           "\n" +
-          `**${creature.$.stats.tenacity.value}** Tenacity *(Taking **${Math.round(100 * reductionMultiplier(creature.$.stats.tenacity.value) * DAMAGE_TO_INJURY_RATIO)}%** health damage as **Injuries**)*` +
+          `**${creature.$.stats.tenacity.value}** Tenacity *(Taking **${(100 * reductionMultiplier(creature.$.stats.tenacity.value) * DAMAGE_TO_INJURY_RATIO).toFixed(1)}%** health damage as **Injuries**)*` +
           "\n" +
-          `**${creature.$.stats.min_comfortable_temperature.value}**°C (**${Math.round(10 * cToF(creature.$.stats.min_comfortable_temperature.value)) / 10}**°F) Min Comfortable Temperature *(**${creature.deltaHeat}**°C Delta)*`
+          `**${creature.$.stats.min_comfortable_temperature.value}**°C (**${(cToF(creature.$.stats.min_comfortable_temperature.value)).toFixed(1)}**°F) Min Comfortable Temperature *(**${creature.deltaHeat}**°C Delta)*`
         }
       ])
     } break;
@@ -811,7 +812,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
                 str += `**`;
                 switch (mod.type) {
                   case ModifierType.MULTIPLY: str += `${mod.value}x`; break;
-                  case ModifierType.ADD_PERCENT: str += `${mod.value >= 0 ? "+" : "-"}${Math.round(Math.abs(mod.value) * 1000) / 10}%`; break;
+                  case ModifierType.ADD_PERCENT: str += `${mod.value >= 0 ? "+" : "-"}${(Math.abs(mod.value) * 100).toFixed(1)}%`; break;
                   case ModifierType.CAP_MAX: str += `${mod.value}^`; break;
                   case ModifierType.ADD: str += `${mod.value >= 0 ? "+" : "-"}${Math.abs(mod.value)}`; break;
                 }
@@ -937,7 +938,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
             var str = "";
 
             for (const source of attackdata.sources) {
-              str += `[**${Math.round(source.flat_bonus + (source.from_skill * (type === DamageMethod.Melee ? creature.$.stats.melee.value : creature.$.stats.ranged.value)))} *(${source.flat_bonus} + ${Math.round(100 * source.from_skill) / 100}x)* ${DamageType[source.type]}**]\n`
+              str += `[**${Math.round(source.flat_bonus + (source.from_skill * creature.$.stats.damage.value * ((type === DamageMethod.Melee ? creature.$.stats.melee.value : creature.$.stats.ranged.value) / 100)))} *(${source.flat_bonus} + ${(source.from_skill).toFixed(2)}x)* ${DamageType[source.type]}**]\n`
             }
 
             return str;
@@ -954,7 +955,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
       embed.addFields([
         {
           name: "Position",
-          value: `${CombatPosition[attack.type]} - ${DamageMethod[attack.type]}`
+          value: `${CombatPosition[attack.type]} - ${DamageMethod[attack.type]} *(**${(100 * rotateLine((attack.type === DamageMethod.Melee ? creature.$.stats.melee.value : creature.$.stats.ranged.value) / 100, Creature.PROFICIENCY_DAMAGE_SCALE, 1)).toFixed(2)}%**)*`
         },
         {
           name: "Crit",
@@ -1053,7 +1054,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
             str += `**`;
             switch (mod.type) {
               case ModifierType.MULTIPLY: str += `${mod.value}x`; break;
-              case ModifierType.ADD_PERCENT: str += `${mod.value >= 0 ? "+" : "-"}${Math.round(Math.abs(mod.value) * 1000) / 10}%`; break;
+              case ModifierType.ADD_PERCENT: str += `${mod.value >= 0 ? "+" : "-"}${(Math.abs(mod.value) * 100).toFixed(1)}%`; break;
               case ModifierType.CAP_MAX: str += `${mod.value}^`; break;
               case ModifierType.ADD: str += `${mod.value >= 0 ? "+" : "-"}${Math.abs(mod.value)}`; break;
             }

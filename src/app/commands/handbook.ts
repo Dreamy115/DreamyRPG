@@ -665,7 +665,7 @@ export function attackDescriptor(attacks: AttackData[]) {
       var str = "";
 
       for (const source of attackdata.sources) {
-        str += `[**${source.flat_bonus} + ${Math.round(100 * source.from_skill) / 100}x ${DamageType[source.type]}**]\n`
+        str += `[**${source.flat_bonus} + ${(source.from_skill).toFixed(2)}x ${DamageType[source.type]}**]\n`
       }
 
       return str;
@@ -682,7 +682,7 @@ export function modifierDescriptor(modifiers: NamedModifier[]) {
       str += `**`;
       switch (mod.type) {
         case ModifierType.MULTIPLY: str += `${mod.value}x`; break;
-        case ModifierType.ADD_PERCENT: str += `${mod.value >= 0 ? "+" : "-"}${Math.round(Math.abs(mod.value) * 1000) / 10}%`; break;
+        case ModifierType.ADD_PERCENT: str += `${mod.value >= 0 ? "+" : "-"}${(Math.abs(mod.value) * 100).toFixed(1)}%`; break;
         case ModifierType.CAP_MAX: str += `${mod.value}^`; break;
         case ModifierType.ADD: str += `${mod.value >= 0 ? "+" : "-"}${Math.abs(mod.value)}`; break;
       }

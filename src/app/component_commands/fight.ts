@@ -1,5 +1,5 @@
 import { MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu, MessageSelectMenuOptions, MessageSelectOptionData } from "discord.js";
-import { AbilitiesManager, CONFIG, sleep } from "../..";
+import { AbilitiesManager, CONFIG, rotateLine, sleep } from "../..";
 import Creature, { diceRoll } from "../../game/Creature";
 import { DamageCause, DamageLog, damageLogEmbed, DamageMethod, DamageSource, ShieldReaction } from "../../game/Damage";
 import { Combatant, CombatPosition, Fight } from "../../game/Fight";
@@ -287,10 +287,6 @@ export default new ComponentCommandHandler(
           for (const set of creature.attackSet[type]) {
             let skill_value: number;
             switch (creature.attackSet.type) {
-              case DamageMethod.Direct:
-              default:
-                skill_value = Math.round((creature.$.stats.melee.value + creature.$.stats.ranged.value) / 2)
-                break;
               case DamageMethod.Melee:
                 skill_value = creature.$.stats.melee.value;
                 break;
@@ -301,7 +297,7 @@ export default new ComponentCommandHandler(
 
             logs.push(target.applyDamage({
               cause: attack_type,
-              chance: accuracy_mod * (creature.$.stats.accuracy.value + (set.modifiers?.accuracy ?? 0)),
+              chance: rotateLine(skill_value / 100, Creature.PROFICIENCY_ACCURACY_SCALE, 1) * accuracy_mod * (creature.$.stats.accuracy.value + (set.modifiers?.accuracy ?? 0)),
               method: creature.attackSet.type,
               penetration: {
                 lethality: (set.modifiers?.lethality ?? 0) + creature.$.stats.lethality.value,
@@ -318,7 +314,7 @@ export default new ComponentCommandHandler(
                 for (const src of set.sources) {
                   array.push({
                     type: src.type,
-                    value: Math.round(src.flat_bonus + (skill_value * src.from_skill))
+                    value: Math.round(src.flat_bonus + (creature.$.stats.damage.value * rotateLine(skill_value / 100, Creature.PROFICIENCY_DAMAGE_SCALE, 1) * src.from_skill))
                   })
                 }
 

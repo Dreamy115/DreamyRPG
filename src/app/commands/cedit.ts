@@ -757,6 +757,7 @@ export default new ApplicationCommandHandler({
       interaction.followUp({
         embeds: [damageLogEmbed(log)]
       })
+      
       creature.put(db);
       return;
     } break;
@@ -879,6 +880,7 @@ export default new ApplicationCommandHandler({
     }
   }
 
+  creature.reload();
   await creature.put(db);
   interaction.followUp({
     ephemeral: true,

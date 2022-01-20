@@ -984,6 +984,10 @@ export default class Creature {
     return db.connection.collection(Creature.COLLECTION_NAME).deleteOne({_id: this.$._id});
   }
 
+  reload() {
+    this.$ = new Creature(this.dump()).$;
+  }
+
   static readonly BAR_STYLES = {
     Health: bar_styles[0],
     Injuries: "░",

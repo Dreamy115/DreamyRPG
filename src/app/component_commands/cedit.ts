@@ -962,6 +962,7 @@ export default new ComponentCommandHandler(
           } break;
         }
 
+        creature.reload();
         await creature.put(db);
         interaction.followUp({
           ephemeral: true,

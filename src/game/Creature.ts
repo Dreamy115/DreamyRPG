@@ -966,9 +966,12 @@ export default class Creature {
     if (!data) throw new Error("Not found");
 
     // @ts-expect-error
-    return new Creature(data);
+    const char = new Creature(data);
+    Creature.cache.set(char.$._id, char);
+    return char;
   }
   async put(db: typeof mongoose) {
+    Creature.cache.set(this.$._id, this);
     try {
       // @ts-expect-error
       await db.connection.collection(Creature.COLLECTION_NAME).insertOne(this.dump());

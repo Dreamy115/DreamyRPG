@@ -85,7 +85,7 @@ export async function setSim(guild: Guild, db: typeof Mongoose, Bot: Client) {
     for await (const document of db.connection.collection(Creature.COLLECTION_NAME).find()) {
       try {
         // @ts-expect-error
-        const creature = new Creature(document);
+        const creature: Creature = Creature.cache.get(document._id) ?? new Creature(document);
 
         if (!(await creature.getFightID(db))) {
           creature.tick();

@@ -47,7 +47,7 @@ export default class Creature {
         filter: new TrackableStat(16),
         melee: new TrackableStat(100),
         ranged: new TrackableStat(100),
-        damage: new TrackableStat(14),
+        damage: new TrackableStat(20),
         health: new TrackableStat(100),
         mana: new TrackableStat(25),
         mana_regen: new TrackableStat(10),
@@ -221,8 +221,8 @@ export default class Creature {
         },
         sources: [{
           type: DamageType.Physical,
-          flat_bonus: 7,
-          from_skill: 0.5
+          flat_bonus: 2,
+          from_skill: 0.6
         }],
       }],
       crit: [{
@@ -233,7 +233,7 @@ export default class Creature {
         },
         sources: [{
           type: DamageType.Physical,
-          flat_bonus: 8,
+          flat_bonus: 4,
           from_skill: 0.75
         }],
       }],
@@ -245,7 +245,7 @@ export default class Creature {
         },
         sources: [{
           type: DamageType.Physical,
-          flat_bonus: 3,
+          flat_bonus: 0,
           from_skill: 0.3
         }],
       }]
@@ -1021,12 +1021,7 @@ export default class Creature {
     {
       type: ModifierType.ADD_PERCENT,
       value: 0.15,
-      stat: "melee"
-    },
-    {
-      type: ModifierType.ADD_PERCENT,
-      value: 0.15,
-      stat: "ranged"
+      stat: "damage"
     },
     {
       type: ModifierType.ADD_PERCENT,
@@ -1037,6 +1032,16 @@ export default class Creature {
       type: ModifierType.ADD_PERCENT,
       value: 0.1,
       stat: "filter"
+    },
+    {
+      type: ModifierType.ADD,
+      value: 2,
+      stat: "lethality"
+    },
+    {
+      type: ModifierType.ADD,
+      value: 2,
+      stat: "defiltering"
     },
     {
       type: ModifierType.ADD_PERCENT,

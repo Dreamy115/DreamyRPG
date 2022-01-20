@@ -716,6 +716,7 @@ export default class Creature {
 
     effectData.$.onApply?.(this, effect);
 
+    this.reload();
     return true;
   }
   clearActiveEffect(id: string, type: "expire" | "delete"): boolean {
@@ -735,6 +736,7 @@ export default class Creature {
         } break;
       }
 
+      this.reload();
       return true;
     }
 

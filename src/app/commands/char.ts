@@ -957,7 +957,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
 
             return str;
           }()}
-          **${(attackdata.modifiers?.accuracy ?? 0) + creature.$.stats.accuracy.value} *(${creature.$.stats.accuracy.value} ${(attackdata.modifiers?.accuracy ?? 0) >= 0 ? "+" : "-"}${Math.abs(attackdata.modifiers?.accuracy ?? 0)})*** Accuracy
+          **${((attackdata.modifiers?.accuracy ?? 0) + (creature.$.stats.accuracy.value * rotateLine((type === DamageMethod.Melee ? creature.$.stats.melee.value : creature.$.stats.ranged.value) / 100, Creature.PROFICIENCY_ACCURACY_SCALE, 1))).toFixed(1)} *(${(creature.$.stats.accuracy.value * rotateLine((type === DamageMethod.Melee ? creature.$.stats.melee.value : creature.$.stats.ranged.value) / 100, Creature.PROFICIENCY_ACCURACY_SCALE, 1)).toFixed(1)} ${(attackdata.modifiers?.accuracy ?? 0) >= 0 ? "+" : "-"}${Math.abs(attackdata.modifiers?.accuracy ?? 0)})*** Accuracy
           **${attackdata.modifiers?.lethality ?? 0}** Lethality
           **${attackdata.modifiers?.defiltering ?? 0}** Defiltering\n\n`;
         }

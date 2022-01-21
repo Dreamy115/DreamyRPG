@@ -40,7 +40,7 @@ export default class Creature {
       stats: {
         ult_stack_target: new TrackableStat(0),
         attack_cost: new TrackableStat(6),
-        accuracy: new TrackableStat(95),
+        accuracy: new TrackableStat(90),
         armor: new TrackableStat(24),
         lethality: new TrackableStat(0),
         defiltering: new TrackableStat(0),

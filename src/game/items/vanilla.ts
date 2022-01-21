@@ -47,8 +47,8 @@ export default [
           },
           sources: [
             {
-              flat_bonus: 12,
-              from_skill: 0.1,
+              flat_bonus: 0,
+              from_skill: 0.6,
               type: DamageType.Physical
             }
           ]
@@ -63,8 +63,8 @@ export default [
           },
           sources: [
             {
-              flat_bonus: 22,
-              from_skill: 0.1,
+              flat_bonus: 1,
+              from_skill: 1,
               type: DamageType.Physical
             }
           ]
@@ -79,8 +79,8 @@ export default [
           },
           sources: [
             {
-              flat_bonus: 32,
-              from_skill: 0.1,
+              flat_bonus: 4,
+              from_skill: 1.5,
               type: DamageType.Physical
             }
           ]
@@ -107,8 +107,8 @@ export default [
             lethality: 1
           },
           sources: [{
-            flat_bonus: 11,
-            from_skill: 0.1,
+            flat_bonus: 0,
+            from_skill: 0.5,
             type: DamageType.Physical
           }]
         }
@@ -121,8 +121,8 @@ export default [
             lethality: 2
           },
           sources: [{
-            flat_bonus: 11,
-            from_skill: 0.05,
+            flat_bonus: 1,
+            from_skill: 0.5,
             type: DamageType.Physical
           }]
         },
@@ -133,8 +133,8 @@ export default [
             lethality: 2
           },
           sources: [{
-            flat_bonus: 11,
-            from_skill: 0.05,
+            flat_bonus: 1,
+            from_skill: 0.5,
             type: DamageType.Physical
           }]
         }
@@ -147,8 +147,8 @@ export default [
             lethality: 3
           },
           sources: [{
-            flat_bonus: 11,
-            from_skill: 0.03,
+            flat_bonus: 2,
+            from_skill: 0.5,
             type: DamageType.Physical
           }]
         },
@@ -159,8 +159,8 @@ export default [
             lethality: 3
           },
           sources: [{
-            flat_bonus: 11,
-            from_skill: 0.03,
+            flat_bonus: 2,
+            from_skill: 0.5,
             type: DamageType.Physical
           }]
         },
@@ -171,8 +171,8 @@ export default [
             lethality: 3
           },
           sources: [{
-            flat_bonus: 11,
-            from_skill: 0.03,
+            flat_bonus: 2,
+            from_skill: 0.5,
             type: DamageType.Physical
           }]
         }

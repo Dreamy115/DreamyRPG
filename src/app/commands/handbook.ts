@@ -675,7 +675,7 @@ export function attackDescriptor(attacks: AttackData[]) {
   return str;
 }
 
-export function modifierDescriptor(modifiers: NamedModifier[]) {
+export function modifierDescriptor(modifiers: NamedModifier[], spacer = "\n") {
   var str = "";
   if (modifiers.length > 0) {
     for (const mod of modifiers) {
@@ -686,9 +686,8 @@ export function modifierDescriptor(modifiers: NamedModifier[]) {
         case ModifierType.CAP_MAX: str += `${mod.value}^`; break;
         case ModifierType.ADD: str += `${mod.value >= 0 ? "+" : "-"}${Math.abs(mod.value)}`; break;
       }
-      str += `** ${capitalize(mod.stat.replaceAll(/_/g, " "))}\n`;
+      str += `** ${capitalize(mod.stat.replaceAll(/_/g, " "))}${spacer}`;
     }
-    str += "\n"
   }
   return str;
 }

@@ -766,6 +766,7 @@ export default new ComponentCommandHandler(
                           if (equipped) {
                             creature.$.items.backpack.push(equipped);
                           }
+                          // @ts-expect-error
                           creature.$.items.slotted[data.$.slot] = item;
                           
                           if (data.$.slot === "ultimate")

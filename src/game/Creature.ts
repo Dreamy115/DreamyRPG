@@ -9,7 +9,8 @@ import { CreatureAbility } from "./CreatureAbilities.js";
 import { DamageCause, DamageGroup, DamageLog, DamageMethod as DamageMethod, DamageType, DAMAGE_TO_INJURY_RATIO, reductionMultiplier, ShieldReaction } from "./Damage.js";
 import { Fight } from "./Fight.js";
 import { GameDirective } from "./GameDirectives.js";
-import { AttackData, AttackSet, Item, ItemSlot } from "./Items.js";
+import { AttackData, AttackSet, Item, ItemSlot, InventoryItem, EquippableInventoryItem, WeaponInventoryItem, WearableInventoryItem } from "./Items.js";
+import { ItemModule, ModuleType } from "./Modules.js";
 import { PassiveEffect, NamedModifier } from "./PassiveEffects.js";
 import { CreaturePerk } from "./Perks.js";
 import { CreatureSkill } from "./Skills.js";
@@ -105,15 +106,41 @@ export default class Creature {
       vars: data.vars ?? {}
     }
 
+    function fixModule(item: WearableInventoryItem | InventoryItem) {
+      // @ts-expect-error
+      const module: ItemModule | undefined = item?.module;
+
+      if (module)
+        // @ts-expect-error
+        item.module = new ItemModule(module.type ?? -1, module.value ?? 0);
+    }
+
     for (const i in data.items?.slotted) {
       // @ts-expect-error
       this.$.items.slotted[i] = data.items.slotted[i];
+
+      // @ts-expect-error
+      fixModule(this.$.items.slotted[i]);
+    }
+
+    for (const i of this.$.items.backpack) {
+      fixModule(i);
     }
 
     this.checkItemConflicts();
-
-    const passives = this.passives;
     // PRELOAD
+    
+    this.$.stats.ult_stack_target.base = this.ultimate?.$.cost ?? 0;
+    // @ts-expect-error Addding Primary Weapon damage to base
+    this.$.stats.damage.base += ItemManager.map.get(this.$.items.primary_weapon?.id ?? "")?.$.base_damage ?? 0;
+    
+    // Modules
+    for (const [type, mods] of this.getModuleCumulativeModifiers()) {
+      for (const mod of mods)
+        this.applyNamedModifier(mod)
+    }
+    
+    const passives = this.passives;
     for (const passive of passives) {
       passive.$.preload?.(this);
       for (const mod of passive.$.modifiers ?? []) {
@@ -133,7 +160,6 @@ export default class Creature {
       this.applyModifiersToBaseStats(Creature.ATTRIBUTE_MODS[a], Math.round(this.$.attributes[a].value));
     }
 
-    this.$.stats.ult_stack_target.base = this.ultimate?.$.cost ?? 0;
 
     // CAPPING
     this.$.stats.vamp.modifiers.push({
@@ -207,6 +233,35 @@ export default class Creature {
   }
   get class() {
     return ClassManager.map.get(this.$.info.class ?? "");
+  }
+
+
+  get modules(): Map<ModuleType, ItemModule[]> {
+    const map = new Map<ModuleType, ItemModule[]>();
+    for (const item of this.inventoryItems) {
+      // @ts-expect-error
+      if (item?.module) {
+        // @ts-expect-error
+        const witem: WearableInventoryItem = item;
+        
+        map.set(witem.module.type, [...(map.get(witem.module.type) ?? []), witem.module]);
+      }
+    }
+    return map;
+  }
+  getModuleCumulativeModifiers(): Map<ModuleType, NamedModifier[]> {
+    const map = new Map<ModuleType, NamedModifier[]>();
+
+    for (const [type, modules] of this.modules) {
+      let cumval = 0;
+      for (const module of modules) {
+        cumval += module.value;
+      }
+      const module = new ItemModule(type, cumval);
+      map.set(type, module.modifiers);
+    }
+
+    return map;
   }
 
 
@@ -1251,10 +1306,10 @@ export interface CreatureData {
   }
   vitals: Record<Vitals, number>
   items: {
-    primary_weapon: InventoryItem | null
+    primary_weapon: WeaponInventoryItem | null
     backpack: InventoryItem[]
-    weapons: InventoryItem[]
-    slotted: Record<ItemSlot, InventoryItem | null | undefined>
+    weapons: WeaponInventoryItem[]
+    slotted: Record<ItemSlot, WearableInventoryItem | null | undefined>
     skills: Set<string>
     schematics: Set<string>
     crafting_materials: CraftingMaterials
@@ -1291,10 +1346,10 @@ export interface CreatureDump {
     level?: number
   }
   items?: {
-    primary_weapon?: InventoryItem | null
+    primary_weapon?: WeaponInventoryItem | null
     backpack?: InventoryItem[]
-    weapons?: InventoryItem[]
-    slotted?: Record<ItemSlot, InventoryItem | null | undefined>
+    weapons?: WeaponInventoryItem[]
+    slotted?: Record<ItemSlot, WearableInventoryItem | null | undefined>
     skills?: string[]
     schematics?: string[]
     crafting_materials?: {[key: string]: number}
@@ -1339,10 +1394,6 @@ function globalOrLocalPusherSet<T>(array: Set<T>, input: Set<T | string>, manage
 
 export function diceRoll(size = 6): number {
   return Math.floor(Math.random() * size) + 1;
-}
-
-export interface InventoryItem {
-  id: string
 }
 
 export type Attributes = "STR" | "FOR" | "REJ" | "PER" | "INT" | "DEX" | "CHA";

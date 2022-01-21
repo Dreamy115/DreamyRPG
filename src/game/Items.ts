@@ -4,9 +4,11 @@ import path from "path";
 import { PassiveEffect } from "./PassiveEffects";
 import { DamageMethod, DamageType } from "./Damage";
 import { CreaturePerk } from "./Perks";
-import Creature, { InventoryItem } from "./Creature";
+import Creature from "./Creature";
 import { AbilityUseLog, LoreReplacer } from "./CreatureAbilities";
 import { CraftingMaterials } from "./Crafting";
+import { ItemManager } from "..";
+import { ItemModule } from "./Modules";
 
 export default class ItemsManager {
   map = new Map<string, Item>();
@@ -74,6 +76,7 @@ export interface UltimateWearableItemData extends PassiveItemData {
 }
 export interface WeaponItemData extends PassiveItemData {
   type: "weapon"
+  base_damage: number
   attack: AttackSet
 }
 
@@ -155,14 +158,46 @@ export const SlotDescriptions: Record<ItemSlot, string> = {
 }
 Object.freeze(SlotDescriptions);
 
-export function createItem(data: Item|string): InventoryItem {
-  if (data instanceof Item) {
-    return {
-      id: data.$.id
-    }
+export function createItem(itemdata: Item|string): InventoryItem {
+  let data: Item;
+  if (itemdata instanceof Item) {
+    data = itemdata;
   } else {
-    return {
-      id: data
+    const _data = ItemManager.map.get(itemdata);
+    if (!_data) throw new Error("Invalid item");
+    data = _data;
+  }
+
+  switch (data.$.type) {
+    case "consumable":
+    case "generic":
+    default:
+      return {
+        id: data.$.id
+      }
+    case "wearable": {
+      var _: WearableInventoryItem = {
+        id: data.$.id,
+        module: ItemModule.generate()
+      }
+      return _;
     }
   }
 }
+
+
+interface BaseInventoryItem {
+  id: string
+}
+
+export interface EquippableInventoryItem extends BaseInventoryItem {
+}
+
+export interface WearableInventoryItem extends EquippableInventoryItem {
+  module: ItemModule
+}
+export interface WeaponInventoryItem extends EquippableInventoryItem {
+
+}
+
+export type InventoryItem = EquippableInventoryItem | BaseInventoryItem;

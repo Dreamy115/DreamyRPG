@@ -1,13 +1,14 @@
-import { ApplicationCommandOptionChoice, Client, EmbedFieldData, MessageActionRow, MessageAttachment, MessageButton, MessageEmbed, MessageSelectMenu } from "discord.js";
+import { ApplicationCommandOptionChoice, Client, EmbedFieldData, Invite, MessageActionRow, MessageAttachment, MessageButton, MessageEmbed, MessageSelectMenu } from "discord.js";
 import { DisplaySeverity, replaceEffectLore, romanNumeral } from "../../game/ActiveEffects.js";
 import { Schematic } from "../../game/Crafting.js";
-import Creature, { diceRoll, InventoryItem } from "../../game/Creature.js";
+import Creature, { diceRoll } from "../../game/Creature.js";
 import { CreatureAbility, replaceLore } from "../../game/CreatureAbilities.js";
 import { reductionMultiplier, DAMAGE_TO_INJURY_RATIO, DamageMethod, DamageType } from "../../game/Damage.js";
 import { CombatPosition } from "../../game/Fight.js";
-import { AttackData, SlotDescriptions, Item, ItemQualityEmoji } from "../../game/Items.js";
+import { AttackData, SlotDescriptions, Item, ItemQualityEmoji, InventoryItem, EquippableInventoryItem } from "../../game/Items.js";
 import { cToF } from "../../game/Locations.js";
 import { LootTable } from "../../game/LootTables.js";
+import { ItemModule, ModuleType } from "../../game/Modules.js";
 import { PassiveEffect, NamedModifier } from "../../game/PassiveEffects.js";
 import { CreaturePerk } from "../../game/Perks.js";
 import { textStat, ModifierType, TrackableStat } from "../../game/Stats.js";
@@ -732,11 +733,24 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
       }
       shield_length_mod = 1 - health_length_mod;
 
+      const modules = creature.modules;
+      const cum_mods = creature.getModuleCumulativeModifiers();
+
       embed.addField(
         "Basic",
         `Race - **${SpeciesManager.map.get(creature.$.info.species ?? "")?.$.info.name ?? "Unknown"}**\n` +  
         `Class - **${ClassManager.map.get(creature.$.info.class ?? "")?.$.info.name ?? "Unknown"}**\n` +
-        `Level **${creature.$.experience.level}**`  
+        `Level **${creature.$.experience.level}**\n\n` +
+        function () {
+          const arr: string[] = [];
+
+          for (const type of Object.values(ModuleType).filter(x => !isNaN(Number(x)))) {
+            // @ts-expect-error
+            arr.push(`${ModuleType[type]} **${modules.get(type)?.length ?? 0}**  ${modifierDescriptor(cum_mods.get(type) ?? [], " ")}`);
+          }
+
+          return arr.join("\n");
+        }()
       ).addFields([
         {
           name: "Vitals",
@@ -1371,6 +1385,15 @@ export function describeItem(invitem?: InventoryItem, creature?: Creature) {
   }
 
   str += `*${lore}*\n`;
+
+  // @ts-expect-error
+  if (invitem?.module) {
+    // @ts-expect-error
+    let {module}: {module: ItemModule} = invitem;
+    const desc = modifierDescriptor(module.modifiers, ", ");
+
+    str += `Module: **${ModuleType[module.type]}** - **${(100 * module.value).toFixed(2)}%**; ${desc.substring(0, desc.length - 2)}\n`;
+  }
   
   const scrap: string[] = [];
   if (item.$.scrap) {

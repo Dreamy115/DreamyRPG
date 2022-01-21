@@ -1,10 +1,10 @@
 import { ApplicationCommandOptionChoice, MessageEmbed } from "discord.js";
 import { capitalize, CONFIG, ItemManager, LootTables } from "../..";
 import { CraftingMaterials } from "../../game/Crafting";
-import Creature, { HealType, InventoryItem } from "../../game/Creature";
+import Creature, { HealType } from "../../game/Creature";
 import { replaceLore } from "../../game/CreatureAbilities";
 import { DamageType, DamageMethod, ShieldReaction, DamageCause, DamageGroup, damageLogEmbed } from "../../game/Damage";
-import { createItem } from "../../game/Items";
+import { createItem, InventoryItem } from "../../game/Items";
 import { LootTable } from "../../game/LootTables";
 import { ApplicationCommandHandler } from "../commands";
 import { ceditMenu, gm_ceditMenu } from "../component_commands/cedit";
@@ -364,6 +364,20 @@ export default new ApplicationCommandHandler({
             {
               name: "backpack_item",
               description: "The item to remove",
+              type: "STRING",
+              autocomplete: true,
+              required: true
+            }
+          ]
+        },
+        {
+          name: "wipe",
+          description: "Completly wipe the inventory (Both equipped and backpacked)",
+          type: "SUB_COMMAND",
+          options: [
+            {
+              name: "cid",
+              description: "Find by ID",
               type: "STRING",
               autocomplete: true,
               required: true
@@ -820,6 +834,9 @@ export default new ApplicationCommandHandler({
             return;
           }
           creature.$.items.backpack.splice(index, 1);
+        } break;
+        case "wipe": {
+          creature.wipeItems();
         } break;
       }
     } break;

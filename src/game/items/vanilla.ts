@@ -35,6 +35,7 @@ export default [
       lore: "You found this laying around! You can make use of it!",
       quality: ItemQuality.Common
     },
+    base_damage: 1,
     attack: {
       type: DamageMethod.Melee,
       weak: [
@@ -95,6 +96,7 @@ export default [
       lore: "Nothing special. This outdated revolver still uses .45 ACP.\n**Revolver Perk** - Damage group count increases with attack stability!",
       quality: ItemQuality.Common
     },
+    base_damage: 1,
     attack: {
       type: DamageMethod.Ranged,
       weak: [

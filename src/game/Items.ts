@@ -143,11 +143,11 @@ export const ItemQualityColor = [
 
 export type ItemSlot = 
   "shield" | "jacket" | "backpack" | 
-  "headgear" | "vest" | "utility" |
+  "mask" | "vest" | "utility" |
   "gloves" | "nanites" | "ultimate"
 export const SlotDescriptions: Record<ItemSlot, string> = {
   backpack: "A bag to keep your stuff in.",
-  headgear: "Something to protect your noggin.",
+  mask: "Something to protect your lungs.",
   jacket: "Tired of the cold? Put on one of these!",
   vest: "Protection for your torso.",
   gloves: "Don't get frostbite! Put something on your paws.",

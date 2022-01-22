@@ -1,6 +1,6 @@
 import { Client, Guild, NewsChannel, TextChannel } from "discord.js";
 import Mongoose from "mongoose";
-import { CONFIG, SETTINGS } from "../..";
+import { CONFIG, SETTINGS, sleep } from "../..";
 import Creature from "../../game/Creature";
 import { ApplicationCommandHandler } from "../commands";
 import { infoEmbed } from "./char";
@@ -96,24 +96,28 @@ export async function setSim(guild: Guild, db: typeof Mongoose, Bot: Client) {
           const msg = await sim_channel.messages.fetch(creature.$.sim_message ?? "").catch(() => null);
           if (msg) {
             try {
-              await msg.edit({
+              msg.edit({
                 embeds: [embed]
-              })
+              }).then(() => creature.put(db))
             } catch {
               msg.delete().catch();
-              const m = await sim_channel.send({
+              sim_channel.send({
                 embeds: [embed]
-              });
-              creature.$.sim_message = m.id;
+              }).then((m) => {
+                creature.$.sim_message = m.id;
+                creature.put(db)
+              })
             }
           } else {
-            const m = await sim_channel.send({
+            sim_channel.send({
               embeds: [embed]
+            }).then((m) => {
+              creature.$.sim_message = m.id;
+              creature.put(db)
             })
-            creature.$.sim_message = m.id;
           }
         }
-        await creature.put(db);
+        await sleep(500);
       } catch (e) {
         console.error(e);
       }

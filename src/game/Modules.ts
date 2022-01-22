@@ -49,7 +49,7 @@ export class ItemModule {
         {
           stat: "damage",
           type: ModifierType.ADD_PERCENT,
-          value: 0.15
+          value: 0.125
         }
       ]
     ],
@@ -59,12 +59,17 @@ export class ItemModule {
         {
           stat: "shield",
           type: ModifierType.ADD_PERCENT,
+          value: 0.05
+        },
+        {
+          stat: "armor",
+          type: ModifierType.ADD_PERCENT,
           value: 0.1
         },
         {
-          stat: "health",
+          stat: "filter",
           type: ModifierType.ADD_PERCENT,
-          value: 0.05
+          value: 0.1
         }
       ]
     ],

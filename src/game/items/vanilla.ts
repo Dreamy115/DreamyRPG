@@ -25,7 +25,14 @@ export default [
           creature.$.stats.shield_regen.base += 4;
         }
       })
-    ])
+    ]),
+    scrap: {
+      materials: new CraftingMaterials({
+        cells: 1,
+        plastic: 20,
+        metal: 3
+      })
+    }
   }),
   new Item({
     id: "starter_knife",

@@ -374,6 +374,8 @@ export default class Creature {
         this.$.items.slotted[slot] = null;
       }
     }
+
+    this.$.items.backpack = this.$.items.backpack.filter(v => v);
   }
 
   wipeItems() {

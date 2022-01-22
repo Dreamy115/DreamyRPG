@@ -3,6 +3,7 @@ import { LootTable } from "../LootTables";
 export default [
   new LootTable({
     id: "rough_bandage",
+    note: "Sample bandage drop",
     pools: new Map() 
     .set("medic", [
       {

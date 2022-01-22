@@ -7,6 +7,7 @@ import { AbilityUseLog } from "../../game/CreatureAbilities";
 import { DamageCause, DamageGroup, damageLogEmbed, DamageMethod, DamageType, ShieldReaction } from "../../game/Damage";
 import { createItem, Item, ItemQualityEmoji } from "../../game/Items";
 import { LootTable } from "../../game/LootTables";
+import { ItemModule, ModuleType } from "../../game/Modules";
 import { TrackableStat } from "../../game/Stats";
 import { infoEmbed } from "../commands/char";
 import { ComponentCommandHandler } from "../component_commands";
@@ -493,14 +494,24 @@ export default new ComponentCommandHandler(
 
                   const items: MessageSelectOptionData[] = [];
 
-                  for (const i of creature.$.items.backpack) {
-                    const item = ItemManager.map.get(i.id);
+                  for (const i in creature.$.items.backpack) {
+                    const it = creature.$.items.backpack[i];
+                    const item = ItemManager.map.get(it?.id);
                     if (!item || item.$.type === "consumable") continue;
 
                     items.push({
                       label: item.$.info.name,
                       emoji: ItemQualityEmoji[item.$.info.quality],
-                      value: item.$.id ?? ""
+                      value: i,
+                      description: 
+                        // @ts-expect-error
+                        `${capitalize(item.$.slot ?? item.$.type)} ${
+                          // @ts-expect-error
+                          it.module
+                          // @ts-expect-error
+                          ? `${ModuleType[it.module.type]} ${(100 * it.module.value).toFixed(2)}%`
+                          : ""
+                        }`
                     })
                   }
 
@@ -514,8 +525,16 @@ export default new ComponentCommandHandler(
 
                   interaction.followUp({
                     ephemeral: true,
-                    content: "Backpack contents...",
-                    components: backpackItemComponents(items, `cedit/${creature_id}/edit/item/equip`)
+                    content: "Items to equip",
+                    components: [
+                      new MessageActionRow().setComponents([
+                        new MessageSelectMenu()
+                          .setCustomId(`cedit/${creature.$._id}/edit/item/equip`)
+                          .setOptions(items)
+                          .setMaxValues(items.length)
+                          .setMinValues(1)
+                      ])
+                    ]
                   })
                   return;
                 } break;
@@ -554,7 +573,8 @@ export default new ComponentCommandHandler(
                               label: item.$.info.name,
                               emoji: ItemQualityEmoji[item.$.info.quality],
                               value: item.$.id ?? "",
-                              description: capitalize(item.$.type)
+                              // @ts-expect-error
+                              description: capitalize(item.$.slot ?? item.$.type)
                             })
                           }
 
@@ -570,6 +590,8 @@ export default new ComponentCommandHandler(
 
                           return array2;
                         }())
+                        .setMinValues(1)
+                        .setMaxValues(creature.inventoryItems.length)
                       ])
                     ]})
                   return;
@@ -674,11 +696,12 @@ export default new ComponentCommandHandler(
                   const gained = new CraftingMaterials({});
                   let count = 0;
 
-                  for (const i of interaction.values) {
-                    const index = creature.$.items.backpack.findIndex(v => v.id === i);
-                    if (index === -1) continue;
+                  for (const i in interaction.values) {
+                    const index = Number(i);
 
-                    const item = ItemManager.map.get(i);
+                    const it = creature.$.items.backpack[index];
+
+                    const item = ItemManager.map.get(it?.id);
                     if (!item?.$.scrap) continue;
 
                     for (const mat in item.$.scrap.materials ?? {}) {
@@ -694,9 +717,10 @@ export default new ComponentCommandHandler(
                       }
                     }
 
-                    creature.$.items.backpack.splice(index, 1);
+                    delete creature.$.items.backpack[index];
                     count++;
                   }
+                  creature.$.items.backpack = creature.$.items.backpack.filter(v => v);
 
                   interaction.editReply({
                     content: `Scrapped **${count}** items`,
@@ -729,7 +753,12 @@ export default new ComponentCommandHandler(
                     const data = ItemManager.map.get(i);
                     switch (data?.$.type) {
                       case "weapon": {
-                        creature.$.items.backpack.push(creature.$.items.weapons.splice(creature.$.items.weapons.findIndex(v => v.id === i), 1)[0]);
+                        if (creature.$.items.primary_weapon?.id === data.$.id) {
+                          creature.$.items.backpack.push(creature.$.items.primary_weapon);
+                          creature.$.items.primary_weapon = null;
+                        } else {
+                          creature.$.items.backpack.push(creature.$.items.weapons.splice(creature.$.items.weapons.findIndex(v => v.id === i), 1)[0]);
+                        }
                       } break;
                       case "wearable": {
                         const item = creature.$.items.slotted[data.$.slot];
@@ -751,29 +780,31 @@ export default new ComponentCommandHandler(
                   }
 
                   for (const i of interaction.values) {
-                    const data = ItemManager.map.get(i);
+                    const index = Number(i);
+
+                    const item = creature.$.items.backpack[index];
+                    if (!item) continue;
+
+                    const data = ItemManager.map.get(item.id);
                     switch (data?.$.type) {
+                      default: continue;
                       case "weapon": {
-                        creature.$.items.weapons.push(creature.$.items.backpack.splice(creature.$.items.backpack.findIndex(v => v.id === i), 1)[0]);
+                        creature.$.items.weapons.push(creature.$.items.backpack[index]);
                       } break;
                       case "wearable": {
-                        const index = creature.$.items.backpack.findIndex(v => v.id === i);
-                        if (index === -1) continue;
-
-                        const item = creature.$.items.backpack.splice(index, 1)[0];
-                        if (item) {
-                          const equipped = creature.$.items.slotted[data.$.slot];
-                          if (equipped) {
-                            creature.$.items.backpack.push(equipped);
-                          }
-                          // @ts-expect-error
-                          creature.$.items.slotted[data.$.slot] = item;
-                          
-                          if (data.$.slot === "ultimate")
-                            creature.$.abilities.ult_stacks = 0;
+                        const equipped = creature.$.items.slotted[data.$.slot];
+                        if (equipped) {
+                          creature.$.items.backpack.push(equipped);
                         }
+                        // @ts-expect-error
+                        creature.$.items.slotted[data.$.slot] = item;
+                        
+                        if (data.$.slot === "ultimate")
+                          creature.$.abilities.ult_stacks = 0;  
                       } break;
                     }
+
+                    delete creature.$.items.backpack[index];
                   }
                   creature.checkItemConflicts();
                 }
@@ -1252,8 +1283,9 @@ export async function scrapMenu(interaction: ButtonInteraction | CommandInteract
 
   const items: MessageSelectOptionData[] = [];
 
-  for (const i of creature.$.items.backpack) {
-    const item = ItemManager.map.get(i.id);
+  for (const i in creature.$.items.backpack) {
+    const it = creature.$.items.backpack[i];
+    const item = ItemManager.map.get(it.id);
     if (!item) continue;
 
     const scrap: string[] = [];
@@ -1262,20 +1294,27 @@ export async function scrapMenu(interaction: ButtonInteraction | CommandInteract
         // @ts-expect-error
         scrap.push(`${item.$.scrap.materials[mat]} ${capitalize(mat)}`)
       }
+      items.push({
+        label: item.$.info.name,
+        emoji: ItemQualityEmoji[item.$.info.quality],
+        description:
+          `${
+            // @ts-expect-error
+            it.module
+            // @ts-expect-error
+            ? `${ModuleType[it.module.type]} ${(100 * it.module.value).toFixed(2)}%`
+            : ""
+            // @ts-expect-error
+          } ${scrap.join(", ")} ${capitalize(item.$.slot ?? item.$.type)}`,
+        value: i
+      })
     }
-
-    items.push({
-      label: item.$.info.name,
-      emoji: ItemQualityEmoji[item.$.info.quality],
-      description: scrap.join(", "),
-      value: item.$.id ?? ""
-    })
   }
 
   if (items.length == 0) {
     interaction.followUp({
       ephemeral: true,
-      content: "Backpack is empty!"
+      content: "No scrappable items in backpack!"
     });
     return;
   }
@@ -1283,7 +1322,15 @@ export async function scrapMenu(interaction: ButtonInteraction | CommandInteract
   interaction.followUp({
     ephemeral: true,
     content: "Items to scrap...",
-    components: backpackItemComponents(items, `cedit/${creature.$._id}/edit/item/scrap`)
+    components: [
+      new MessageActionRow().setComponents([
+        new MessageSelectMenu()
+          .setCustomId(`cedit/${creature.$._id}/edit/item/scrap`)
+          .setOptions(items)
+          .setMaxValues(items.length)
+          .setMinValues(1)
+      ])
+    ]
   })
 }
 

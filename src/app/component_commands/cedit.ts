@@ -1054,9 +1054,9 @@ export default new ComponentCommandHandler(
                                     `${modifierDescriptor({
                                       stat: mod.stat,
                                       type: mod.type,
-                                      value: lerp(lerped + (data.$.optimize_step ?? DEFAULT_ITEM_OPT_STEP), reference.range[0], reference.range[1])
+                                      value: lerp(clamp(lerped + (data.$.optimize_step ?? DEFAULT_ITEM_OPT_STEP), 0, 1), reference.range[0], reference.range[1])
                                     })}` +
-                                    `(**${(100 * Math.min(1, lerped + ((data.$ as WearableItemData | WeaponItemData).optimize_step ?? DEFAULT_ITEM_OPT_STEP))).toFixed(1)}**%)`
+                                    `(**${(100 * Math.min(1, lerped + ((data.$ as WearableItemData | WeaponItemData).optimize_step ?? DEFAULT_ITEM_OPT_STEP))).toFixed(1)}%**)`
                                   )
                                 }
 

@@ -137,7 +137,7 @@ export default class Creature {
       // @ts-expect-error
       slottedItems[slot] = ItemManager.map.get(this.$.items.slotted[slot]?.id ?? "") ?? null;
     }
-    console.log(slottedItems)
+
     // ADDING ITEM BASES
     this.$.stats.ult_stack_target.base = this.ultimate?.$.cost ?? 0;
     

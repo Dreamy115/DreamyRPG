@@ -606,7 +606,7 @@ export default new ComponentCommandHandler(
                           continue;
                         }
 
-                        _mods.push(`${modifierDescriptor(mod)} (**${(100 * invLerp(mod.value, reference.range[0], reference.range[1])).toFixed(1)}**%)`);
+                        _mods.push(`${modifierDescriptor(mod)} (**${(100 * invLerp(mod.value, reference.range[0], reference.range[1])).toFixed(1)}%**)`);
                       }
 
                       creature.put(db);

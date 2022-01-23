@@ -93,5 +93,31 @@ export default [
         attacker: "Hypothermia",
       })
     }
+  }),
+  new ActiveEffect({
+    id: "filter_fail",
+    consecutive_limit: 1,
+    display_severity: DisplaySeverity.ROMAN,
+    info: {
+      name: "Failing Filters",
+      lore: "Your air filter is not enough. Chemical Burns: **{0}** Health True Damage every tick.",
+      replacers: [
+        {
+          multiply: 0.03,
+          type: "severity"
+        }
+      ]
+    },
+    onTick(creature, {ticks, severity}) {
+      creature.applyDamage({
+        cause: DamageCause.DoT,
+        chance: 100,
+        method: DamageMethod.Direct,
+        shieldReaction: ShieldReaction.Ignore,
+        sources: [{type: DamageType.True, value: Math.max(1, severity * 0.03 * creature.$.stats.health.value)}],
+        useDodge: false,
+        attacker: "Chemical Burns",
+      })
+    }
   })
 ]

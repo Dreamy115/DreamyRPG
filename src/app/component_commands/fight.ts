@@ -301,7 +301,7 @@ export default new ComponentCommandHandler(
               method: creature.attackSet.type,
               penetration: {
                 lethality: (set.modifiers?.lethality ?? 0) + creature.$.stats.lethality.value,
-                defiltering: (set.modifiers?.defiltering ?? 0) + creature.$.stats.defiltering.value,
+                passthrough: (set.modifiers?.passthrough ?? 0) + creature.$.stats.passthrough.value,
                 cutting: (set.modifiers?.cutting ?? 0) + creature.$.stats.cutting.value
               },
               shieldReaction: ShieldReaction.Normal,

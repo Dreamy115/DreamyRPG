@@ -67,7 +67,7 @@ export class ItemModule {
           value: 0.1
         },
         {
-          stat: "filter",
+          stat: "dissipate",
           type: ModifierType.ADD_PERCENT,
           value: 0.1
         }

@@ -669,7 +669,7 @@ export function attackDescriptor(attacks: AttackData[]) {
       }
 
       return str;
-    }()}**${attackdata.modifiers?.accuracy ?? 0}** Accuracy | **${attackdata.modifiers?.lethality ?? 0}** Lethality | **${attackdata.modifiers?.defiltering ?? 0}** Defiltering | **${attackdata.modifiers?.cutting ?? 0}** Cutting\n`;
+    }()}**${attackdata.modifiers?.accuracy ?? 0}** Accuracy | **${attackdata.modifiers?.lethality ?? 0}** Lethality | **${attackdata.modifiers?.passthrough ?? 0}** Passthrough | **${attackdata.modifiers?.cutting ?? 0}** Cutting\n`;
   }
 
   return str;

@@ -37,8 +37,12 @@ export default class ItemsManager {
   }
 }
 
+export type SpecializedWearableData = 
+  UltimateWearableItemData | MaskWearableItemData | ShieldWearableItemData |
+  JacketWearableItemData | VestWearableItemData | GlovesWearableItemData | 
+  BackpackWearableItemData
 export class Item {
-  $: WearableItemData | WeaponItemData | ConsumableItemData | GenericItemData | UltimateWearableItemData
+  $: WearableItemData | WeaponItemData | ConsumableItemData | GenericItemData | SpecializedWearableData
   constructor(data: Item["$"]) {
     this.$ = data;
   }
@@ -67,13 +71,50 @@ interface PassiveItemData extends BaseItemData {
 }
 export interface WearableItemData extends PassiveItemData {
   type: "wearable"
-  slot: Exclude<ItemSlot, "ultimate">
+  slot: Exclude<ItemSlot, "ultimate" | "mask" | "shield" | "jacket" | "vest" | "gloves" | "backpack">
 }
 export interface UltimateWearableItemData extends PassiveItemData {
   type: "wearable"
   slot: "ultimate"
   ultimate: string
 }
+export interface MaskWearableItemData extends PassiveItemData {
+  type: "wearable"
+  slot: "mask"
+  base_filtering: number
+}
+export interface ShieldWearableItemData extends PassiveItemData {
+  type: "wearable"
+  slot: "shield"
+  base_shield: number
+  base_regen: number
+}
+export interface JacketWearableItemData extends PassiveItemData {
+  type: "wearable"
+  slot: "jacket"
+  base_insulation: number
+  base_heat_capacity: number
+}
+export interface VestWearableItemData extends PassiveItemData {
+  type: "wearable"
+  slot: "vest"
+  base_armor: number
+  base_dissipate: number
+}
+export interface GlovesWearableItemData extends PassiveItemData {
+  type: "wearable"
+  slot: "gloves"
+  base_tech: number
+  base_mana: number
+  base_mana_regen: number
+}
+export interface BackpackWearableItemData extends PassiveItemData {
+  type: "wearable"
+  slot: "backpack"
+  base_parry: number
+  base_deflect: number
+}
+
 export interface WeaponItemData extends PassiveItemData {
   type: "weapon"
   base_damage: number
@@ -105,7 +146,7 @@ export interface AttackSet {
 export interface AttackData {
   modifiers?: {
     lethality?: number
-    defiltering?: number
+    passthrough?: number
     accuracy?: number
     cutting?: number
   }
@@ -178,7 +219,7 @@ export function createItem(itemdata: Item|string): InventoryItem {
     case "wearable": {
       var _: WearableInventoryItem = {
         id: data.$.id,
-        module: ItemModule.generate()
+        stat_module: ItemModule.generate()
       }
       return _;
     }
@@ -194,7 +235,7 @@ export interface EquippableInventoryItem extends BaseInventoryItem {
 }
 
 export interface WearableInventoryItem extends EquippableInventoryItem {
-  module: ItemModule
+  stat_module: ItemModule
 }
 export interface WeaponInventoryItem extends EquippableInventoryItem {
 

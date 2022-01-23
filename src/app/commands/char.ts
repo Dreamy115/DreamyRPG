@@ -733,7 +733,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
       }
       shield_length_mod = 1 - health_length_mod;
 
-      const modules = creature.modules;
+      const modules = creature.stat_modules;
       const cum_mods = creature.getModuleCumulativeModifiers();
 
       embed.addField(
@@ -777,7 +777,8 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
           `**${creature.$.stats.mana_regen.value}**/t\n\n` +
           make_bar(100 * creature.$.vitals.heat / creature.$.stats.heat_capacity.value, Creature.BAR_STYLES.Heat, BAR_LENGTH / 3).str +
           ` **Heat** ${textStat(creature.$.vitals.heat, creature.$.stats.heat_capacity.value)} ` +
-          `**${creature.deltaHeat}**/t`
+          `**${creature.deltaHeat}**/t${creature.deltaHeat < 0 ? " ⚠️" : ""}\n` +
+          `**${creature.$.stats.filtering.value}** Filtering >> **${(creature.location?.$.rads ?? 0)}** Area${(creature.location?.$.rads ?? 0) > creature.$.stats.filtering.value ? " ⚠️" : ""}`
         },
         {
           name: "Offense",
@@ -787,8 +788,8 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
             `**${creature.$.stats.damage.value}** Damage Rating *(Melee **${(creature.$.stats.damage.value * rotateLine(creature.$.stats.melee.value / 100, Creature.PROFICIENCY_DAMAGE_SCALE, 1)).toFixed(1)}** | **${(creature.$.stats.damage.value * rotateLine(creature.$.stats.ranged.value / 100, Creature.PROFICIENCY_DAMAGE_SCALE, 1)).toFixed(1)}** Ranged)*\n` +
             `**${creature.$.stats.tech.value}** Tech *(Ability Power)*\n` +
             "\n" +
-            `**${creature.$.stats.lethality.value}** Lethality | **${creature.$.stats.defiltering.value}** Defiltering | **${creature.$.stats.cutting.value}** Cutting\n` +
-            `*(Reduces effectivenes of enemy **Armor**, **Filter**, and **Tenacity** respectively)*` +
+            `**${creature.$.stats.lethality.value}** Lethality | **${creature.$.stats.passthrough.value}** Passthrough | **${creature.$.stats.cutting.value}** Cutting\n` +
+            `*(Reduces effectivenes of enemy **Armor**, **Dissipate**, and **Tenacity** respectively)*` +
             "\n" +
             `Vamp **${creature.$.stats.vamp.value}%** | **${creature.$.stats.siphon.value}%** Siphon *(Regenerates **health** | **shields** by **%** of damage dealt when dealing **Physical** | **Energy** Damage)*\n` +
             "\n" +
@@ -798,7 +799,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
           name: "Defense",
           value:
           `**${creature.$.stats.armor.value}** Armor *(**${(100 * (1 - reductionMultiplier(creature.$.stats.armor.value))).toFixed(1)}%** Reduced Physical Damage)*\n` +
-          `**${creature.$.stats.filter.value}** Filter *(**${(100 * (1 - reductionMultiplier(creature.$.stats.filter.value))).toFixed(1)}%** Reduced Energy Damage)*\n` +
+          `**${creature.$.stats.dissipate.value}** Dissipate *(**${(100 * (1 - reductionMultiplier(creature.$.stats.dissipate.value))).toFixed(1)}%** Reduced Energy Damage)*\n` +
           `Parry **${creature.$.stats.parry.value}%** | **${creature.$.stats.deflect.value}%** Deflect *(Reduces hit chance from **Melee** | **Ranged**)*\n` +
           "\n" +
           `**${creature.$.stats.tenacity.value}** Tenacity *(Taking **${(100 * reductionMultiplier(creature.$.stats.tenacity.value) * DAMAGE_TO_INJURY_RATIO).toFixed(1)}%** health damage as **Injuries**)*` +
@@ -959,7 +960,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
           }()}
           **${((attackdata.modifiers?.accuracy ?? 0) + (creature.$.stats.accuracy.value * rotateLine((type === DamageMethod.Melee ? creature.$.stats.melee.value : creature.$.stats.ranged.value) / 100, Creature.PROFICIENCY_ACCURACY_SCALE, 1))).toFixed(1)} *(${(creature.$.stats.accuracy.value * rotateLine((type === DamageMethod.Melee ? creature.$.stats.melee.value : creature.$.stats.ranged.value) / 100, Creature.PROFICIENCY_ACCURACY_SCALE, 1)).toFixed(1)} ${(attackdata.modifiers?.accuracy ?? 0) >= 0 ? "+" : "-"}${Math.abs(attackdata.modifiers?.accuracy ?? 0)})*** Accuracy
           **${attackdata.modifiers?.lethality ?? 0}** Lethality
-          **${attackdata.modifiers?.defiltering ?? 0}** Defiltering\n\n`;
+          **${attackdata.modifiers?.passthrough ?? 0}** Passthrough\n\n`;
         }
 
         return str;
@@ -1384,31 +1385,50 @@ export function describeItem(invitem?: InventoryItem, creature?: Creature) {
     lore = replaceLore(lore, item.$.info.replacers, creature);
   }
 
-  str += `*${lore}*\n`;
+  str += `*${lore}*\n\n`;
 
   // @ts-expect-error
-  if (invitem?.module) {
+  if (invitem?.stat_module) {
     // @ts-expect-error
-    let {module}: {module: ItemModule} = invitem;
-    const desc = modifierDescriptor(module.modifiers, ", ");
+    let stat_module: ItemModule = invitem.stat_module;
+    const desc = modifierDescriptor(stat_module.modifiers, ", ");
 
-    str += `Module: **${ModuleType[module.type]}** - **${(100 * module.value).toFixed(2)}%**; ${desc.substring(0, desc.length - 2)}\n`;
+    str += `Module: **${ModuleType[stat_module.type]}** - **${(100 * stat_module.value).toFixed(2)}%**; ${desc.substring(0, desc.length - 2)}\n\n`;
   }
-  
-  const scrap: string[] = [];
-  if (item.$.scrap) {
-    for (const mat in item.$.scrap.materials) {
-      // @ts-expect-error
-      scrap.push(`**${item.$.scrap.materials[mat]}** ${capitalize(mat)}`)
-    }
-    str += `\nScraps for: ${scrap.join(", ")}\n`
-  }
+
 
   if (item.$.type === "consumable") {
     const table = LootTables.map.get(item.$.returnTable ?? "");
     if (table)
       str += `\nAfter Use:\n${tableDescriptor(table)}\n\n`;
   } else if (item.$.type !== "generic") {
+    if (item.$.type === "wearable") {
+      switch (item.$.slot) {
+        case "shield": {
+          str += `Shield Primer: **${item.$.base_shield}** **${item.$.base_regen}**/t\n`
+        } break;
+        case "mask": {
+          str += `Air Filter: **${item.$.base_filtering}**\n`;
+        } break;
+        case "jacket": {
+          str += `Heat Capacity: **${item.$.base_heat_capacity}**\nInsulation: **${-item.$.base_insulation}**\n`
+        } break;
+        case "vest": {
+          str += `Armor **${item.$.base_armor}** | **${item.$.base_dissipate}** Dissipate\n`;
+        } break;
+        case "gloves": {
+          str += `Mana: **${item.$.base_mana}** **${item.$.base_mana_regen}**/t\nTech: **${item.$.base_tech}**\n`;
+        } break;
+        case "backpack": {
+          str += `Parry **${item.$.base_parry}** | **${item.$.base_deflect}** Deflect\n`;
+        } break;
+        case "ultimate": {
+          const ult = AbilitiesManager.map.get(item.$.ultimate);
+          str += `Ultimate: **${ult?.$.info.name}**\n`
+        } break;
+      }
+    }
+
     if (item.$.perks) {
       const perks: string[] = [];
       for (const p of item.$.perks) {
@@ -1459,6 +1479,16 @@ export function describeItem(invitem?: InventoryItem, creature?: Creature) {
       }
 
       str += `**Abilities**: **${abilities.join("**, **")}**\n`;
+
+    }
+
+    const scrap: string[] = [];
+    if (item.$.scrap) {
+      for (const mat in item.$.scrap.materials) {
+        // @ts-expect-error
+        scrap.push(`**${item.$.scrap.materials[mat]}** ${capitalize(mat)}`)
+      }
+      str += `\nScraps for: ${scrap.join(", ")}\n`
     }
 
     switch (item.$.type) {

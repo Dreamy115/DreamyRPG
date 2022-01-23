@@ -9,6 +9,7 @@ export default [
     },
     hasEnhancedCrafting: true,
     shop: "default",
-    temperature: 21
+    temperature: 21,
+    rads: 0
   })
 ]

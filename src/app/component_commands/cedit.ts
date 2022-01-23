@@ -507,9 +507,9 @@ export default new ComponentCommandHandler(
                         // @ts-expect-error
                         `${capitalize(item.$.slot ?? item.$.type)} ${
                           // @ts-expect-error
-                          it.module
+                          it.stat_module
                           // @ts-expect-error
-                          ? `${ModuleType[it.module.type]} ${(100 * it.module.value).toFixed(2)}%`
+                          ? `${ModuleType[it.stat_module.type]} ${(100 * it.stat_module.value).toFixed(2)}%`
                           : ""
                         }`
                     })
@@ -1300,9 +1300,9 @@ export async function scrapMenu(interaction: ButtonInteraction | CommandInteract
         description:
           `${
             // @ts-expect-error
-            it.module
+            it.stat_module
             // @ts-expect-error
-            ? `${ModuleType[it.module.type]} ${(100 * it.module.value).toFixed(2)}%`
+            ? `${ModuleType[it.stat_module.type]} ${(100 * it.stat_module.value).toFixed(2)}%`
             : ""
             // @ts-expect-error
           } ${scrap.join(", ")} ${capitalize(item.$.slot ?? item.$.type)}`,

@@ -38,6 +38,7 @@ export class GameLocation {
     area_effects?: LocationEffect[]
     hasEnhancedCrafting: boolean
     temperature: number
+    rads: number
   }
 
   constructor(data: GameLocation["$"]) {

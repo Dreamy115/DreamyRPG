@@ -756,7 +756,7 @@ export default new ApplicationCommandHandler({
         useDodge: interaction.options.getBoolean("dodgeable", true),
         penetration: {
           lethality: interaction.options.getInteger("penetration", false) ?? undefined,
-          defiltering: interaction.options.getInteger("penetration", false) ?? undefined,
+          passthrough: interaction.options.getInteger("penetration", false) ?? undefined,
           cutting: interaction.options.getInteger("cutting", false) ?? undefined
         },
         sources: [{

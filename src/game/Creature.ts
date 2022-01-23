@@ -9,7 +9,7 @@ import { CreatureAbility } from "./CreatureAbilities.js";
 import { DamageCause, DamageGroup, DamageLog, DamageMethod as DamageMethod, DamageType, DAMAGE_TO_INJURY_RATIO, reductionMultiplier, ShieldReaction } from "./Damage.js";
 import { Fight } from "./Fight.js";
 import { GameDirective } from "./GameDirectives.js";
-import { AttackData, AttackSet, Item, ItemSlot, InventoryItem, EquippableInventoryItem, WeaponInventoryItem, WearableInventoryItem } from "./Items.js";
+import { AttackData, AttackSet, Item, ItemSlot, InventoryItem, EquippableInventoryItem, WeaponInventoryItem, WearableInventoryItem, WearableItemData, SlotDescriptions } from "./Items.js";
 import { ItemModule, ModuleType } from "./Modules.js";
 import { PassiveEffect, NamedModifier } from "./PassiveEffects.js";
 import { CreaturePerk } from "./Perks.js";
@@ -43,9 +43,9 @@ export default class Creature {
         accuracy: new TrackableStat(90),
         armor: new TrackableStat(24),
         lethality: new TrackableStat(0),
-        defiltering: new TrackableStat(0),
+        passthrough: new TrackableStat(0),
         cutting: new TrackableStat(0),
-        filter: new TrackableStat(16),
+        dissipate: new TrackableStat(16),
         melee: new TrackableStat(100),
         ranged: new TrackableStat(100),
         damage: new TrackableStat(20),
@@ -62,7 +62,8 @@ export default class Creature {
         siphon: new TrackableStat(0),
         initiative: new TrackableStat(10),
         min_comfortable_temperature: new TrackableStat(15),
-        heat_capacity: new TrackableStat(100)
+        heat_capacity: new TrackableStat(100),
+        filtering: new TrackableStat(0)
       },
       attributes: {
         STR: new TrackableStat(data.attributes?.STR ?? 0),
@@ -108,11 +109,11 @@ export default class Creature {
 
     function fixModule(item: WearableInventoryItem | InventoryItem) {
       // @ts-expect-error
-      const module: ItemModule | undefined = item?.module;
+      const module: ItemModule | undefined = item?.stat_module;
 
       if (module)
         // @ts-expect-error
-        item.module = new ItemModule(module.type ?? -1, module.value ?? 0);
+        item.stat_module = new ItemModule(module.type ?? -1, module.value ?? 0);
     }
 
     for (const i in data.items?.slotted) {
@@ -129,11 +130,51 @@ export default class Creature {
 
     this.checkItemConflicts();
     // PRELOAD
-    
+
+    // @ts-expect-error
+    const slottedItems: Record<ItemSlot, Item | undefined> = {};
+    for (const slot in SlotDescriptions) {
+      // @ts-expect-error
+      slottedItems[slot] = ItemManager.map.get(this.$.items.slotted[slot]?.id ?? "") ?? null;
+    }
+    console.log(slottedItems)
+    // ADDING ITEM BASES
     this.$.stats.ult_stack_target.base = this.ultimate?.$.cost ?? 0;
-    // @ts-expect-error Addding Primary Weapon damage to base
+    
+    // @ts-expect-error
     this.$.stats.damage.base += ItemManager.map.get(this.$.items.primary_weapon?.id ?? "")?.$.base_damage ?? 0;
     
+    // @ts-expect-error
+    this.$.stats.filtering.base += slottedItems.mask?.$.base_filtering ?? 0;
+
+    // @ts-expect-error
+    this.$.stats.shield.base += slottedItems.shield?.$.base_shield ?? 0;
+    // @ts-expect-error
+    this.$.stats.shield_regen.base += slottedItems.shield?.$.base_regen ?? 0;
+    
+    // @ts-expect-error
+    this.$.stats.armor.base += slottedItems.vest?.$.base_armor ?? 0;
+    // @ts-expect-error
+    this.$.stats.dissipate.base += slottedItems.vest?.$.base_dissipate ?? 0;
+
+    // @ts-expect-error
+    this.$.stats.min_comfortable_temperature.base += slottedItems.jacket?.$.base_insulation ?? 0;
+    // @ts-expect-error
+    this.$.stats.heat_capacity.base += slottedItems.jacket?.$.base_heat_capacity ?? 0;
+    
+    // @ts-expect-error
+    this.$.stats.parry.base += slottedItems.backpack?.$.base_parry ?? 0;
+    // @ts-expect-error
+    this.$.stats.deflect.base += slottedItems.backpack?.$.base_deflect ?? 0;
+    
+    // @ts-expect-error
+    this.$.stats.mana.base += slottedItems.gloves?.$.base_mana ?? 0;
+    // @ts-expect-error
+    this.$.stats.mana_regen.base += slottedItems.gloves?.$.base_mana_regen ?? 0;
+    // @ts-expect-error
+    this.$.stats.tech.base += slottedItems.gloves?.$.tech ?? 0;
+
+
     // Modules
     for (const [type, mods] of this.getModuleCumulativeModifiers()) {
       for (const mod of mods)
@@ -236,15 +277,15 @@ export default class Creature {
   }
 
 
-  get modules(): Map<ModuleType, ItemModule[]> {
+  get stat_modules(): Map<ModuleType, ItemModule[]> {
     const map = new Map<ModuleType, ItemModule[]>();
     for (const item of this.inventoryItems) {
       // @ts-expect-error
-      if (item?.module) {
+      if (item?.stat_module) {
         // @ts-expect-error
         const witem: WearableInventoryItem = item;
         
-        map.set(witem.module.type, [...(map.get(witem.module.type) ?? []), witem.module]);
+        map.set(witem.stat_module.type, [...(map.get(witem.stat_module.type) ?? []), witem.stat_module]);
       }
     }
     return map;
@@ -252,7 +293,7 @@ export default class Creature {
   getModuleCumulativeModifiers(): Map<ModuleType, NamedModifier[]> {
     const map = new Map<ModuleType, NamedModifier[]>();
 
-    for (const [type, modules] of this.modules) {
+    for (const [type, modules] of this.stat_modules) {
       let cumval = 0;
       for (const module of modules) {
         cumval += module.value;
@@ -271,7 +312,7 @@ export default class Creature {
       normal: [{
         modifiers: {
           accuracy: 0,
-          defiltering: 0,
+          passthrough: 0,
           lethality: 0
         },
         sources: [{
@@ -283,7 +324,7 @@ export default class Creature {
       crit: [{
         modifiers: {
           accuracy: 0,
-          defiltering: 0,
+          passthrough: 0,
           lethality: 0
         },
         sources: [{
@@ -295,7 +336,7 @@ export default class Creature {
       weak: [{
         modifiers: {
           accuracy: 0,
-          defiltering: 0,
+          passthrough: 0,
           lethality: 0
         },
         sources: [{
@@ -600,8 +641,8 @@ export default class Creature {
             source.value *= reductionMultiplier(this.$.stats.armor.value - (group.penetration?.lethality ?? 0));
           } break;
           case DamageType.Energy: {
-            log.total_damage_mitigated += Math.round(source.value * (1 - reductionMultiplier(this.$.stats.filter.value - (group.penetration?.defiltering ?? 0))));
-            source.value *= reductionMultiplier(this.$.stats.filter.value - (group.penetration?.defiltering ?? 0));
+            log.total_damage_mitigated += Math.round(source.value * (1 - reductionMultiplier(this.$.stats.dissipate.value - (group.penetration?.passthrough ?? 0))));
+            source.value *= reductionMultiplier(this.$.stats.dissipate.value - (group.penetration?.passthrough ?? 0));
           } break;
         }
         source.value = Math.round(source.value);
@@ -748,6 +789,14 @@ export default class Creature {
         id: "hypothermia",
         ticks: 1,
         severity: 1
+      })
+    }
+
+    if (this.$.stats.filtering.value < (this.location?.$.rads ?? 0)) {
+      effects.push({
+        id: "filter_fail",
+        ticks: 1,
+        severity: (this.location?.$.rads ?? 0) - this.$.stats.filtering.value
       })
     }
 
@@ -1088,7 +1137,7 @@ export default class Creature {
     {
       type: ModifierType.ADD_PERCENT,
       value: 0.1,
-      stat: "filter"
+      stat: "dissipate"
     },
     {
       type: ModifierType.ADD,
@@ -1098,7 +1147,7 @@ export default class Creature {
     {
       type: ModifierType.ADD,
       value: 2,
-      stat: "defiltering"
+      stat: "passthrough"
     },
     {
       type: ModifierType.ADD_PERCENT,
@@ -1188,7 +1237,7 @@ export default class Creature {
       {
         type: ModifierType.ADD_PERCENT,
         value: 0.06,
-        stat: "filter"
+        stat: "dissipate"
       },
       {
         type: ModifierType.ADD_PERCENT,
@@ -1222,7 +1271,7 @@ export default class Creature {
       {
         type: ModifierType.ADD,
         value: 5,
-        stat: "defiltering"
+        stat: "passthrough"
       }
     ],
     INT: [
@@ -1402,6 +1451,7 @@ export type Attributes = "STR" | "FOR" | "REJ" | "PER" | "INT" | "DEX" | "CHA";
 
 export type Vitals = "health" | "mana" | "shield" | "injuries" | "heat";
 
-export type Stats = "accuracy" | "armor" | "filter" | "lethality" | "defiltering" | "cutting" | "melee" | "damage" |
-"ranged" | "health" | "mana" | "mana_regen" | "shield" | "shield_regen" | "parry" | "deflect" | "tenacity" | 
-"tech" | "vamp" | "siphon" | "initiative" | "min_comfortable_temperature" | "heat_capacity" | "attack_cost" | "ult_stack_target";
+export type Stats = 
+  "accuracy" | "armor" | "dissipate" | "lethality" | "passthrough" | "cutting" | "melee" | "damage" | "ranged" |
+  "health" | "mana" | "mana_regen" | "shield" | "shield_regen" | "parry" | "deflect" | "tenacity" | "filtering" |
+  "tech" | "vamp" | "siphon" | "initiative" | "min_comfortable_temperature" | "heat_capacity" | "attack_cost" | "ult_stack_target";

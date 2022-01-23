@@ -14,25 +14,19 @@ export default [
     },
     type: "wearable",
     slot: "shield",
-    passives: new Set([
-      new PassiveEffect({
-        info: {
-          name: "Shield Primer",
-          lore: `Base Shield **20 SP** **4**/t`
-        },
-        preload: function (creature) {
-          creature.$.stats.shield.base += 20;
-          creature.$.stats.shield_regen.base += 4;
-        }
-      })
-    ]),
-    scrap: {
-      materials: new CraftingMaterials({
-        cells: 1,
-        plastic: 20,
-        metal: 3
-      })
-    }
+    base_shield: 20,
+    base_regen: 4
+  }),
+  new Item({
+    id: "basic_mask",
+    info: {
+      name: "Basic Mask",
+      lore: "It's capable of filtering out small amounts of particles. That's what the point of the mask is.",
+      quality: ItemQuality.Common
+    },
+    type: "wearable",
+    slot: "mask",
+    base_filtering: 1
   }),
   new Item({
     id: "starter_knife",
@@ -49,7 +43,7 @@ export default [
         {
           modifiers: {
             accuracy: -5,
-            defiltering: 0,
+            passthrough: 0,
             lethality: 0
           },
           sources: [
@@ -65,7 +59,7 @@ export default [
         {
           modifiers: {
             accuracy: 0,
-            defiltering: 0,
+            passthrough: 0,
             lethality: 0
           },
           sources: [
@@ -81,7 +75,7 @@ export default [
         {
           modifiers: {
             accuracy: 10,
-            defiltering: 0,
+            passthrough: 0,
             lethality: 2
           },
           sources: [
@@ -110,7 +104,7 @@ export default [
         { 
           modifiers: {
             accuracy: -5,
-            defiltering: 0,
+            passthrough: 0,
             lethality: 1
           },
           sources: [{
@@ -124,7 +118,7 @@ export default [
         {
           modifiers: {
             accuracy: -5,
-            defiltering: 0,
+            passthrough: 0,
             lethality: 2
           },
           sources: [{
@@ -136,7 +130,7 @@ export default [
         {
           modifiers: {
             accuracy: -5,
-            defiltering: 0,
+            passthrough: 0,
             lethality: 2
           },
           sources: [{
@@ -150,7 +144,7 @@ export default [
         {
           modifiers: {
             accuracy: -5,
-            defiltering: 0,
+            passthrough: 0,
             lethality: 3
           },
           sources: [{
@@ -162,7 +156,7 @@ export default [
         {
           modifiers: {
             accuracy: -5,
-            defiltering: 0,
+            passthrough: 0,
             lethality: 3
           },
           sources: [{
@@ -174,7 +168,7 @@ export default [
         {
           modifiers: {
             accuracy: -5,
-            defiltering: 0,
+            passthrough: 0,
             lethality: 3
           },
           sources: [{

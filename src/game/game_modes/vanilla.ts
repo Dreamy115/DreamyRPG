@@ -53,7 +53,7 @@ export default [
           },
           {
             type: ModifierType.MULTIPLY,
-            stat: "filter",
+            stat: "dissipate",
             value: 1.2
           },
           {
@@ -63,7 +63,7 @@ export default [
           },
           {
             type: ModifierType.MULTIPLY,
-            stat: "defiltering",
+            stat: "passthrough",
             value: 1.2
           }
         ]

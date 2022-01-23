@@ -1232,7 +1232,7 @@ export default new ComponentCommandHandler(
                                   str.push(
                                     `${modifierDescriptor(mod)} ` +
                                     `(**${(100 * lerped).toFixed(1)}%**) -> ` +
-                                    `Unknown **??** (**??%**)`
+                                    `**??** Unknown (**??%**)`
                                   )
                                 }
 

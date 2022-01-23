@@ -72,6 +72,7 @@ interface PassiveItemData extends BaseItemData {
     choose: number,
     mods: Map<Stats | Attributes, ItemModifierModuleInfo>
   }
+  recalibrate_cost?: CraftingMaterials
   optimize_step?: number
   optimize_cost?: CraftingMaterials
 }

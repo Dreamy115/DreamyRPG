@@ -410,32 +410,53 @@ export default new ComponentCommandHandler(
 
                   switch (args.shift()) {
                     default: {
-                      const items: MessageSelectOptionData[] = [];
+                      const opt_items: MessageSelectOptionData[] = [];
+                      const rec_items: MessageSelectOptionData[] = [];
 
                       for (const i in creature.$.items.backpack) {
                         const it = creature.$.items.backpack[i];
                         const item = ItemManager.map.get(it?.id);
-                        if (!item || (item.$.type !== "wearable" && item.$.type !== "weapon")) continue;
-                        if (!item.$.optimize_cost) continue;
-                        
-                        items.push({
-                          label: item.$.info.name,
-                          emoji: ItemQualityEmoji[item.$.info.quality],
-                          value: i,
-                          description: limitString(removeMarkdown(
-                            // @ts-expect-error
-                            `${capitalize(item.$.slot ?? item.$.type)} ` + 
-                            (
-                              // @ts-expect-error
-                              it.stat_module ? (
+                        if (item?.$.type === "wearable" || item?.$.type === "weapon") {
+                          if (item.$.optimize_cost)
+                            opt_items.push({
+                              label: item.$.info.name,
+                              emoji: ItemQualityEmoji[item.$.info.quality],
+                              value: i,
+                              description: limitString(removeMarkdown(
                                 // @ts-expect-error
-                                `${ModuleType[it.stat_module.type]} ` +
-                                // @ts-expect-error
-                                `${(100 * it.stat_module.value).toFixed(2)}% -> ${(100 * Math.min(1, it.stat_module.value + (item.$.optimize_step ?? DEFAULT_ITEM_OPT_STEP))).toFixed(2)}% `
-                                ) : ""
-                            ) + (
-                              // @ts-expect-error
-                              it.modifier_modules ? function() {
+                                `${capitalize(item.$.slot ?? item.$.type)} ` + 
+                                (
+                                  // @ts-expect-error
+                                  it.stat_module ? (
+                                    // @ts-expect-error
+                                    `${ModuleType[it.stat_module.type]} ` +
+                                    // @ts-expect-error
+                                    `${(100 * it.stat_module.value).toFixed(2)}% -> ${(100 * Math.min(1, it.stat_module.value + (item.$.optimize_step ?? DEFAULT_ITEM_OPT_STEP))).toFixed(2)}% `
+                                    ) : ""
+                                ) + (
+                                  // @ts-expect-error
+                                  it.modifier_modules ? function() {
+                                    const _mods: string[] = [];
+                                    for (const mod of (it as EquippableInventoryItem)?.modifier_modules ?? []) {
+                                      const reference = (item.$ as WearableItemData | WeaponItemData).modifier_module?.mods.get(mod.stat);
+                                      _mods.push(`${modifierDescriptor(mod)} _(${reference ? `${`**${
+                                        reference.range[0] === reference.range[1]
+                                        ? ""
+                                        : (100 * invLerp(mod.value, reference.range[0], reference.range[1])).toFixed(1)
+                                      }%**`}` : "NUL"})_`);
+                                    }
+                                    return _mods.join(", ")
+                                  }() : ""
+                                )).trim(),
+                                100
+                              )
+                            })
+                          if (item.$.recalibrate_cost && (it as EquippableInventoryItem).modifier_modules) {
+                            rec_items.push({
+                              label: item.$.info.name,
+                              emoji: ItemQualityEmoji[item.$.info.quality],
+                              value: i,
+                              description: limitString(removeMarkdown(function() {
                                 const _mods: string[] = [];
                                 for (const mod of (it as EquippableInventoryItem)?.modifier_modules ?? []) {
                                   const reference = (item.$ as WearableItemData | WeaponItemData).modifier_module?.mods.get(mod.stat);
@@ -446,17 +467,35 @@ export default new ComponentCommandHandler(
                                   }%**`}` : "NUL"})_`);
                                 }
                                 return _mods.join(", ")
-                              }() : ""
-                            )).trim(),
-                            100
-                          )
-                        })
+                              }()).trim(), 100)
+                            })
+                          }
+                        }
                       }
     
-                      if (items.length == 0) {
+                      const components: MessageActionRow[] = [];
+                      if (opt_items.length > 0) 
+                        components.push(new MessageActionRow().setComponents([
+                          new MessageSelectMenu()
+                            .setCustomId(`cedit/${creature.$._id}/edit/item/modify/optimize`)
+                            .setOptions(opt_items)
+                            .setMaxValues(1).setMinValues(1)
+                            .setPlaceholder("Optimize Items")
+                        ]))
+
+                      if (rec_items.length > 0)
+                        components.push(new MessageActionRow().setComponents([
+                          new MessageSelectMenu()
+                            .setCustomId(`cedit/${creature.$._id}/edit/item/modify/recalibrate`)
+                            .setOptions(rec_items)
+                            .setMaxValues(1).setMinValues(1)
+                            .setPlaceholder("Recalibrate Items")
+                        ]))
+
+                      if (components.length == 0) {
                         interaction.followUp({
                           ephemeral: true,
-                          content: "No optimizable items found in your backpack."
+                          content: "No modifiable items found in your backpack."
                         });
                         return;
                       }
@@ -464,15 +503,7 @@ export default new ComponentCommandHandler(
                       interaction.followUp({
                         ephemeral: true,
                         content: "Item Workshop...",
-                        components: [
-                          new MessageActionRow().setComponents([
-                            new MessageSelectMenu()
-                              .setCustomId(`cedit/${creature.$._id}/edit/item/modify/optimize`)
-                              .setOptions(items)
-                              .setMaxValues(1).setMinValues(1)
-                              .setPlaceholder("Optimize Items")
-                          ])
-                        ]
+                        components
                       })
                       return;
                     } break;
@@ -527,6 +558,63 @@ export default new ComponentCommandHandler(
                         mod.value = lerp(clamp(lerped + (item.$.optimize_step ?? DEFAULT_ITEM_OPT_STEP), 0, 1), reference.range[0], reference.range[1]);
                       }
 
+                    } break;
+                    case "recalibrate": {
+                      const index = Number(args.shift());
+                      if (isNaN(index)) return;
+
+                      const it: EquippableInventoryItem = creature.$.items.backpack[index];
+                      const item = ItemManager.map.get(it?.id);
+                      if (
+                        !item || (item.$.type !== "wearable" && item.$.type !== "weapon")
+                        || !item.$.recalibrate_cost
+                      ) {
+                        interaction.followUp({
+                          ephemeral: true,
+                          content: "Item not recalibrateable"
+                        });
+                        return;
+                      }
+
+                      try {
+                        for (const mat in item.$.recalibrate_cost) {
+                          // @ts-expect-error
+                          const material: number = item.$.recalibrate_cost[mat];
+              
+                          // @ts-expect-error
+                          if (creature.$.items.crafting_materials[mat] < material) throw new Error(`Not enough materials; need more ${capitalize(mat)}`)
+                        }
+                      } catch (e: any) {
+                        interaction.editReply({
+                          content: `Your character doesn't meet the requirements:\n*${e?.message}*`
+                        });
+                        return;
+                      }
+
+                      for (const mat in item.$.recalibrate_cost) {
+                        // @ts-expect-error
+                        creature.$.items.crafting_materials[mat] -= item.$.recalibrate_cost[mat];
+                      }
+
+                      it.modifier_modules = (createItem(item) as EquippableInventoryItem).modifier_modules;
+
+                      const _mods: string[] = [];
+                      for (const mod of it.modifier_modules ?? []) {
+                        const reference = item.$.modifier_module?.mods.get(mod.stat);
+                        if (!reference) {
+                          _mods.push("Invalid");
+                          continue;
+                        }
+
+                        _mods.push(`${modifierDescriptor(mod)} (**${(100 * invLerp(mod.value, reference.range[0], reference.range[1])).toFixed(1)}**%)`);
+                      }
+
+                      creature.put(db);
+                      interaction.followUp({
+                        ephemeral: true,
+                        content: `New Attributes: ${_mods.join(", ")}`
+                      })
+                      return;
                     } break;
                   }
 
@@ -1083,6 +1171,94 @@ export default new ComponentCommandHandler(
                           new MessageActionRow().setComponents([
                             new MessageButton()
                               .setCustomId(`cedit/${creature.$._id}/edit/item/modify/optimize/${index}`)
+                              .setLabel("Confirm")
+                              .setStyle("SUCCESS")
+                          ])
+                        ]
+                      })
+                      return;
+                    } break;
+                    case "recalibrate": {
+                      const index = Number(interaction.values[0]);
+
+                      const item: EquippableInventoryItem = creature.$.items.backpack[index];
+                      const data = ItemManager.map.get(item?.id ?? "");
+
+                      if (!item || (data?.$.type !== "wearable" && data?.$.type !== "weapon") || !data.$.recalibrate_cost) {
+                        interaction.followUp({
+                          ephemeral: true,
+                          content: "Invalid item or not recalibrateable"
+                        })
+                        return;
+                      }
+
+                      try {
+                        for (const mat in data.$.recalibrate_cost) {
+                          // @ts-expect-error
+                          const material: number = data.$.recalibrate_cost[mat];
+              
+                          // @ts-expect-error
+                          if (creature.$.items.crafting_materials[mat] < material) throw new Error(`Not enough materials; need more ${capitalize(mat)}`)
+                        }
+                      } catch (e: any) {
+                        interaction.editReply({
+                          content: `Your character doesn't meet the requirements:\n*${e?.message}*`
+                        });
+                        return;
+                      }
+    
+                      interaction.followUp({
+                        ephemeral: true,
+                        embeds: [
+                          new MessageEmbed()
+                            .setTitle("Item Recalibration")
+                            .setDescription(
+                              `**${data.displayName}**\n` +
+                              function() {
+                                const itm = item as WearableInventoryItem;
+                                if (!itm.stat_module) return "";
+                                return `**${ModuleType[itm.stat_module.type]} ${(100 * itm.stat_module.value).toFixed(2)}%**`
+                               }() + function() {
+                                if ((item.modifier_modules?.length ?? 0) === 0) return "";
+
+                                const str: string[] = [];
+
+                                for (const mod of item.modifier_modules ?? []) {
+                                  const reference = (data.$ as WearableItemData | WeaponItemData).modifier_module?.mods.get(mod.stat);
+                                  if (!reference) continue;
+                                  
+                                  let lerped = invLerp(mod.value, reference.range[0], reference.range[1]);
+
+                                  str.push(
+                                    `${modifierDescriptor(mod)} ` +
+                                    `(**${(100 * lerped).toFixed(1)}%**) -> ` +
+                                    `Unknown **??** (**??%**)`
+                                  )
+                                }
+
+                                return str.join("\n");
+                              }()
+                            ).addField(
+                              "Cost",
+                              `${function() {
+                                const arr: string[] = [];
+
+                                for (const mat in data.$.recalibrate_cost) {
+                                  // @ts-expect-error
+                                  const material: number = data.$.recalibrate_cost[mat];
+                                  
+                                  if (material !== 0)
+                                    arr.push(`**${material}** ${capitalize(mat)}`)
+                                }
+
+                                return arr;
+                              }().join(", ")}`
+                            )
+                        ],
+                        components: [
+                          new MessageActionRow().setComponents([
+                            new MessageButton()
+                              .setCustomId(`cedit/${creature.$._id}/edit/item/modify/recalibrate/${index}`)
                               .setLabel("Confirm")
                               .setStyle("SUCCESS")
                           ])

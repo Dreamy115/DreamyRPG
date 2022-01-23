@@ -18,7 +18,7 @@ export default [
     base_regen: 4
   }),
   new Item({
-    id: "basic_mask",
+    id: "starter_mask",
     info: {
       name: "Basic Mask",
       lore: "It's capable of filtering out small amounts of particles. That's what the point of the mask is.",
@@ -27,6 +27,55 @@ export default [
     type: "wearable",
     slot: "mask",
     base_filtering: 1
+  }),
+  new Item({
+    id: "starter_jacket",
+    info: {
+      name: "Rag Jacket",
+      lore: "Something to put over yourself to stop the wind.",
+      quality: ItemQuality.Common
+    },
+    type: "wearable",
+    slot: "jacket",
+    base_heat_capacity: 0,
+    base_insulation: 15
+  }),
+  new Item({
+    id: "starter_vest",
+    info: {
+      name: "Scrap Vest",
+      lore: "A bunch of scrap taped together for protection.. Eeeeh good enough?",
+      quality: ItemQuality.Common
+    },
+    type: "wearable",
+    slot: "vest",
+    base_armor: 2,
+    base_dissipate: 1,
+  }),
+  new Item({
+    id: "starter_backpack",
+    info: {
+      name: "Rag-Pack",
+      lore: "Introducing the Rag-Pack, it holds things! -uh... That's everything? Where's the rest of the script? Is this thing still on?",
+      quality: ItemQuality.Common
+    },
+    type: "wearable",
+    slot: "backpack",
+    base_deflect: 0,
+    base_parry: 1
+  }),
+  new Item({
+    id: "starter_gloves",
+    info: {
+      name: "Used Bike Gloves",
+      lore: "Something to put your pawsies into, not much.",
+      quality: ItemQuality.Common
+    },
+    type: "wearable",
+    slot: "gloves",
+    base_mana: 0,
+    base_mana_regen: 0,
+    base_tech: 1
   }),
   new Item({
     id: "starter_knife",

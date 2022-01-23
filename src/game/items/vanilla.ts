@@ -38,7 +38,7 @@ export default [
     type: "wearable",
     slot: "jacket",
     base_heat_capacity: 0,
-    base_insulation: 15
+    base_insulation: -15
   }),
   new Item({
     id: "starter_vest",

@@ -23,7 +23,7 @@ export default [
         cells: 1
       }) 
     },
-    optimalize_cost: new CraftingMaterials({
+    optimize_cost: new CraftingMaterials({
       cells: 1
     })
   }),

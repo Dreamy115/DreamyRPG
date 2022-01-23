@@ -416,7 +416,7 @@ export default new ComponentCommandHandler(
                         const item = ItemManager.map.get(it?.id);
                         if (!item || item.$.type !== "wearable") continue;
                         // @ts-expect-error
-                        if (it.stat_module.value >= 1.0 || !item.$.optimalize_cost) continue;
+                        if (it.stat_module.value >= 1.0 || !item.$.optimize_cost) continue;
 
                         items.push({
                           label: item.$.info.name,
@@ -426,7 +426,7 @@ export default new ComponentCommandHandler(
                           // @ts-expect-error
                           `${capitalize(item.$.slot)} ${ModuleType[it.stat_module.type]} ` +
                           // @ts-expect-error
-                            `${(100 * it.stat_module.value).toFixed(2)}% -> ${(100 * Math.min(1, it.stat_module.value + (item.$.optimalize_step ?? DEFAULT_ITEM_OPT_STEP))).toFixed(2)}%`
+                            `${(100 * it.stat_module.value).toFixed(2)}% -> ${(100 * Math.min(1, it.stat_module.value + (item.$.optimize_step ?? DEFAULT_ITEM_OPT_STEP))).toFixed(2)}%`
                         })
                       }
     
@@ -463,7 +463,7 @@ export default new ComponentCommandHandler(
                       if (
                         !item || item.$.type !== "wearable"
                         ||
-                        it.stat_module.value >= 1.0 || !item.$.optimalize_cost
+                        it.stat_module.value >= 1.0 || !item.$.optimize_cost
                       ) {
                         interaction.followUp({
                           ephemeral: true,
@@ -473,9 +473,9 @@ export default new ComponentCommandHandler(
                       }
 
                       try {
-                        for (const mat in item.$.optimalize_cost) {
+                        for (const mat in item.$.optimize_cost) {
                           // @ts-expect-error
-                          const material: number = item.$.optimalize_cost[mat];
+                          const material: number = item.$.optimize_cost[mat];
               
                           // @ts-expect-error
                           if (creature.$.items.crafting_materials[mat] < material) throw new Error(`Not enough materials; need more ${capitalize(mat)}`)
@@ -487,11 +487,11 @@ export default new ComponentCommandHandler(
                         return;
                       }
 
-                      for (const mat in item.$.optimalize_cost) {
+                      for (const mat in item.$.optimize_cost) {
                         // @ts-expect-error
-                        creature.$.items.crafting_materials[mat] -= item.$.optimalize_cost[mat];
+                        creature.$.items.crafting_materials[mat] -= item.$.optimize_cost[mat];
                       }
-                      it.stat_module.value = Math.min(1, it.stat_module.value + (item.$.optimalize_step ?? DEFAULT_ITEM_OPT_STEP));
+                      it.stat_module.value = Math.min(1, it.stat_module.value + (item.$.optimize_step ?? DEFAULT_ITEM_OPT_STEP));
 
                     } break;
                   }
@@ -945,7 +945,7 @@ export default new ComponentCommandHandler(
                       const item: WearableInventoryItem = creature.$.items.backpack[index];
                       const data = ItemManager.map.get(item?.id ?? "");
 
-                      if (!item || data?.$.type !== "wearable" || item.stat_module.value >= 1 || !data.$.optimalize_cost) {
+                      if (!item || data?.$.type !== "wearable" || item.stat_module.value >= 1 || !data.$.optimize_cost) {
                         interaction.followUp({
                           ephemeral: true,
                           content: "Invalid item or not optimizable"
@@ -954,9 +954,9 @@ export default new ComponentCommandHandler(
                       }
 
                       try {
-                        for (const mat in data.$.optimalize_cost) {
+                        for (const mat in data.$.optimize_cost) {
                           // @ts-expect-error
-                          const material: number = data.$.optimalize_cost[mat];
+                          const material: number = data.$.optimize_cost[mat];
               
                           // @ts-expect-error
                           if (creature.$.items.crafting_materials[mat] < material) throw new Error(`Not enough materials; need more ${capitalize(mat)}`)
@@ -976,15 +976,15 @@ export default new ComponentCommandHandler(
                             .setDescription(
                               `**${data.displayName}**\n` +
                               `**${ModuleType[item.stat_module.type]} ${(100 * item.stat_module.value).toFixed(2)}%** -> ` +
-                              `**${(100 * (item.stat_module.value + (data.$.optimalize_step ?? DEFAULT_ITEM_OPT_STEP))).toFixed(2)}%**`
+                              `**${(100 * (item.stat_module.value + (data.$.optimize_step ?? DEFAULT_ITEM_OPT_STEP))).toFixed(2)}%**`
                             ).addField(
                               "Cost",
                               `${function() {
                                 const arr: string[] = [];
 
-                                for (const mat in data.$.optimalize_cost) {
+                                for (const mat in data.$.optimize_cost) {
                                   // @ts-expect-error
-                                  const material: number = data.$.optimalize_cost[mat];
+                                  const material: number = data.$.optimize_cost[mat];
                                   
                                   if (material !== 0)
                                     arr.push(`**${material}** ${capitalize(mat)}`)

@@ -72,13 +72,13 @@ interface PassiveItemData extends BaseItemData {
 export interface NormalWearableItemData extends PassiveItemData {
   type: "wearable"
   slot: Exclude<ItemSlot, "ultimate" | "mask" | "shield" | "jacket" | "vest" | "gloves" | "backpack">
-  optimalize_step?: number
-  optimalize_cost?: CraftingMaterials
+  optimize_step?: number
+  optimize_cost?: CraftingMaterials
 }
 export interface WearableItemData extends PassiveItemData {
   type: "wearable"
-  optimalize_step?: number
-  optimalize_cost?: CraftingMaterials
+  optimize_step?: number
+  optimize_cost?: CraftingMaterials
 }
 export const DEFAULT_ITEM_OPT_STEP = 0.2;
 export interface UltimateWearableItemData extends WearableItemData {

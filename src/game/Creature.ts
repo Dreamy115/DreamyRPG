@@ -10,7 +10,7 @@ import { DamageCause, DamageGroup, DamageLog, DamageMethod as DamageMethod, Dama
 import { Fight } from "./Fight.js";
 import { GameDirective } from "./GameDirectives.js";
 import { AttackData, AttackSet, Item, ItemSlot, InventoryItem, EquippableInventoryItem, WeaponInventoryItem, WearableInventoryItem, NormalWearableItemData, SlotDescriptions } from "./Items.js";
-import { ItemModule, ModuleType } from "./Modules.js";
+import { ItemStatModule, ModuleType } from "./Modules.js";
 import { PassiveEffect, NamedModifier } from "./PassiveEffects.js";
 import { CreaturePerk } from "./Perks.js";
 import { CreatureSkill } from "./Skills.js";
@@ -109,11 +109,11 @@ export default class Creature {
 
     function fixModule(item: WearableInventoryItem | InventoryItem) {
       // @ts-expect-error
-      const module: ItemModule | undefined = item?.stat_module;
+      const module: ItemStatModule | undefined = item?.stat_module;
 
       if (module)
         // @ts-expect-error
-        item.stat_module = new ItemModule(module.type ?? -1, module.value ?? 0);
+        item.stat_module = new ItemStatModule(module.type ?? -1, module.value ?? 0);
     }
 
     for (const i in data.items?.slotted) {
@@ -179,6 +179,21 @@ export default class Creature {
     for (const [type, mods] of this.getModuleCumulativeModifiers()) {
       for (const mod of mods)
         this.applyNamedModifier(mod)
+    }
+    for (const slot in this.$.items.slotted) {
+      // @ts-expect-error
+      const item: WearableInventoryItem = this.$.items.slotted[slot];
+
+      for (const mod of item.modifier_modules ?? []) {
+        this.applyNamedModifier(mod);
+      }
+    }
+    for (const weapon of [this.$.items.primary_weapon, ...this.$.items.weapons]) {
+      if (!weapon) continue;
+
+      for (const mod of weapon.modifier_modules ?? []) {
+        this.applyNamedModifier(mod);
+      }
     }
     
     const passives = this.passives;
@@ -277,8 +292,8 @@ export default class Creature {
   }
 
 
-  get stat_modules(): Map<ModuleType, ItemModule[]> {
-    const map = new Map<ModuleType, ItemModule[]>();
+  get stat_modules(): Map<ModuleType, ItemStatModule[]> {
+    const map = new Map<ModuleType, ItemStatModule[]>();
     for (const item of this.inventoryItems) {
       // @ts-expect-error
       if (item?.stat_module) {
@@ -298,7 +313,7 @@ export default class Creature {
       for (const module of modules) {
         cumval += module.value;
       }
-      const module = new ItemModule(type, cumval);
+      const module = new ItemStatModule(type, cumval);
       map.set(type, module.modifiers);
     }
 
@@ -391,15 +406,13 @@ export default class Creature {
   }
 
   checkItemConflicts() {
-    let weaponAmount = 0;
-
     if (this.$.items.primary_weapon && ItemManager.map.get(this.$.items.primary_weapon.id)?.$.type !== "weapon") {
       this.$.items.backpack.push(this.$.items.primary_weapon);
       this.$.items.primary_weapon = null;
     }
 
     for (var i = 0; i < this.$.items.weapons.length; i++) {
-      if (weaponAmount >= Creature.MAX_EQUIPPED_WEAPONS || ItemManager.map.get(this.$.items.weapons[i]?.id)?.$.type !== "weapon") {
+      if (this.$.items.weapons.length > Creature.MAX_EQUIPPED_WEAPONS || ItemManager.map.get(this.$.items.weapons[i]?.id)?.$.type !== "weapon") {
         this.$.items.backpack.push(this.$.items.weapons.splice(i, 1)[0]);
         i--;
       }  

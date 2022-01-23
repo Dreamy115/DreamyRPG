@@ -1,14 +1,14 @@
 import fs from "fs";
 import path from "path";
 
-import { PassiveEffect } from "./PassiveEffects";
+import { NamedModifier, PassiveEffect } from "./PassiveEffects";
 import { DamageMethod, DamageType } from "./Damage";
 import { CreaturePerk } from "./Perks";
-import Creature from "./Creature";
+import Creature, { Attributes, diceRoll, Stats } from "./Creature";
 import { AbilityUseLog, LoreReplacer } from "./CreatureAbilities";
 import { CraftingMaterials } from "./Crafting";
-import { ItemManager } from "..";
-import { ItemModule } from "./Modules";
+import { ItemManager, lerp } from "..";
+import { ItemModifierModuleInfo, ItemStatModule } from "./Modules";
 
 export default class ItemsManager {
   map = new Map<string, Item>();
@@ -68,18 +68,18 @@ interface PassiveItemData extends BaseItemData {
   passives?: Set<PassiveEffect|string>
   abilities?: Set<string>
   perks?: Set<(string | CreaturePerk)>
+  modifier_module?: {
+    choose: number,
+    mods: Map<Stats | Attributes, ItemModifierModuleInfo>
+  }
+  optimize_step?: number
+  optimize_cost?: CraftingMaterials
 }
 export interface NormalWearableItemData extends PassiveItemData {
   type: "wearable"
   slot: Exclude<ItemSlot, "ultimate" | "mask" | "shield" | "jacket" | "vest" | "gloves" | "backpack">
-  optimize_step?: number
-  optimize_cost?: CraftingMaterials
 }
-export interface WearableItemData extends PassiveItemData {
-  type: "wearable"
-  optimize_step?: number
-  optimize_cost?: CraftingMaterials
-}
+export type WearableItemData = Omit<NormalWearableItemData, "slot">
 export const DEFAULT_ITEM_OPT_STEP = 0.2;
 export interface UltimateWearableItemData extends WearableItemData {
   slot: "ultimate"
@@ -210,21 +210,33 @@ export function createItem(itemdata: Item|string): InventoryItem {
     data = _data;
   }
 
+  const invi: InventoryItem = {
+    id: data.$.id
+  }
+
   switch (data.$.type) {
-    case "consumable":
-    case "generic":
-    default:
-      return {
-        id: data.$.id
-      }
+    default: return invi;
     case "wearable": {
-      var _: WearableInventoryItem = {
-        id: data.$.id,
-        stat_module: ItemModule.generate()
-      }
-      return _;
+      (invi as WearableInventoryItem).stat_module = ItemStatModule.generate();
+    } break;
+    case "weapon":
+  }
+
+  if (data.$.modifier_module) {
+    (invi as EquippableInventoryItem).modifier_modules = [];
+    const entries = Array.from(data.$.modifier_module.mods.entries());
+    for (var i = 0; i < data.$.modifier_module.choose; i++) {
+      const [stat, chosen] = entries[diceRoll(entries.length) - 1];
+
+      (invi as EquippableInventoryItem).modifier_modules?.push({
+        stat: stat,
+        type: chosen.type,
+        value: lerp(Math.random(), chosen.range[0], chosen.range[1])
+      })
     }
   }
+
+  return invi;
 }
 
 
@@ -233,13 +245,14 @@ interface BaseInventoryItem {
 }
 
 export interface EquippableInventoryItem extends BaseInventoryItem {
+  modifier_modules?: NamedModifier[]
 }
 
 export interface WearableInventoryItem extends EquippableInventoryItem {
-  stat_module: ItemModule
+  stat_module: ItemStatModule
 }
 export interface WeaponInventoryItem extends EquippableInventoryItem {
 
 }
 
-export type InventoryItem = EquippableInventoryItem | BaseInventoryItem;
+export type InventoryItem = WearableInventoryItem | EquippableInventoryItem | BaseInventoryItem;

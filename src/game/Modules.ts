@@ -1,34 +1,34 @@
 import { diceRoll } from "./Creature";
 import { NamedModifier } from "./PassiveEffects";
-import { ModifierType } from "./Stats";
+import { Modifier, ModifierType } from "./Stats";
 
 export enum ModuleType {
   "Offensive", "Defensive", "Technical"
 }
 
-export class ItemModule {
+export class ItemStatModule {
   type: ModuleType
   value: number
 
-  constructor(type: ItemModule["type"], value: ItemModule["value"]) {
+  constructor(type: ItemStatModule["type"], value: ItemStatModule["value"]) {
     this.type = type;
     this.value = value;
   }
 
-  static generate(): ItemModule {
+  static generate(): ItemStatModule {
     // @ts-expect-error
     const type: ModuleType = ModuleType[ModuleType[diceRoll(Object.values(ModuleType).filter(x => !isNaN(Number(x))).length) - 1]];
   
-    return new ItemModule(
+    return new ItemStatModule(
       type,
-      (Math.random() * (ItemModule.MAX_GEN_VALUE - ItemModule.MIN_GEN_VALUE)) + ItemModule.MIN_GEN_VALUE
+      (Math.random() * (ItemStatModule.MAX_GEN_VALUE - ItemStatModule.MIN_GEN_VALUE)) + ItemStatModule.MIN_GEN_VALUE
     )
   }
 
   get modifiers(): NamedModifier[] {
     const mods: NamedModifier[] = [];
 
-    for (const {stat, type, value} of ItemModule.MODIFIERS.get(this.type) ?? []) {
+    for (const {stat, type, value} of ItemStatModule.MODIFIERS.get(this.type) ?? []) {
       mods.push({
         stat,
         type,
@@ -84,4 +84,9 @@ export class ItemModule {
       ]
     ]
   ])
+}
+
+
+export interface ItemModifierModuleInfo extends Omit<Modifier, "value"> {
+  range: [number, number]
 }

@@ -482,7 +482,7 @@ export default new ApplicationCommandHandler(
           } else if (item instanceof PassiveEffect) {
             embed.addField(
               "Modifiers",
-              modifierDescriptor(item.$.modifiers ?? []) || "None"
+              modifiersDescriptor(item.$.modifiers ?? []) || "None"
             )
           } else if (item instanceof CreatureAbility) {
             embed.description =
@@ -678,21 +678,25 @@ export function attackDescriptor(attacks: AttackData[]) {
   return str;
 }
 
-export function modifierDescriptor(modifiers: NamedModifier[], spacer = "\n") {
-  var str = "";
+export function modifierDescriptor(modifier: NamedModifier) {
+  return `**${function() {
+    switch (modifier.type) {
+      case ModifierType.MULTIPLY: return `${modifier.value.toFixed(2)}x`;
+      case ModifierType.ADD_PERCENT: return `${modifier.value >= 0 ? "+" : "-"}${(Math.abs(modifier.value) * 100).toFixed(1)}%`;
+      case ModifierType.CAP_MAX: return `${modifier.value.toFixed(0)}^`;
+      case ModifierType.ADD: return `${modifier.value >= 0 ? "+" : "-"}${Math.abs(modifier.value).toFixed(1)}`;
+    }
+  }()}** ${capitalize(modifier.stat.replaceAll(/_/g, " "))}`
+}
+
+export function modifiersDescriptor(modifiers: NamedModifier[], spacer = "\n") {
+  var str: string[] = [];
   if (modifiers.length > 0) {
     for (const mod of modifiers) {
-      str += `**`;
-      switch (mod.type) {
-        case ModifierType.MULTIPLY: str += `${mod.value}x`; break;
-        case ModifierType.ADD_PERCENT: str += `${mod.value >= 0 ? "+" : "-"}${(Math.abs(mod.value) * 100).toFixed(1)}%`; break;
-        case ModifierType.CAP_MAX: str += `${mod.value}^`; break;
-        case ModifierType.ADD: str += `${mod.value >= 0 ? "+" : "-"}${Math.abs(mod.value)}`; break;
-      }
-      str += `** ${capitalize(mod.stat.replaceAll(/_/g, " "))}${spacer}`;
+      str.push(modifierDescriptor(mod));
     }
   }
-  return str;
+  return str.join(spacer);
 }
 
 export function abilitiesDescriptor(abilities: string[]) {
@@ -717,7 +721,7 @@ export function passivesDescriptor(passives: (string | PassiveEffect)[]) {
       if (typeof passive === "string") {
         str += `[**G**] ${PassivesManager.map.get(passive)?.$.info.name} \`${passive}\`\n`;
       } else {
-        str += `[**L**] ${passive.$.info.name}\n*${passive.$.info.lore}*\n${(passive.$.unique ?? new Set()).size > 0 ? `Unique flags: ${Array.from(passive.$.unique ?? []).join(", ")}\n` : ""}\n${(passive.$.modifiers ?? []).length > 0 ? `**Modifiers**\n${modifierDescriptor(passive.$.modifiers ?? [])}` : ""}`;
+        str += `[**L**] ${passive.$.info.name}\n*${passive.$.info.lore}*\n${(passive.$.unique ?? new Set()).size > 0 ? `Unique flags: ${Array.from(passive.$.unique ?? []).join(", ")}\n` : ""}\n${(passive.$.modifiers ?? []).length > 0 ? `**Modifiers**\n${modifiersDescriptor(passive.$.modifiers ?? [])}` : ""}`;
       }
     }
     str += "\n"

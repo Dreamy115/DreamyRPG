@@ -5,18 +5,18 @@ import Creature, { diceRoll } from "../../game/Creature.js";
 import { CreatureAbility, replaceLore } from "../../game/CreatureAbilities.js";
 import { reductionMultiplier, DAMAGE_TO_INJURY_RATIO, DamageMethod, DamageType } from "../../game/Damage.js";
 import { CombatPosition } from "../../game/Fight.js";
-import { AttackData, SlotDescriptions, Item, ItemQualityEmoji, InventoryItem, EquippableInventoryItem } from "../../game/Items.js";
+import { AttackData, SlotDescriptions, Item, ItemQualityEmoji, InventoryItem, EquippableInventoryItem, WearableInventoryItem, WearableItemData, WeaponItemData } from "../../game/Items.js";
 import { cToF } from "../../game/Locations.js";
 import { LootTable } from "../../game/LootTables.js";
-import { ItemModule, ModuleType } from "../../game/Modules.js";
+import { ItemStatModule, ModuleType } from "../../game/Modules.js";
 import { PassiveEffect, NamedModifier } from "../../game/PassiveEffects.js";
 import { CreaturePerk } from "../../game/Perks.js";
 import { textStat, ModifierType, TrackableStat } from "../../game/Stats.js";
-import { SpeciesManager, ClassManager, capitalize, ItemManager, EffectManager, AbilitiesManager, CONFIG, SchematicsManager, PerkManager, LocationManager, limitString, LootTables, PassivesManager, rotateLine } from "../../index.js";
+import { SpeciesManager, ClassManager, capitalize, ItemManager, EffectManager, AbilitiesManager, CONFIG, SchematicsManager, PerkManager, LocationManager, limitString, LootTables, PassivesManager, rotateLine, invLerp } from "../../index.js";
 import { bar_styles, make_bar } from "../Bars.js";
 import { ApplicationCommandHandler } from "../commands.js";
 import { attributeComponents, ceditMenu, consumeMenu, scrapMenu } from "../component_commands/cedit.js";
-import { abilitiesDescriptor, attackDescriptor, modifierDescriptor, passivesDescriptor, perksDescriptor } from "./handbook.js";
+import { abilitiesDescriptor, attackDescriptor, modifierDescriptor, modifiersDescriptor, passivesDescriptor, perksDescriptor } from "./handbook.js";
 
 export default new ApplicationCommandHandler(
   {
@@ -749,7 +749,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
 
           for (const type of Object.values(ModuleType).filter(x => !isNaN(Number(x)))) {
             // @ts-expect-error
-            arr.push(`${ModuleType[type]} **${modules.get(type)?.length ?? 0}**  ${modifierDescriptor(cum_mods.get(type) ?? [], " ")}`);
+            arr.push(`${ModuleType[type]} **${modules.get(type)?.length ?? 0}**  ${modifiersDescriptor(cum_mods.get(type) ?? [], " ")}`);
           }
 
           return arr.join("\n");
@@ -1113,7 +1113,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
             const attr_bonus = attr.value - attr.base;
             
             // @ts-expect-error
-            str += `**${attr.value} ${a}**${attr_bonus !== 0 ? ` [Modifiers] *(**${attr.base}** ${`${(attr_bonus < 0 ? "-" : "+")} ${Math.abs(attr_bonus)}`})*` : ""}\n${Creature.ATTRIBUTE_DESCRIPTIONS[a]}  ${modifierDescriptor(Creature.ATTRIBUTE_MODS[a]).trim().replaceAll("\n", ", ") || ""}\n`
+            str += `**${attr.value} ${a}**${attr_bonus !== 0 ? ` [Modifiers] *(**${attr.base}** ${`${(attr_bonus < 0 ? "-" : "+")} ${Math.abs(attr_bonus)}`})*` : ""}\n${Creature.ATTRIBUTE_DESCRIPTIONS[a]}  ${modifiersDescriptor(Creature.ATTRIBUTE_MODS[a], ", ").trim() || ""}\n`
           }
 
           return str;
@@ -1123,7 +1123,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
       ).addField(
         "Per Level",
         "Regardless of attributes, each Level provides a creature with:\n" +
-        modifierDescriptor(Creature.LEVEL_MODS).trim().replaceAll("\n", ", ") +
+        modifiersDescriptor(Creature.LEVEL_MODS, ", ") +
         "\non base stats."
       )
     } break;
@@ -1393,13 +1393,24 @@ export function describeItem(invitem?: InventoryItem, creature?: Creature) {
 
   str += `*${lore}*\n\n`;
 
-  // @ts-expect-error
-  if (invitem?.stat_module) {
-    // @ts-expect-error
-    let stat_module: ItemModule = invitem.stat_module;
-    const desc = modifierDescriptor(stat_module.modifiers, ", ");
+  if ((invitem as WearableInventoryItem)?.stat_module) {
+    let stat_module: ItemStatModule = (invitem as WearableInventoryItem).stat_module;
+    const desc = modifiersDescriptor(stat_module.modifiers, ", ");
 
-    str += `Module: **${ModuleType[stat_module.type]}** - **${(100 * stat_module.value).toFixed(2)}%**; ${desc.substring(0, desc.length - 2)}\n\n`;
+    str += `Stat Module: **${ModuleType[stat_module.type]}** - **${(100 * stat_module.value).toFixed(2)}%**; ${desc.substring(0, desc.length - 2)}\n\n`;
+  }
+
+  if (((invitem as EquippableInventoryItem)?.modifier_modules?.length ?? 0) > 0) {
+    const _mods: string[] = [];
+    for (const mod of (invitem as EquippableInventoryItem)?.modifier_modules ?? []) {
+      const reference = (item.$ as WearableItemData | WeaponItemData).modifier_module?.mods.get(mod.stat);
+      _mods.push(`${modifierDescriptor(mod)} _(${reference ? `${`**${
+        reference.range[0] === reference.range[1]
+        ? ""
+        : (100 * invLerp(mod.value, reference.range[0], reference.range[1])).toFixed(1)
+      }%**`}` : "Invalid"})_`);
+    }
+    str += `Modifier Modules: ${_mods.join(", ")}`;
   }
 
 

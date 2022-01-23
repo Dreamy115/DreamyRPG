@@ -290,3 +290,13 @@ export function logCommandInteraction(interaction: CommandInteraction | Autocomp
 export function rotateLine(x: number, scale: number, y: number) {
   return ((x - y) * scale) + y;
 }
+
+export function invLerp(amt: number, min: number, max: number) {
+  return (amt - min) / (max - min);
+}
+export function lerp(amt: number, min: number, max: number) {
+  return (1 - amt) * min + amt * max;
+}
+export function clamp(amt: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, amt));
+}

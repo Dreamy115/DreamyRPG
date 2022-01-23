@@ -1,15 +1,16 @@
 import { ButtonInteraction, CommandInteraction, MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu, MessageSelectOptionData } from "discord.js";
 import Mongoose from "mongoose";
-import { capitalize, ClassManager, CONFIG, ItemManager, limitString, LootTables, messageInput, PerkManager, removeMarkdown, SchematicsManager, SkillManager, SpeciesManager } from "../..";
+import { capitalize, clamp, ClassManager, CONFIG, invLerp, ItemManager, lerp, limitString, LootTables, messageInput, PerkManager, removeMarkdown, SchematicsManager, SkillManager, SpeciesManager } from "../..";
 import { CraftingMaterials } from "../../game/Crafting";
 import Creature, { HealType } from "../../game/Creature";
 import { AbilityUseLog } from "../../game/CreatureAbilities";
 import { DamageCause, DamageGroup, damageLogEmbed, DamageMethod, DamageType, ShieldReaction } from "../../game/Damage";
-import { createItem, DEFAULT_ITEM_OPT_STEP, Item, ItemQualityEmoji, WearableInventoryItem } from "../../game/Items";
+import { createItem, DEFAULT_ITEM_OPT_STEP, EquippableInventoryItem, Item, ItemQualityEmoji, WeaponItemData, WearableInventoryItem, WearableItemData } from "../../game/Items";
 import { LootTable } from "../../game/LootTables";
-import { ItemModule, ModuleType } from "../../game/Modules";
+import { ItemStatModule, ModuleType } from "../../game/Modules";
 import { TrackableStat } from "../../game/Stats";
 import { infoEmbed } from "../commands/char";
+import { modifierDescriptor } from "../commands/handbook";
 import { ComponentCommandHandler } from "../component_commands";
 
 export default new ComponentCommandHandler(
@@ -414,19 +415,41 @@ export default new ComponentCommandHandler(
                       for (const i in creature.$.items.backpack) {
                         const it = creature.$.items.backpack[i];
                         const item = ItemManager.map.get(it?.id);
-                        if (!item || item.$.type !== "wearable") continue;
-                        // @ts-expect-error
-                        if (it.stat_module.value >= 1.0 || !item.$.optimize_cost) continue;
-
+                        if (!item || (item.$.type !== "wearable" && item.$.type !== "weapon")) continue;
+                        if (!item.$.optimize_cost) continue;
+                        
                         items.push({
                           label: item.$.info.name,
                           emoji: ItemQualityEmoji[item.$.info.quality],
                           value: i,
-                          description: 
-                          // @ts-expect-error
-                          `${capitalize(item.$.slot)} ${ModuleType[it.stat_module.type]} ` +
-                          // @ts-expect-error
-                            `${(100 * it.stat_module.value).toFixed(2)}% -> ${(100 * Math.min(1, it.stat_module.value + (item.$.optimize_step ?? DEFAULT_ITEM_OPT_STEP))).toFixed(2)}%`
+                          description: limitString(removeMarkdown(
+                            // @ts-expect-error
+                            `${capitalize(item.$.slot ?? item.$.type)} ` + 
+                            (
+                              // @ts-expect-error
+                              it.stat_module ? (
+                                // @ts-expect-error
+                                `${ModuleType[it.stat_module.type]} ` +
+                                // @ts-expect-error
+                                `${(100 * it.stat_module.value).toFixed(2)}% -> ${(100 * Math.min(1, it.stat_module.value + (item.$.optimize_step ?? DEFAULT_ITEM_OPT_STEP))).toFixed(2)}% `
+                                ) : ""
+                            ) + (
+                              // @ts-expect-error
+                              it.modifier_modules ? function() {
+                                const _mods: string[] = [];
+                                for (const mod of (it as EquippableInventoryItem)?.modifier_modules ?? []) {
+                                  const reference = (item.$ as WearableItemData | WeaponItemData).modifier_module?.mods.get(mod.stat);
+                                  _mods.push(`${modifierDescriptor(mod)} _(${reference ? `${`**${
+                                    reference.range[0] === reference.range[1]
+                                    ? ""
+                                    : (100 * invLerp(mod.value, reference.range[0], reference.range[1])).toFixed(1)
+                                  }%**`}` : "NUL"})_`);
+                                }
+                                return _mods.join(", ")
+                              }() : ""
+                            )).trim(),
+                            100
+                          )
                         })
                       }
     
@@ -440,14 +463,14 @@ export default new ComponentCommandHandler(
     
                       interaction.followUp({
                         ephemeral: true,
-                        content: "Optimize items",
+                        content: "Item Workshop...",
                         components: [
                           new MessageActionRow().setComponents([
                             new MessageSelectMenu()
                               .setCustomId(`cedit/${creature.$._id}/edit/item/modify/optimize`)
                               .setOptions(items)
-                              .setMaxValues(1)
-                              .setMinValues(1)
+                              .setMaxValues(1).setMinValues(1)
+                              .setPlaceholder("Optimize Items")
                           ])
                         ]
                       })
@@ -457,13 +480,11 @@ export default new ComponentCommandHandler(
                       const index = Number(args.shift());
                       if (isNaN(index)) return;
 
-                      // @ts-expect-error
-                      const it: WearableInventoryItem = creature.$.items.backpack[index];
+                      const it: EquippableInventoryItem = creature.$.items.backpack[index];
                       const item = ItemManager.map.get(it?.id);
                       if (
-                        !item || item.$.type !== "wearable"
-                        ||
-                        it.stat_module.value >= 1.0 || !item.$.optimize_cost
+                        !item || (item.$.type !== "wearable" && item.$.type !== "weapon")
+                        || !item.$.optimize_cost
                       ) {
                         interaction.followUp({
                           ephemeral: true,
@@ -491,7 +512,20 @@ export default new ComponentCommandHandler(
                         // @ts-expect-error
                         creature.$.items.crafting_materials[mat] -= item.$.optimize_cost[mat];
                       }
-                      it.stat_module.value = Math.min(1, it.stat_module.value + (item.$.optimize_step ?? DEFAULT_ITEM_OPT_STEP));
+
+                      /* SCOPE */ {
+                        const itm = it as WearableInventoryItem;
+                        if (itm.stat_module)
+                          itm.stat_module.value = Math.min(1, itm.stat_module.value + (item.$.optimize_step ?? DEFAULT_ITEM_OPT_STEP));
+                      }
+
+                      for (const mod of it.modifier_modules ?? []) {
+                        const reference = item.$.modifier_module?.mods.get(mod.stat);
+                        if (!reference) continue;
+                        
+                        const lerped = invLerp(mod.value, reference.range[0], reference.range[1]);
+                        mod.value = lerp(clamp(lerped + (item.$.optimize_step ?? DEFAULT_ITEM_OPT_STEP), 0, 1), reference.range[0], reference.range[1]);
+                      }
 
                     } break;
                   }
@@ -611,7 +645,7 @@ export default new ComponentCommandHandler(
                       label: item.$.info.name,
                       emoji: ItemQualityEmoji[item.$.info.quality],
                       value: i,
-                      description: 
+                      description: limitString(
                         // @ts-expect-error
                         `${capitalize(item.$.slot ?? item.$.type)} ${
                           // @ts-expect-error
@@ -619,7 +653,31 @@ export default new ComponentCommandHandler(
                           // @ts-expect-error
                           ? `${ModuleType[it.stat_module.type]} ${(100 * it.stat_module.value).toFixed(2)}%`
                           : ""
-                        }`
+                        }${function() {
+                          const itm = (it as EquippableInventoryItem);
+                          const data = (item.$ as WearableItemData | WeaponItemData);
+                          if (!itm.modifier_modules) return "";
+
+                          const mods = [...itm.modifier_modules].sort((a, b) => {
+                            const range_a = data.modifier_module?.mods.get(a.stat)?.range ?? [0, 0];
+                            const val_a = invLerp(a.value, range_a[0], range_a[1]);
+
+                            const range_b = data.modifier_module?.mods.get(b.stat)?.range ?? [0, 0];
+                            const val_b = invLerp(b.value, range_b[0], range_b[1]);
+
+                            return val_a - val_b;
+                          });
+
+                          const str: string[] = [];
+
+                          for (const mod of mods) {
+                            str.push(modifierDescriptor(mod));
+                          }
+
+                          return removeMarkdown(str.join(", "));
+                        }()}`,
+                        100
+                      )
                     })
                   }
 
@@ -941,11 +999,10 @@ export default new ComponentCommandHandler(
                     case "optimize": {
                       const index = Number(interaction.values[0]);
 
-                      // @ts-expect-error
-                      const item: WearableInventoryItem = creature.$.items.backpack[index];
+                      const item: EquippableInventoryItem = creature.$.items.backpack[index];
                       const data = ItemManager.map.get(item?.id ?? "");
 
-                      if (!item || data?.$.type !== "wearable" || item.stat_module.value >= 1 || !data.$.optimize_cost) {
+                      if (!item || (data?.$.type !== "wearable" && data?.$.type !== "weapon") || !data.$.optimize_cost) {
                         interaction.followUp({
                           ephemeral: true,
                           content: "Invalid item or not optimizable"
@@ -972,11 +1029,39 @@ export default new ComponentCommandHandler(
                         ephemeral: true,
                         embeds: [
                           new MessageEmbed()
-                            .setTitle("Optimalizing")
+                            .setTitle("Item Optimizing")
                             .setDescription(
                               `**${data.displayName}**\n` +
-                              `**${ModuleType[item.stat_module.type]} ${(100 * item.stat_module.value).toFixed(2)}%** -> ` +
-                              `**${(100 * (item.stat_module.value + (data.$.optimize_step ?? DEFAULT_ITEM_OPT_STEP))).toFixed(2)}%**`
+                              function() {
+                                const itm = item as WearableInventoryItem;
+                                if (!itm.stat_module) return "";
+                                return `**${ModuleType[itm.stat_module.type]} ${(100 * itm.stat_module.value).toFixed(2)}%** -> ` +
+                                       `**${(100 * (itm.stat_module.value + (data.$.optimize_step ?? DEFAULT_ITEM_OPT_STEP))).toFixed(2)}%**`
+                               }() + function() {
+                                if ((item.modifier_modules?.length ?? 0) === 0) return "";
+
+                                const str: string[] = [];
+
+                                for (const mod of item.modifier_modules ?? []) {
+                                  const reference = (data.$ as WearableItemData | WeaponItemData).modifier_module?.mods.get(mod.stat);
+                                  if (!reference) continue;
+                                  
+                                  let lerped = invLerp(mod.value, reference.range[0], reference.range[1]);
+
+                                  str.push(
+                                    `${modifierDescriptor(mod)} ` +
+                                    `(**${(100 * lerped).toFixed(1)}%**) -> ` +
+                                    `${modifierDescriptor({
+                                      stat: mod.stat,
+                                      type: mod.type,
+                                      value: lerp(lerped + (data.$.optimize_step ?? DEFAULT_ITEM_OPT_STEP), reference.range[0], reference.range[1])
+                                    })}` +
+                                    `(**${(100 * Math.min(1, lerped + ((data.$ as WearableItemData | WeaponItemData).optimize_step ?? DEFAULT_ITEM_OPT_STEP))).toFixed(1)}**%)`
+                                  )
+                                }
+
+                                return str.join("\n");
+                              }()
                             ).addField(
                               "Cost",
                               `${function() {

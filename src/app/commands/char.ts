@@ -437,7 +437,10 @@ export default new ApplicationCommandHandler(
             var arr: string[] = [];
             for (const mat in content.cost) {
               // @ts-expect-error
-              arr.push(`**${content.cost[mat]}** ${capitalize(mat)}`)
+              const material: number = content.cost[mat];
+
+              if (material !== 0)
+                arr.push(`**${material}** ${capitalize(mat)}`)
             }
 
             return arr.join(", ");
@@ -1346,7 +1349,10 @@ export function schematicDescriptor(item: Schematic, perks?: Set<string>) {
 
         for (const mat in item.$.requirements.materials) {
           // @ts-expect-error
-          str += `**${item.$.requirements.materials[mat]}** ${capitalize(mat)}, `;
+          const material: number = item.$.requirements.materials[mat];
+
+          if (material !== 0)
+            str += `**${material}** ${capitalize(mat)}, `;
         }
 
         return str.substring(0, str.length - 2);
@@ -1486,7 +1492,10 @@ export function describeItem(invitem?: InventoryItem, creature?: Creature) {
     if (item.$.scrap) {
       for (const mat in item.$.scrap.materials) {
         // @ts-expect-error
-        scrap.push(`**${item.$.scrap.materials[mat]}** ${capitalize(mat)}`)
+        const material: number = item.$.scrap.materials[mat];
+
+        if (material !== 0)
+          scrap.push(`**${material}** ${capitalize(mat)}`)
       }
       str += `\nScraps for: ${scrap.join(", ")}\n`
     }

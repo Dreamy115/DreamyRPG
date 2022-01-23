@@ -5,7 +5,7 @@ import { CraftingMaterials } from "../../game/Crafting";
 import Creature, { HealType } from "../../game/Creature";
 import { AbilityUseLog } from "../../game/CreatureAbilities";
 import { DamageCause, DamageGroup, damageLogEmbed, DamageMethod, DamageType, ShieldReaction } from "../../game/Damage";
-import { createItem, Item, ItemQualityEmoji } from "../../game/Items";
+import { createItem, DEFAULT_ITEM_OPT_STEP, Item, ItemQualityEmoji, WearableInventoryItem } from "../../game/Items";
 import { LootTable } from "../../game/LootTables";
 import { ItemModule, ModuleType } from "../../game/Modules";
 import { TrackableStat } from "../../game/Stats";
@@ -389,6 +389,114 @@ export default new ComponentCommandHandler(
           case "item": {
             if (interaction.isButton()) {
               switch (args.shift()) {
+                case "modify": {
+                  if (!IS_GM) {
+                    if (await creature.getFightID(db)) {
+                      interaction.followUp({
+                        ephemeral: true,
+                        content: "Cannot do that while fighting!"
+                      });
+                      return;
+                    }
+                    if (!creature.location?.$.hasEnhancedCrafting) {
+                      interaction.followUp({
+                        ephemeral: true,
+                        content: "The location you're in must have Enhanced Crafting."
+                      })
+                      return;
+                    }
+                  }
+
+                  switch (args.shift()) {
+                    default: {
+                      const items: MessageSelectOptionData[] = [];
+
+                      for (const i in creature.$.items.backpack) {
+                        const it = creature.$.items.backpack[i];
+                        const item = ItemManager.map.get(it?.id);
+                        if (!item || item.$.type !== "wearable") continue;
+                        // @ts-expect-error
+                        if (it.stat_module.value >= 1.0 || !item.$.optimalize_cost) continue;
+
+                        items.push({
+                          label: item.$.info.name,
+                          emoji: ItemQualityEmoji[item.$.info.quality],
+                          value: i,
+                          description: 
+                          // @ts-expect-error
+                          `${capitalize(item.$.slot)} ${ModuleType[it.stat_module.type]} ` +
+                          // @ts-expect-error
+                            `${(100 * it.stat_module.value).toFixed(2)}% -> ${(100 * Math.min(1, it.stat_module.value + (item.$.optimalize_step ?? DEFAULT_ITEM_OPT_STEP))).toFixed(2)}%`
+                        })
+                      }
+    
+                      if (items.length == 0) {
+                        interaction.followUp({
+                          ephemeral: true,
+                          content: "No optimizable items found in your backpack."
+                        });
+                        return;
+                      }
+    
+                      interaction.followUp({
+                        ephemeral: true,
+                        content: "Optimize items",
+                        components: [
+                          new MessageActionRow().setComponents([
+                            new MessageSelectMenu()
+                              .setCustomId(`cedit/${creature.$._id}/edit/item/modify/optimize`)
+                              .setOptions(items)
+                              .setMaxValues(1)
+                              .setMinValues(1)
+                          ])
+                        ]
+                      })
+                      return;
+                    } break;
+                    case "optimize": {
+                      const index = Number(args.shift());
+                      if (isNaN(index)) return;
+
+                      // @ts-expect-error
+                      const it: WearableInventoryItem = creature.$.items.backpack[index];
+                      const item = ItemManager.map.get(it?.id);
+                      if (
+                        !item || item.$.type !== "wearable"
+                        ||
+                        it.stat_module.value >= 1.0 || !item.$.optimalize_cost
+                      ) {
+                        interaction.followUp({
+                          ephemeral: true,
+                          content: "Item not optimizable"
+                        });
+                        return;
+                      }
+
+                      try {
+                        for (const mat in item.$.optimalize_cost) {
+                          // @ts-expect-error
+                          const material: number = item.$.optimalize_cost[mat];
+              
+                          // @ts-expect-error
+                          if (creature.$.items.crafting_materials[mat] < material) throw new Error(`Not enough materials; need more ${capitalize(mat)}`)
+                        }
+                      } catch (e: any) {
+                        interaction.editReply({
+                          content: `Your character doesn't meet the requirements:\n*${e?.message}*`
+                        });
+                        return;
+                      }
+
+                      for (const mat in item.$.optimalize_cost) {
+                        // @ts-expect-error
+                        creature.$.items.crafting_materials[mat] -= item.$.optimalize_cost[mat];
+                      }
+                      it.stat_module.value = Math.min(1, it.stat_module.value + (item.$.optimalize_step ?? DEFAULT_ITEM_OPT_STEP));
+
+                    } break;
+                  }
+
+                } break;
                 case "craft": {
                   if (!IS_GM && await creature.getFightID(db)) {
                     interaction.followUp({
@@ -732,7 +840,10 @@ export default new ComponentCommandHandler(
 
                         for (const mat in gained) {
                           // @ts-expect-error
-                          str += `**${gained[mat]}** ${capitalize(mat)}\n`;
+                          const material: number = gained[mat];
+
+                          if (material !== 0)
+                            str += `**${material}** ${capitalize(mat)}\n`;
                         }
 
                         return str;
@@ -807,8 +918,96 @@ export default new ComponentCommandHandler(
                     delete creature.$.items.backpack[index];
                   }
                   creature.checkItemConflicts();
-                }
-              }
+                } break;
+                case "modify": {
+                  if (!IS_GM) {
+                    if (await creature.getFightID(db)) {
+                      interaction.followUp({
+                        ephemeral: true,
+                        content: "Cannot do that while fighting!"
+                      });
+                      return;
+                    }
+                    if (!creature.location?.$.hasEnhancedCrafting) {
+                      interaction.followUp({
+                        ephemeral: true,
+                        content: "The location you're in must have Enhanced Crafting."
+                      })
+                      return;
+                    }
+                  }
+
+                  switch (args.shift()) {
+                    case "optimize": {
+                      const index = Number(interaction.values[0]);
+
+                      // @ts-expect-error
+                      const item: WearableInventoryItem = creature.$.items.backpack[index];
+                      const data = ItemManager.map.get(item?.id ?? "");
+
+                      if (!item || data?.$.type !== "wearable" || item.stat_module.value >= 1 || !data.$.optimalize_cost) {
+                        interaction.followUp({
+                          ephemeral: true,
+                          content: "Invalid item or not optimizable"
+                        })
+                        return;
+                      }
+
+                      try {
+                        for (const mat in data.$.optimalize_cost) {
+                          // @ts-expect-error
+                          const material: number = data.$.optimalize_cost[mat];
+              
+                          // @ts-expect-error
+                          if (creature.$.items.crafting_materials[mat] < material) throw new Error(`Not enough materials; need more ${capitalize(mat)}`)
+                        }
+                      } catch (e: any) {
+                        interaction.editReply({
+                          content: `Your character doesn't meet the requirements:\n*${e?.message}*`
+                        });
+                        return;
+                      }
+    
+                      interaction.followUp({
+                        ephemeral: true,
+                        embeds: [
+                          new MessageEmbed()
+                            .setTitle("Optimalizing")
+                            .setDescription(
+                              `**${data.displayName}**\n` +
+                              `**${ModuleType[item.stat_module.type]} ${(100 * item.stat_module.value).toFixed(2)}%** -> ` +
+                              `**${(100 * (item.stat_module.value + (data.$.optimalize_step ?? DEFAULT_ITEM_OPT_STEP))).toFixed(2)}%**`
+                            ).addField(
+                              "Cost",
+                              `${function() {
+                                const arr: string[] = [];
+
+                                for (const mat in data.$.optimalize_cost) {
+                                  // @ts-expect-error
+                                  const material: number = data.$.optimalize_cost[mat];
+                                  
+                                  if (material !== 0)
+                                    arr.push(`**${material}** ${capitalize(mat)}`)
+                                }
+
+                                return arr;
+                              }().join(", ")}`
+                            )
+                        ],
+                        components: [
+                          new MessageActionRow().setComponents([
+                            new MessageButton()
+                              .setCustomId(`cedit/${creature.$._id}/edit/item/modify/optimize/${index}`)
+                              .setLabel("Confirm")
+                              .setStyle("SUCCESS")
+                          ])
+                        ]
+                      })
+                      return;
+                    } break;
+                  }
+                } break;
+              } 
             }
           } break;
           case "attr": {
@@ -1019,13 +1218,17 @@ export function ceditMenu(creature: Creature): MessageActionRow[] {
       new MessageButton()
         .setCustomId(`cedit/${creature.$._id}/edit/attr`)
         .setStyle("SUCCESS")
-        .setLabel("Assign Attributes")
-    ]),
-    new MessageActionRow().addComponents([
+        .setLabel("Assign Attributes"),
       new MessageButton()
         .setCustomId(`cedit/${creature.$._id}/edit/weapon_switch`)
         .setStyle("PRIMARY")
-        .setLabel("Switch Weapons"),
+        .setLabel("Switch Weapons")
+    ]),
+    new MessageActionRow().addComponents([
+      new MessageButton()
+        .setCustomId(`cedit/${creature.$._id}/edit/item/modify`)
+        .setStyle("PRIMARY")
+        .setLabel("Modify Items"),
       new MessageButton()
         .setCustomId(`cedit/${creature.$._id}/edit/item/equip`)
         .setStyle("SECONDARY")
@@ -1292,7 +1495,10 @@ export async function scrapMenu(interaction: ButtonInteraction | CommandInteract
     if (item.$.scrap) {
       for (const mat in item.$.scrap.materials) {
         // @ts-expect-error
-        scrap.push(`${item.$.scrap.materials[mat]} ${capitalize(mat)}`)
+        const material = item.$.scrap.materials[mat];
+
+        if (material !== 0)
+          scrap.push(`${material} ${capitalize(mat)}`)
       }
       items.push({
         label: item.$.info.name,

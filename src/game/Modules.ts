@@ -39,7 +39,7 @@ export class ItemModule {
     return mods;
   }
   static readonly MIN_GEN_VALUE = 0.2;
-  static readonly MAX_GEN_VALUE = 1;
+  static readonly MAX_GEN_VALUE = 0.8;
 
 
   static readonly MODIFIERS = new Map<ModuleType, NamedModifier[]>([
@@ -49,7 +49,7 @@ export class ItemModule {
         {
           stat: "damage",
           type: ModifierType.ADD_PERCENT,
-          value: 0.125
+          value: 0.2
         }
       ]
     ],
@@ -59,17 +59,17 @@ export class ItemModule {
         {
           stat: "shield",
           type: ModifierType.ADD_PERCENT,
-          value: 0.05
+          value: 0.1
         },
         {
           stat: "armor",
           type: ModifierType.ADD_PERCENT,
-          value: 0.1
+          value: 0.15
         },
         {
           stat: "dissipate",
           type: ModifierType.ADD_PERCENT,
-          value: 0.1
+          value: 0.15
         }
       ]
     ],
@@ -79,7 +79,7 @@ export class ItemModule {
         {
           stat: "tech",
           type: ModifierType.ADD_PERCENT,
-          value: 0.15
+          value: 0.25
         }
       ]
     ]

@@ -255,7 +255,7 @@ export default new ApplicationCommandHandler(
             var pre_date = new Date();
             for await (let data of cursor) {
               // @ts-expect-error
-              const creature = new Creature(data);
+              const creature: Creature = Creature.cache.get(document._id) ?? new Creature(document);
 
               creature.$.info.location = location.$.id;
 
@@ -363,7 +363,7 @@ export default new ApplicationCommandHandler(
               var pre_date = new Date();
               for await (let data of cursor) {
                 // @ts-expect-error
-                const creature = new Creature(data);
+                const creature: Creature = Creature.cache.get(document._id) ?? new Creature(document);
 
                 for (var i = 0; i < amount; i++) {
                   creature.tick();
@@ -388,7 +388,7 @@ export default new ApplicationCommandHandler(
               var pre_date = new Date();
               for await (let data of cursor) {
                 // @ts-expect-error
-                const creature = new Creature(data);
+                const creature: Creature = Creature.cache.get(document._id) ?? new Creature(document);
 
                 creature.heal(creature.$.stats.health.value + creature.$.stats.shield.value, HealType.Overheal);
                 creature.heal(creature.$.stats.mana.value, HealType.Mana);

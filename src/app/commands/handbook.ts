@@ -585,7 +585,10 @@ export default new ApplicationCommandHandler(
 
                   for (const mat in item.$.requirements.materials) {
                     // @ts-expect-error
-                    str += `**${item.$.requirements.materials[mat]}** ${capitalize(mat)}\n`;
+                    const material: number = item.$.requirements.materials[mat];
+
+                    if (material !== 0)
+                      str += `**${material}** ${capitalize(mat)}\n`;
                   }
 
                   return str;

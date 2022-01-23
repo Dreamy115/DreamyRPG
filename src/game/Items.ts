@@ -37,12 +37,12 @@ export default class ItemsManager {
   }
 }
 
-export type SpecializedWearableData = 
+export type SpecializedWearableData =
   UltimateWearableItemData | MaskWearableItemData | ShieldWearableItemData |
   JacketWearableItemData | VestWearableItemData | GlovesWearableItemData | 
   BackpackWearableItemData
 export class Item {
-  $: WearableItemData | WeaponItemData | ConsumableItemData | GenericItemData | SpecializedWearableData
+  $: NormalWearableItemData | WeaponItemData | ConsumableItemData | GenericItemData | SpecializedWearableData
   constructor(data: Item["$"]) {
     this.$ = data;
   }
@@ -69,47 +69,48 @@ interface PassiveItemData extends BaseItemData {
   abilities?: Set<string>
   perks?: Set<(string | CreaturePerk)>
 }
-export interface WearableItemData extends PassiveItemData {
+export interface NormalWearableItemData extends PassiveItemData {
   type: "wearable"
   slot: Exclude<ItemSlot, "ultimate" | "mask" | "shield" | "jacket" | "vest" | "gloves" | "backpack">
+  optimalize_step?: number
+  optimalize_cost?: CraftingMaterials
 }
-export interface UltimateWearableItemData extends PassiveItemData {
+export interface WearableItemData extends PassiveItemData {
   type: "wearable"
+  optimalize_step?: number
+  optimalize_cost?: CraftingMaterials
+}
+export const DEFAULT_ITEM_OPT_STEP = 0.2;
+export interface UltimateWearableItemData extends WearableItemData {
   slot: "ultimate"
   ultimate: string
 }
-export interface MaskWearableItemData extends PassiveItemData {
-  type: "wearable"
+export interface MaskWearableItemData extends WearableItemData {
   slot: "mask"
   base_filtering: number
 }
-export interface ShieldWearableItemData extends PassiveItemData {
-  type: "wearable"
+export interface ShieldWearableItemData extends WearableItemData {
   slot: "shield"
   base_shield: number
   base_regen: number
 }
-export interface JacketWearableItemData extends PassiveItemData {
-  type: "wearable"
+export interface JacketWearableItemData extends WearableItemData {
   slot: "jacket"
   base_insulation: number
   base_heat_capacity: number
 }
-export interface VestWearableItemData extends PassiveItemData {
-  type: "wearable"
+export interface VestWearableItemData extends WearableItemData {
   slot: "vest"
   base_armor: number
   base_dissipate: number
 }
-export interface GlovesWearableItemData extends PassiveItemData {
-  type: "wearable"
+export interface GlovesWearableItemData extends WearableItemData {
   slot: "gloves"
   base_tech: number
   base_mana: number
   base_mana_regen: number
 }
-export interface BackpackWearableItemData extends PassiveItemData {
-  type: "wearable"
+export interface BackpackWearableItemData extends WearableItemData {
   slot: "backpack"
   base_parry: number
   base_deflect: number

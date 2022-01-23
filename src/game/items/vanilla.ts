@@ -15,7 +15,17 @@ export default [
     type: "wearable",
     slot: "shield",
     base_shield: 20,
-    base_regen: 4
+    base_regen: 4,
+    scrap: {
+      materials: new CraftingMaterials({
+        metal: 2,
+        plastic: 10,
+        cells: 1
+      }) 
+    },
+    optimalize_cost: new CraftingMaterials({
+      cells: 1
+    })
   }),
   new Item({
     id: "starter_mask",

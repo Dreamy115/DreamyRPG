@@ -34,7 +34,7 @@ export default [
       switch (args.shift()) {
         case "global": {
           switch (args.shift()) {
-            case "advance_time": {
+            case "advan_time": {
               await interaction.reply({
                 ephemeral: true,
                 content: "Please input the amount of ticks in chat as an Integer.\n**WARNING!** This will load every Creature and tick them individually. If your database of Creatures is a bit large it might take a while."
@@ -64,7 +64,7 @@ export default [
                 var pre_date = new Date();
                 for await (let data of cursor) {
                   // @ts-expect-error
-                  const creature = new Creature(data);
+                  const creature: Creature = Creature.cache.get(document._id) ?? new Creature(document);
 
                   for (var i = 0; i < input; i++) {
                     creature.tick();
@@ -90,7 +90,7 @@ export default [
                 var pre_date = new Date();
                 for await (let data of cursor) {
                   // @ts-expect-error
-                  const creature = new Creature(data);
+                  const creature: Creature = Creature.cache.get(document._id) ?? new Creature(document);
 
                   creature.heal(creature.$.stats.health.value + creature.$.stats.shield.value, HealType.Overheal);
                   creature.heal(creature.$.stats.mana.value, HealType.Mana);

@@ -9,7 +9,7 @@ import { CreatureAbility } from "./CreatureAbilities.js";
 import { DamageCause, DamageGroup, DamageLog, DamageMethod as DamageMethod, DamageType, DAMAGE_TO_INJURY_RATIO, reductionMultiplier, ShieldReaction } from "./Damage.js";
 import { Fight } from "./Fight.js";
 import { GameDirective } from "./GameDirectives.js";
-import { AttackData, AttackSet, Item, ItemSlot, InventoryItem, EquippableInventoryItem, WeaponInventoryItem, WearableInventoryItem, WearableItemData, SlotDescriptions } from "./Items.js";
+import { AttackData, AttackSet, Item, ItemSlot, InventoryItem, EquippableInventoryItem, WeaponInventoryItem, WearableInventoryItem, NormalWearableItemData, SlotDescriptions } from "./Items.js";
 import { ItemModule, ModuleType } from "./Modules.js";
 import { PassiveEffect, NamedModifier } from "./PassiveEffects.js";
 import { CreaturePerk } from "./Perks.js";

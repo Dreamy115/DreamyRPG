@@ -1232,7 +1232,7 @@ export default new ComponentCommandHandler(
                                   str.push(
                                     `${modifierDescriptor(mod)} ` +
                                     `(**${(100 * lerped).toFixed(1)}%**) -> ` +
-                                    `**??** Unknown (**??%**)`
+                                    `${capitalize(Array.from(data.$.modifier_module?.mods.keys() ?? []).join(" | ").replaceAll(/_/g, " "))} (**??%**)`
                                   )
                                 }
 

@@ -1395,9 +1395,8 @@ export function describeItem(invitem?: InventoryItem, creature?: Creature) {
 
   if ((invitem as WearableInventoryItem)?.stat_module) {
     let stat_module: ItemStatModule = (invitem as WearableInventoryItem).stat_module;
-    const desc = modifiersDescriptor(stat_module.modifiers, ", ");
 
-    str += `Stat Module: **${ModuleType[stat_module.type]}** - **${(100 * stat_module.value).toFixed(2)}%**; ${desc.substring(0, desc.length - 2)}\n\n`;
+    str += `Stat Module: **${ModuleType[stat_module.type]}** - **${(100 * stat_module.value).toFixed(2)}%**; ${modifiersDescriptor(stat_module.modifiers, ", ")}\n\n`;
   }
 
   if (((invitem as EquippableInventoryItem)?.modifier_modules?.length ?? 0) > 0) {

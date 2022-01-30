@@ -365,11 +365,11 @@ export class Fight {
       for await (const creature of creatures) {
         combatants.set(
           creature.$._id, {
-          // @ts-expect-error
-          position: 
+          position: (
             party.length > 1
             ? creature.attackSet.type
-            : CombatPosition["No Position"],
+            : CombatPosition["No Position"]
+          ) as CombatPosition,
           down: !creature.isAbleToFight
         })
       }
@@ -398,8 +398,7 @@ export class Fight {
   static async fetch(id: string, db: typeof Mongoose, cache = true): Promise<Fight> {
     if (cache) {
       if (this.cache.has(id)) {
-        // @ts-expect-error
-        return this.cache.get(id);
+        return this.cache.get(id) as Fight;
       }
     }
 
@@ -411,8 +410,7 @@ export class Fight {
     Fight.cache.set(this.$._id, this);
 
     try {
-      // @ts-expect-error
-      await db.connection.collection(Fight.COLLECTION_NAME).insertOne(this.$);
+      await db.connection.collection(Fight.COLLECTION_NAME).insertOne(this.$ as unknown as Document);
     } catch {
       await db.connection.collection(Fight.COLLECTION_NAME).replaceOne({_id: this.$._id}, this.$);
     }

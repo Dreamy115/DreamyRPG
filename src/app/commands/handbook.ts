@@ -1,8 +1,8 @@
-import { ApplicationCommandOptionData, MessageActionRow, MessageButton, MessageEmbed } from "discord.js";
+import { ApplicationCommandOptionData, ColorResolvable, MessageActionRow, MessageButton, MessageEmbed } from "discord.js";
 import { AbilitiesManager, capitalize, ClassManager, CONFIG, Directives, EffectManager, ItemManager, LocationManager, LootTables, PassivesManager, PerkManager, SchematicsManager, SkillManager, SpeciesManager } from "../..";
 import { ActiveEffect, DisplaySeverity, romanNumeral } from "../../game/ActiveEffects";
 import { CreatureClass } from "../../game/Classes";
-import { Schematic } from "../../game/Crafting";
+import { Material, Schematic } from "../../game/Crafting";
 import { CreatureAbility, replaceLore } from "../../game/CreatureAbilities";
 import { DamageMethod, DamageType } from "../../game/Damage";
 import { GameDirective } from "../../game/GameDirectives";
@@ -228,9 +228,9 @@ export default new ApplicationCommandHandler(
         .setFooter(`Page ${page}/${Math.floor(array.length / ITEMS_PER_PAGE) + 1}`)
         .setDescription("");
 
-        for (const item of array) {
-          // @ts-expect-error
-          embed.description += `\`${item.$.id}\` ${item.$.info.quality !== undefined ? `${ItemQualityEmoji[item.$.info.quality]} `: ""}**${item.$.info.name}**${item.$.type ? ` (${capitalize(item.$.type)})` : "" }\n`
+        for (const _item of array) {
+          const item = _item as Item;
+          embed.description += `\`${item.$.id}\` ${item.$?.info.quality !== undefined ? `${ItemQualityEmoji[item.$?.info.quality]} `: ""}**${item.$?.info.name}**${item.$?.type ? ` (${capitalize(item.$?.type)})` : "" }\n`
         }
       } break;
       case "item": {
@@ -308,34 +308,15 @@ export default new ApplicationCommandHandler(
             )
           }
         } else {
+          let itm = item as Item;
           embed
-          // @ts-expect-error
-          .setTitle(`${item.$.info.quality ? `${ItemQualityEmoji[item.$.info.quality]} ` : ""}${item.$.info.name}`)
-          .setDescription(item.$.info.lore);
+          .setTitle(`${itm.$.info.quality ? `${ItemQualityEmoji[itm.$.info.quality]} ` : ""}${itm.$.info.name}`)
+          .setDescription(itm.$.info.lore);
 
-          // @ts-expect-error
-          if (item.$.info.quality !== undefined) {
-            // @ts-expect-error
-            embed.setColor(ItemQualityColor[item.$.info.quality]);
+          if (itm.$.info.quality !== undefined) {
+            embed.setColor(ItemQualityColor[itm.$.info.quality] as ColorResolvable);
           }
 
-            // @ts-expect-error
-            if ((item.$.unique ?? []).length > 0) {
-              embed.addField(
-                "Unique Flags",
-                function() {
-                  var str = "";
-                  // @ts-expect-error
-                  for (const u of item.$.unique) {
-                    str += `${capitalize(u.replaceAll(/_/g, " "))}, `;
-                  }
-
-                  return str.substring(0, str.length - 2);
-                }() || "None"
-              )
-            }
-          }
-          
           if (item instanceof GameDirective) {
             embed.addFields([
               { 
@@ -584,8 +565,7 @@ export default new ApplicationCommandHandler(
                   var str = "";
 
                   for (const mat in item.$.requirements.materials) {
-                    // @ts-expect-error
-                    const material: number = item.$.requirements.materials[mat];
+                    const material: number = item.$.requirements.materials[mat as Material];
 
                     if (material !== 0)
                       str += `**${material}** ${capitalize(mat)}\n`;
@@ -644,16 +624,15 @@ export default new ApplicationCommandHandler(
               )
             }
           }
-          // @ts-expect-error
-          if (item.$.info?.description)
+
+          if ((item.$.info as CreatureSpecies["$"]["info"] | undefined)?.description)
             embed.addField(
               "Detailed Description",
-              // @ts-expect-error
-              item.$.info?.description
+              (item as CreatureSpecies).$.info.description
             )
+        }
       }
     }
-
     interaction.editReply({
       embeds: [embed]
     })

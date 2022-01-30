@@ -1,11 +1,11 @@
-import { ButtonInteraction, CommandInteraction, MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu, MessageSelectOptionData } from "discord.js";
+import { ButtonInteraction, CommandInteraction, Message, MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu, MessageSelectOptionData } from "discord.js";
 import Mongoose from "mongoose";
 import { capitalize, clamp, ClassManager, CONFIG, invLerp, ItemManager, lerp, limitString, LootTables, messageInput, PerkManager, removeMarkdown, SchematicsManager, SkillManager, SpeciesManager } from "../..";
-import { CraftingMaterials } from "../../game/Crafting";
-import Creature, { HealType } from "../../game/Creature";
+import { CraftingMaterials, Material } from "../../game/Crafting";
+import Creature, { Attributes, CreatureDump, HealType } from "../../game/Creature";
 import { AbilityUseLog } from "../../game/CreatureAbilities";
 import { DamageCause, DamageGroup, damageLogEmbed, DamageMethod, DamageType, ShieldReaction } from "../../game/Damage";
-import { createItem, DEFAULT_ITEM_OPT_STEP, EquippableInventoryItem, Item, ItemQualityEmoji, WeaponItemData, WearableInventoryItem, WearableItemData } from "../../game/Items";
+import { ConsumableItemData, createItem, DEFAULT_ITEM_OPT_STEP, EquippableInventoryItem, InventoryItem, Item, ItemQualityEmoji, SpecializedWearableData, WeaponItemData, WearableInventoryItem, WearableItemData } from "../../game/Items";
 import { LootTable } from "../../game/LootTables";
 import { ItemStatModule, ModuleType } from "../../game/Modules";
 import { TrackableStat } from "../../game/Stats";
@@ -44,8 +44,9 @@ export default new ComponentCommandHandler(
       }
     } 
 
-    // @ts-expect-error
-    const channel = interaction.message.channel ?? await interaction.guild?.channels.fetch(interaction.message.channel_id ?? interaction.message.channelId).catch(() => null);
+    const message = interaction.message as Message;
+
+    const channel = message.channel ?? await interaction.guild?.channels.fetch((interaction.message as Exclude<typeof interaction.message, Message>).channel_id ?? message.channelId).catch(() => null);
     if (!channel?.isText?.()) throw new Error("Invalid channel");
 
     switch(args.shift()) {
@@ -167,10 +168,8 @@ export default new ComponentCommandHandler(
 
             creature.wipeItems();
             let dump = creature.dump();
-            // @ts-expect-error
-            dump.info.species = interaction.values[0];
-            // @ts-expect-error
-            dump.info.class = undefined;
+            (dump.info as Exclude<CreatureDump["info"], undefined>).species = interaction.values[0];
+            (dump.info as Exclude<CreatureDump["info"], undefined>).class = undefined;
 
             creature = new Creature(dump);
           } break;
@@ -269,8 +268,8 @@ export default new ComponentCommandHandler(
                 })
               } else {
                 let dump = creature.dump();
-                // @ts-expect-error
-                dump.info.class = chosen_class.$.id;
+
+                (dump.info as Exclude<CreatureDump["info"], undefined>).class = chosen_class.$.id;
   
                 creature = new Creature(dump);
   
@@ -301,8 +300,8 @@ export default new ComponentCommandHandler(
               }
 
               let dump = creature.dump();
-              // @ts-expect-error
-              dump.info.class = chosen_class.$.id;
+
+              (dump.info as Exclude<CreatureDump["info"], undefined>).class = chosen_class.$.id;
 
               creature = new Creature(dump);
 
@@ -414,30 +413,27 @@ export default new ComponentCommandHandler(
                       const rec_items: MessageSelectOptionData[] = [];
 
                       for (const i in creature.$.items.backpack) {
-                        const it = creature.$.items.backpack[i];
-                        const item = ItemManager.map.get(it?.id);
+                        const _it = creature.$.items.backpack[i];
+                        const item = ItemManager.map.get(_it?.id);
                         if (item?.$.type === "wearable" || item?.$.type === "weapon") {
+                          const it = _it as EquippableInventoryItem;
                           if (item.$.optimize_cost)
                             opt_items.push({
                               label: item.$.info.name,
                               emoji: ItemQualityEmoji[item.$.info.quality],
                               value: i,
                               description: limitString(removeMarkdown(
-                                // @ts-expect-error
-                                `${capitalize(item.$.slot ?? item.$.type)} ` + 
+                                `${capitalize((item.$ as SpecializedWearableData).slot ?? item.$.type)} ` + 
                                 (
-                                  // @ts-expect-error
-                                  it.stat_module ? (
-                                    // @ts-expect-error
-                                    `${ModuleType[it.stat_module.type]} ` +
-                                    // @ts-expect-error
-                                    `${(100 * it.stat_module.value).toFixed(2)}% -> ${(100 * Math.min(1, it.stat_module.value + (item.$.optimize_step ?? DEFAULT_ITEM_OPT_STEP))).toFixed(2)}% `
+                                  (it as WearableInventoryItem).stat_module ? (
+                                    `${ModuleType[(it as WearableInventoryItem).stat_module.type]} ` +
+                                    `${(100 * (it as WearableInventoryItem).stat_module.value).toFixed(2)}% -> ` + 
+                                    `${(100 * Math.min(1, (it as WearableInventoryItem).stat_module.value + (item.$.optimize_step ?? DEFAULT_ITEM_OPT_STEP))).toFixed(2)}% `
                                     ) : ""
                                 ) + (
-                                  // @ts-expect-error
                                   it.modifier_modules ? function() {
                                     const _mods: string[] = [];
-                                    for (const mod of (it as EquippableInventoryItem)?.modifier_modules ?? []) {
+                                    for (const mod of it.modifier_modules ?? []) {
                                       const reference = (item.$ as WearableItemData | WeaponItemData).modifier_module?.mods.get(mod.stat);
                                       _mods.push(`${modifierDescriptor(mod)} _(${reference ? `${`**${
                                         reference.range[0] === reference.range[1]
@@ -451,7 +447,7 @@ export default new ComponentCommandHandler(
                                 100
                               )
                             })
-                          if (item.$.recalibrate_cost && (it as EquippableInventoryItem).modifier_modules) {
+                          if (item.$.recalibrate_cost && it.modifier_modules) {
                             rec_items.push({
                               label: item.$.info.name,
                               emoji: ItemQualityEmoji[item.$.info.quality],
@@ -525,11 +521,10 @@ export default new ComponentCommandHandler(
                       }
 
                       try {
-                        for (const mat in item.$.optimize_cost) {
-                          // @ts-expect-error
+                        for (const _mat in item.$.optimize_cost) {
+                          const mat = _mat as Material;
                           const material: number = item.$.optimize_cost[mat];
               
-                          // @ts-expect-error
                           if (creature.$.items.crafting_materials[mat] < material) throw new Error(`Not enough materials; need more ${capitalize(mat)}`)
                         }
                       } catch (e: any) {
@@ -539,8 +534,8 @@ export default new ComponentCommandHandler(
                         return;
                       }
 
-                      for (const mat in item.$.optimize_cost) {
-                        // @ts-expect-error
+                      for (const _mat in item.$.optimize_cost) {
+                        const mat = _mat as Material;
                         creature.$.items.crafting_materials[mat] -= item.$.optimize_cost[mat];
                       }
 
@@ -577,11 +572,10 @@ export default new ComponentCommandHandler(
                       }
 
                       try {
-                        for (const mat in item.$.recalibrate_cost) {
-                          // @ts-expect-error
+                        for (const _mat in item.$.recalibrate_cost) {
+                          const mat = _mat as Material;
                           const material: number = item.$.recalibrate_cost[mat];
               
-                          // @ts-expect-error
                           if (creature.$.items.crafting_materials[mat] < material) throw new Error(`Not enough materials; need more ${capitalize(mat)}`)
                         }
                       } catch (e: any) {
@@ -591,8 +585,8 @@ export default new ComponentCommandHandler(
                         return;
                       }
 
-                      for (const mat in item.$.recalibrate_cost) {
-                        // @ts-expect-error
+                      for (const _mat in item.$.recalibrate_cost) {
+                        const mat = _mat as Material;
                         creature.$.items.crafting_materials[mat] -= item.$.recalibrate_cost[mat];
                       }
 
@@ -651,11 +645,10 @@ export default new ComponentCommandHandler(
           
                       if (!perks.find((v) => v.$.id === perk.$.id)) throw new Error(`Must have ${perk.$.info.name} \`${perk.$.id}\` perk`)
                     }
-                    for (const mat in recipe.$.requirements.materials) {
-                      // @ts-expect-error
+                    for (const _mat in recipe.$.requirements.materials) {
+                      const mat = _mat as Material;
                       const material: number = recipe.$.requirements.materials[mat];
           
-                      // @ts-expect-error
                       if (creature.$.items.crafting_materials[mat] < material) throw new Error(`Not enough materials; need more ${capitalize(mat)}`)
                     }
                     for (const i of recipe.$.requirements.items ?? []) {
@@ -677,8 +670,8 @@ export default new ComponentCommandHandler(
           
                     creature.$.items.backpack.splice(creature.$.items.backpack.findIndex(v => v.id === item.$.id), 1);
                   }
-                  for (const mat in recipe.$.requirements.materials) {
-                    // @ts-expect-error
+                  for (const _mat in recipe.$.requirements.materials) {
+                    const mat = _mat as Material;
                     creature.$.items.crafting_materials[mat] -= recipe.$.requirements.materials[mat];
                   }
           
@@ -725,32 +718,28 @@ export default new ComponentCommandHandler(
                   const items: MessageSelectOptionData[] = [];
 
                   for (const i in creature.$.items.backpack) {
-                    const it = creature.$.items.backpack[i];
-                    const item = ItemManager.map.get(it?.id);
-                    if (!item || item.$.type === "consumable") continue;
+                    const _it = creature.$.items.backpack[i];
+                    const _item = ItemManager.map.get(_it?.id);
+                    if (!_item || _item.$.type === "consumable") continue;
+
+                    const data = _item.$ as unknown as ConsumableItemData;
+                    const it = _it as InventoryItem;
 
                     items.push({
-                      label: item.$.info.name,
-                      emoji: ItemQualityEmoji[item.$.info.quality],
+                      label: data.info.name,
+                      emoji: ItemQualityEmoji[data.info.quality],
                       value: i,
                       description: limitString(
-                        // @ts-expect-error
-                        `${capitalize(item.$.slot ?? item.$.type)} ${
-                          // @ts-expect-error
-                          it.stat_module
-                          // @ts-expect-error
-                          ? `${ModuleType[it.stat_module.type]} ${(100 * it.stat_module.value).toFixed(2)}%`
-                          : ""
-                        }${function() {
+                        `${function() {
                           const itm = (it as EquippableInventoryItem);
-                          const data = (item.$ as WearableItemData | WeaponItemData);
+                          const _data = (data as unknown as WearableItemData | WeaponItemData);
                           if (!itm.modifier_modules) return "";
 
                           const mods = [...itm.modifier_modules].sort((a, b) => {
-                            const range_a = data.modifier_module?.mods.get(a.stat)?.range ?? [0, 0];
+                            const range_a = _data.modifier_module?.mods.get(a.stat)?.range ?? [0, 0];
                             const val_a = invLerp(a.value, range_a[0], range_a[1]);
 
-                            const range_b = data.modifier_module?.mods.get(b.stat)?.range ?? [0, 0];
+                            const range_b = _data.modifier_module?.mods.get(b.stat)?.range ?? [0, 0];
                             const val_b = invLerp(b.value, range_b[0], range_b[1]);
 
                             return val_a - val_b;
@@ -827,8 +816,7 @@ export default new ComponentCommandHandler(
                               label: item.$.info.name,
                               emoji: ItemQualityEmoji[item.$.info.quality],
                               value: item.$.id ?? "",
-                              // @ts-expect-error
-                              description: capitalize(item.$.slot ?? item.$.type)
+                              description: capitalize((item.$ as SpecializedWearableData).slot ?? item.$.type)
                             })
                           }
 
@@ -958,15 +946,12 @@ export default new ComponentCommandHandler(
                     const item = ItemManager.map.get(it?.id);
                     if (!item?.$.scrap) continue;
 
-                    for (const mat in item.$.scrap.materials ?? {}) {
-                      // @ts-expect-error
-                      const material: number = item.$.scrap.materials[mat];
+                    for (const _mat in item.$.scrap.materials ?? {}) {
+                      const mat = _mat as Material;
+                      const material: number = item.$.scrap.materials?.[mat] ?? 0;
 
-                      // @ts-expect-error
                       if (typeof creature.$.items.crafting_materials[mat] === "number") {
-                        // @ts-expect-error
                         creature.$.items.crafting_materials[mat] += material;
-                        // @ts-expect-error
                         gained[mat] += material;
                       }
                     }
@@ -985,8 +970,7 @@ export default new ComponentCommandHandler(
                         var str = "";
 
                         for (const mat in gained) {
-                          // @ts-expect-error
-                          const material: number = gained[mat];
+                          const material: number = gained[mat as Material];
 
                           if (material !== 0)
                             str += `**${material}** ${capitalize(mat)}\n`;
@@ -1053,8 +1037,8 @@ export default new ComponentCommandHandler(
                         if (equipped) {
                           creature.$.items.backpack.push(equipped);
                         }
-                        // @ts-expect-error
-                        creature.$.items.slotted[data.$.slot] = item;
+
+                        creature.$.items.slotted[data.$.slot] = item as WearableInventoryItem;
                         
                         if (data.$.slot === "ultimate")
                           creature.$.abilities.ult_stacks = 0;  
@@ -1099,11 +1083,10 @@ export default new ComponentCommandHandler(
                       }
 
                       try {
-                        for (const mat in data.$.optimize_cost) {
-                          // @ts-expect-error
+                        for (const _mat in data.$.optimize_cost) {
+                          const mat = _mat as Material;
                           const material: number = data.$.optimize_cost[mat];
-              
-                          // @ts-expect-error
+
                           if (creature.$.items.crafting_materials[mat] < material) throw new Error(`Not enough materials; need more ${capitalize(mat)}`)
                         }
                       } catch (e: any) {
@@ -1155,8 +1138,8 @@ export default new ComponentCommandHandler(
                               `${function() {
                                 const arr: string[] = [];
 
-                                for (const mat in data.$.optimize_cost) {
-                                  // @ts-expect-error
+                                for (const _mat in data.$.optimize_cost) {
+                                  const mat = _mat as Material;
                                   const material: number = data.$.optimize_cost[mat];
                                   
                                   if (material !== 0)
@@ -1193,11 +1176,10 @@ export default new ComponentCommandHandler(
                       }
 
                       try {
-                        for (const mat in data.$.recalibrate_cost) {
-                          // @ts-expect-error
+                        for (const _mat in data.$.recalibrate_cost) {
+                          const mat = _mat as Material;
                           const material: number = data.$.recalibrate_cost[mat];
-              
-                          // @ts-expect-error
+
                           if (creature.$.items.crafting_materials[mat] < material) throw new Error(`Not enough materials; need more ${capitalize(mat)}`)
                         }
                       } catch (e: any) {
@@ -1243,8 +1225,8 @@ export default new ComponentCommandHandler(
                               `${function() {
                                 const arr: string[] = [];
 
-                                for (const mat in data.$.recalibrate_cost) {
-                                  // @ts-expect-error
+                                for (const _mat in data.$.recalibrate_cost) {
+                                  const mat = _mat as Material;
                                   const material: number = data.$.recalibrate_cost[mat];
                                   
                                   if (material !== 0)
@@ -1301,19 +1283,18 @@ export default new ComponentCommandHandler(
                   return;
                 }
 
-                // @ts-expect-error
-                if (creature.$.attributes[arg] instanceof TrackableStat) {
+                let ar = arg as Attributes; 
+
+                if (creature.$.attributes[ar] instanceof TrackableStat) {
                   if (IS_GM || creature.totalAttributePointsUsed < creature.$.experience.level) {
-                    // @ts-expect-error
-                    if (creature.$.attributes[arg].base >= Creature.ATTRIBUTE_MAX) {
+                    if (creature.$.attributes[ar].base >= Creature.ATTRIBUTE_MAX) {
                       interaction.followUp({
                         ephemeral: true,
                         content: "Attribute is MAXED OUT!"
                       })
                       return;
                     } else {
-                      // @ts-expect-error
-                      creature.$.attributes[arg].base++;
+                      creature.$.attributes[ar].base++;
                     }
                   } else {
                     interaction.followUp({
@@ -1389,11 +1370,10 @@ export default new ComponentCommandHandler(
                 }
 
                 try {
-                  for (const mat in thing.cost) {
-                    // @ts-expect-error
+                  for (const _mat in thing.cost) {
+                    const mat = _mat as Material;
                     const material: number = thing.cost[mat];
         
-                    // @ts-expect-error
                     if (creature.$.items.crafting_materials[mat] < material) throw new Error(`${capitalize(mat)}`)
                   }
                 } catch (e: any) {
@@ -1430,8 +1410,8 @@ export default new ComponentCommandHandler(
                   } break;
                 }
 
-                for (const mat in thing.cost) {
-                  // @ts-expect-error
+                for (const _mat in thing.cost) {
+                  const mat = _mat as Material;
                   creature.$.items.crafting_materials[mat] -= thing.cost[mat];
                 }
 
@@ -1754,8 +1734,8 @@ export async function scrapMenu(interaction: ButtonInteraction | CommandInteract
 
     const scrap: string[] = [];
     if (item.$.scrap) {
-      for (const mat in item.$.scrap.materials) {
-        // @ts-expect-error
+      for (const _mat in item.$.scrap.materials) {
+        const mat = _mat as Material;
         const material = item.$.scrap.materials[mat];
 
         if (material !== 0)
@@ -1766,13 +1746,10 @@ export async function scrapMenu(interaction: ButtonInteraction | CommandInteract
         emoji: ItemQualityEmoji[item.$.info.quality],
         description:
           `${
-            // @ts-expect-error
-            it.stat_module
-            // @ts-expect-error
-            ? `${ModuleType[it.stat_module.type]} ${(100 * it.stat_module.value).toFixed(2)}%`
+            (it as WearableInventoryItem).stat_module
+            ? `${ModuleType[(it as WearableInventoryItem).stat_module.type]} ${(100 * (it as WearableInventoryItem).stat_module.value).toFixed(2)}%`
             : ""
-            // @ts-expect-error
-          } ${scrap.join(", ")} ${capitalize(item.$.slot ?? item.$.type)}`,
+          } ${scrap.join(", ")} ${capitalize((item.$ as SpecializedWearableData).slot ?? item.$.type)}`,
         value: i
       })
     }

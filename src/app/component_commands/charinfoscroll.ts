@@ -1,4 +1,4 @@
-import { MessageActionRow, MessageButton } from "discord.js";
+import { Message, MessageActionRow, MessageButton } from "discord.js";
 import Creature from "../../game/Creature";
 import char, { infoEmbed } from "../commands/char";
 import { ComponentCommandHandler } from "../component_commands";
@@ -14,11 +14,11 @@ export default new ComponentCommandHandler(
     ]);
     interaction.deleteReply();
 
+    const message = interaction.message as Message;
+
     const channel = interaction.guild
-    // @ts-expect-error
-    ? await interaction.guild.channels.fetch(interaction.message.channelId ?? interaction.message.channel_id)
-    // @ts-expect-error
-    : await Bot.channels.fetch(interaction.message.channel_id)
+    ? await interaction.guild.channels.fetch(message.channelId ?? (interaction.message as Exclude<typeof interaction.message, Message>).channel_id)
+    : await Bot.channels.fetch((interaction.message as Exclude<typeof interaction.message, Message>).channel_id ?? message.channelId)
 
     if (!channel?.isText?.()) throw new Error("Channel isn't text")
 

@@ -80,3 +80,10 @@ export class CraftingMaterials {
     this.biomaterial = data.biomaterial ?? 0;
   }
 }
+
+export type Material =
+  "metal" |
+  "fabric" |
+  "plastic" |
+  "cells" |
+  "biomaterial"

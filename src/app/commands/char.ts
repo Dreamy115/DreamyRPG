@@ -1,11 +1,11 @@
 import { ApplicationCommandOptionChoice, Client, EmbedFieldData, Invite, MessageActionRow, MessageAttachment, MessageButton, MessageEmbed, MessageSelectMenu } from "discord.js";
 import { DisplaySeverity, replaceEffectLore, romanNumeral } from "../../game/ActiveEffects.js";
-import { Schematic } from "../../game/Crafting.js";
-import Creature, { diceRoll } from "../../game/Creature.js";
+import { Material, Schematic } from "../../game/Crafting.js";
+import Creature, { Attributes, diceRoll, Stats } from "../../game/Creature.js";
 import { CreatureAbility, replaceLore } from "../../game/CreatureAbilities.js";
 import { reductionMultiplier, DAMAGE_TO_INJURY_RATIO, DamageMethod, DamageType } from "../../game/Damage.js";
 import { CombatPosition } from "../../game/Fight.js";
-import { AttackData, SlotDescriptions, Item, ItemQualityEmoji, InventoryItem, EquippableInventoryItem, WearableInventoryItem, WearableItemData, WeaponItemData } from "../../game/Items.js";
+import { AttackData, SlotDescriptions, Item, ItemQualityEmoji, InventoryItem, EquippableInventoryItem, WearableInventoryItem, WearableItemData, WeaponItemData, ConsumableItemData, ItemSlot, SpecializedWearableData } from "../../game/Items.js";
 import { cToF } from "../../game/Locations.js";
 import { LootTable } from "../../game/LootTables.js";
 import { ItemStatModule, ModuleType } from "../../game/Modules.js";
@@ -304,9 +304,8 @@ export default new ApplicationCommandHandler(
 
         const diff = interaction.options.getInteger("difficulty", true);
         const bonus = interaction.options.getInteger("bonus", false) ?? 0;
-        const attr_name = interaction.options.getString("attribute", true);
+        const attr_name = interaction.options.getString("attribute", true) as Attributes;
 
-        // @ts-expect-error
         const attr: TrackableStat = creature.$.attributes[attr_name];
 
         const rolls: number[] = [];
@@ -427,17 +426,18 @@ export default new ApplicationCommandHandler(
 
         let start_index = 25 * Math.abs((interaction.options.getInteger("page", false) ?? 1) - 1);
 
+        const select = components[0].components[0] as MessageSelectMenu | undefined;
+
         var i = 0;
+        if (location.shop.$.content)
         for (i = start_index; i < 25; i++) {
-          // @ts-expect-error
           const content = location.shop.$.content[i];
           if (!content) break;
 
           function cost() {
             var arr: string[] = [];
             for (const mat in content.cost) {
-              // @ts-expect-error
-              const material: number = content.cost[mat];
+              const material: number = content.cost[mat as Material];
 
               if (material !== 0)
                 arr.push(`**${material}** ${capitalize(mat)}`)
@@ -451,8 +451,7 @@ export default new ApplicationCommandHandler(
             case "item": {
               const item = ItemManager.map.get(content.id);
               if (!item) continue;
-              // @ts-expect-error
-              components[0].components[0]?.addOptions({
+              select?.addOptions({
                 label: item.$.info.name,
                 value: String(i),
                 description: `[${i}] Item`
@@ -460,13 +459,15 @@ export default new ApplicationCommandHandler(
 
               embed.addField(
                 `[${i}] Item - ${item.displayName} \`${item.$.id}\``,
-                // @ts-expect-error
-                `*${item.$.info.replacers ? replaceLore(item.$.info.lore, item.$.info.replacers, creature) : item.$.info.lore}*\n\n${cost()}`
+                `*${
+                    (item.$ as ConsumableItemData).info.replacers
+                    ? replaceLore(item.$.info.lore, (item.$ as ConsumableItemData).info.replacers, creature)
+                    : item.$.info.lore}*\n\n${cost()
+                  }`
               )
             } break;
             case "service": {
-              // @ts-expect-error
-              components[0].components[0]?.addOptions({
+              select?.addOptions({
                 label: content.info.name,
                 value: String(i),
                 description: `[${i}] Service`
@@ -480,8 +481,7 @@ export default new ApplicationCommandHandler(
             case "schematic": {
               const schem = SchematicsManager.map.get(content.id);
               if (!schem) continue;
-              // @ts-expect-error
-              components[0].components[0]?.addOptions({
+              select?.addOptions({
                 label: schem.$.info.name,
                 value: String(i),
                 description: `[${i}] Schematic`
@@ -497,9 +497,8 @@ export default new ApplicationCommandHandler(
 
         embed.setFooter(`${location.shop.$.id} | ${start_index + 1}-${i}/${location.shop.$.content?.length ?? 0}`)
 
-        components[0].components[0]
-          // @ts-expect-error
-          .setMaxValues(components[0].components[0].options.length)
+        select
+          ?.setMaxValues(select.options.length)
           .setMinValues(1)
 
         interaction.editReply({
@@ -747,8 +746,8 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
         function () {
           const arr: string[] = [];
 
-          for (const type of Object.values(ModuleType).filter(x => !isNaN(Number(x)))) {
-            // @ts-expect-error
+          for (const t of Object.values(ModuleType).filter(x => !isNaN(Number(x)))) {
+            const type = t as ModuleType;
             arr.push(`${ModuleType[type]} **${modules.get(type)?.length ?? 0}**  ${modifiersDescriptor(cum_mods.get(type) ?? [], " ")}`);
           }
 
@@ -858,8 +857,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
       }
 
       for (const slot in SlotDescriptions) {
-        // @ts-expect-error
-        const item: InventoryItem | null = creature.$.items.slotted[slot];
+        const item = creature.$.items.slotted[slot as ItemSlot];
         const itemdata = ItemManager.map.get(item?.id ?? "");
         
         embed.addField(
@@ -875,8 +873,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
           var str = "";
 
           for (const c in creature.$.items.crafting_materials) {
-            // @ts-expect-error
-            const mat: number = creature.$.items.crafting_materials[c];
+            const mat: number = creature.$.items.crafting_materials[c as Material];
 
             str += `**${mat}** ${capitalize(c)}\n`;
           }
@@ -904,8 +901,11 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
         const item = items[i];
 
         embed.addField(
-          // @ts-expect-error
-          `<**${i+1}**> **${item.displayName}** \`${item.$.id}\`\n**${capitalize(item.$.type)}**${item.$.slot ? `, ${capitalize(item.$.slot)}` : ""}`,
+          `<**${i+1}**> **${item.displayName}** \`${item.$.id}\`\n**${capitalize(item.$.type)}**${
+            (item.$ as SpecializedWearableData).slot
+            ? `, ${capitalize((item.$ as SpecializedWearableData).slot)}`
+            : ""
+          }`,
           describeItem(_items[i], creature) + "\n\n",
           item.$.type !== "weapon"
         )
@@ -1041,26 +1041,24 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
           var str = "";
 
           const array: NamedModifier[] = [];
-          for (const s in creature.$.stats) {
-            // @ts-ignore
+          for (const _s in creature.$.stats) {
+            const s = _s as Stats;
             const stat = creature.$.stats[s];
             
             for (const mod of stat.modifiers) {
               array.push({
-                // @ts-expect-error
                 stat: s,
                 type: mod.type,
                 value: mod.value
               });
             }
           }
-          for (const a in creature.$.attributes) {
-            // @ts-ignore
+          for (const _a in creature.$.attributes) {
+            const a = _a as Attributes;
             const attr = creature.$.attributes[a];
             
             for (const mod of attr.modifiers) {
               array.push({
-                // @ts-expect-error
                 stat: a,
                 type: mod.type,
                 value: mod.value
@@ -1107,12 +1105,11 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
         function () {
           var str = "";
 
-          for (const a in creature.$.attributes) {
-            // @ts-expect-error
+          for (const _a in creature.$.attributes) {
+            const a = _a as Attributes;
             const attr = creature.$.attributes[a];
             const attr_bonus = attr.value - attr.base;
             
-            // @ts-expect-error
             str += `**${attr.value} ${a}**${attr_bonus !== 0 ? ` [Modifiers] *(**${attr.base}** ${`${(attr_bonus < 0 ? "-" : "+")} ${Math.abs(attr_bonus)}`})*` : ""}\n${Creature.ATTRIBUTE_DESCRIPTIONS[a]}  ${modifiersDescriptor(Creature.ATTRIBUTE_MODS[a], ", ").trim() || ""}\n`
           }
 
@@ -1348,8 +1345,7 @@ export function schematicDescriptor(item: Schematic, perks?: Set<string>) {
         var str = "";
 
         for (const mat in item.$.requirements.materials) {
-          // @ts-expect-error
-          const material: number = item.$.requirements.materials[mat];
+          const material: number = item.$.requirements.materials[mat as Material];
 
           if (material !== 0)
             str += `**${material}** ${capitalize(mat)}, `;
@@ -1385,10 +1381,8 @@ export function describeItem(invitem?: InventoryItem, creature?: Creature) {
   if (!item) return null;
 
   let lore = item.$.info.lore
-  // @ts-expect-error
-  if (item.$.info.replacers) {
-    // @ts-expect-error
-    lore = replaceLore(lore, item.$.info.replacers, creature);
+  if ((item.$ as ConsumableItemData).info.replacers) {
+    lore = replaceLore(lore, (item.$ as ConsumableItemData).info.replacers, creature);
   }
 
   str += `*${lore}*\n\n`;
@@ -1501,8 +1495,7 @@ export function describeItem(invitem?: InventoryItem, creature?: Creature) {
     const scrap: string[] = [];
     if (item.$.scrap) {
       for (const mat in item.$.scrap.materials) {
-        // @ts-expect-error
-        const material: number = item.$.scrap.materials[mat];
+        const material: number = item.$.scrap.materials[mat as Material];
 
         if (material !== 0)
           scrap.push(`**${material}** ${capitalize(mat)}`)

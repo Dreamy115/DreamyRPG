@@ -38,6 +38,7 @@ export const SchematicsManager = new CraftingManager();
 export const LootTables = new LootTableManager();
 
 import { setSim } from "./app/commands/simulation.js";
+import { ItemStatModule } from "./game/Modules.js";
 
 process.on("uncaughtException", (e) => {
   console.error(e);

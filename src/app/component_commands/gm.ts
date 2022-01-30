@@ -1,5 +1,6 @@
+import { Message } from "discord.js";
 import { CONFIG, gameLoad, messageInput } from "../..";
-import Creature, { HealType } from "../../game/Creature";
+import Creature, { CreatureDump, HealType } from "../../game/Creature";
 import { ComponentCommandHandler } from "../component_commands";
 
 export default [
@@ -27,8 +28,12 @@ export default [
         return;
       }
 
-      // @ts-expect-error
-      const channel = interaction.message.channel ?? await interaction.guild?.channels.fetch(interaction.message.channel_id ?? interaction.message.channelId).catch(() => null);
+      const message = interaction.message as Message;
+
+      const channel = interaction.guild
+      ? await interaction.guild.channels.fetch(message.channelId ?? (interaction.message as Exclude<typeof interaction.message, Message>).channel_id)
+      : await Bot.channels.fetch((interaction.message as Exclude<typeof interaction.message, Message>).channel_id ?? message.channelId)
+      
       if (!channel?.isText?.()) throw new Error("Invalid channel");
 
       switch (args.shift()) {
@@ -63,7 +68,7 @@ export default [
 
                 var pre_date = new Date();
                 for await (let data of cursor) {
-                  // @ts-expect-error
+                  const document = data as CreatureDump;
                   const creature: Creature = Creature.cache.get(document._id) ?? new Creature(document);
 
                   for (var i = 0; i < input; i++) {
@@ -89,7 +94,7 @@ export default [
 
                 var pre_date = new Date();
                 for await (let data of cursor) {
-                  // @ts-expect-error
+                  const document = data as CreatureDump;
                   const creature: Creature = Creature.cache.get(document._id) ?? new Creature(document);
 
                   creature.heal(creature.$.stats.health.value + creature.$.stats.shield.value, HealType.Overheal);

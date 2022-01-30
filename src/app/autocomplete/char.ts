@@ -1,6 +1,7 @@
 import { ApplicationCommandOptionChoice } from "discord.js";
 import Mongoose from "mongoose";
-import { ItemManager, PerkManager, SchematicsManager } from "../..";
+import { capitalize, ItemManager, PerkManager, SchematicsManager } from "../..";
+import { CraftingMaterials, Material } from "../../game/Crafting";
 import Creature from "../../game/Creature";
 import { Item } from "../../game/Items";
 import { AutocompleteHandler } from "../autocomplete";
@@ -60,11 +61,9 @@ export default new AutocompleteHandler(
                   if (!perks.find((v) => v.$.id === perk.$.id)) throw new Error(`Missing Perk`)
                 }
                 for (const mat in recipe.$.requirements.materials) {
-                  // @ts-expect-error
-                  const material: number = recipe.$.requirements.materials[mat];
-      
-                  // @ts-expect-error
-                  if (creature.$.items.crafting_materials[mat] < material) throw new Error(`Need more ${capitalize(mat)}`)
+                  const material: number = recipe.$.requirements.materials[mat as Material];
+
+                  if (creature.$.items.crafting_materials[mat as Material] < material) throw new Error(`Need more ${capitalize(mat)}`)
                 }
                 for (const i of recipe.$.requirements.items ?? []) {
                   const item = ItemManager.map.get(i);

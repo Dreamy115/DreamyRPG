@@ -1,6 +1,6 @@
 import { ApplicationCommandOptionChoice, MessageActionRow, MessageButton } from "discord.js";
 import { CONFIG, gameLoad, LocationManager } from "../..";
-import Creature, { HealType } from "../../game/Creature";
+import Creature, { CreatureDump, HealType } from "../../game/Creature";
 import { DamageCause, DamageGroup, damageLogEmbed, DamageMethod, DamageType, ShieldReaction } from "../../game/Damage";
 import { Fight } from "../../game/Fight";
 import { TrackableStat } from "../../game/Stats";
@@ -253,9 +253,9 @@ export default new ApplicationCommandHandler(
             const cursor = db.connection.collection(Creature.COLLECTION_NAME).find();
 
             var pre_date = new Date();
-            for await (let data of cursor) {
-              // @ts-expect-error
-              const creature: Creature = Creature.cache.get(document._id) ?? new Creature(document);
+            for await (let document of cursor) {
+              const data = document as CreatureDump;
+              const creature: Creature = Creature.cache.get(data._id) ?? new Creature(data);
 
               creature.$.info.location = location.$.id;
 
@@ -361,9 +361,9 @@ export default new ApplicationCommandHandler(
               const cursor = db.connection.collection(Creature.COLLECTION_NAME).find();
 
               var pre_date = new Date();
-              for await (let data of cursor) {
-                // @ts-expect-error
-                const creature: Creature = Creature.cache.get(document._id) ?? new Creature(document);
+              for await (let document of cursor) {
+                const data = document as CreatureDump;
+                const creature: Creature = Creature.cache.get(data._id) ?? new Creature(data);
 
                 for (var i = 0; i < amount; i++) {
                   creature.tick();
@@ -386,9 +386,9 @@ export default new ApplicationCommandHandler(
               const cursor = db.connection.collection(Creature.COLLECTION_NAME).find();
 
               var pre_date = new Date();
-              for await (let data of cursor) {
-                // @ts-expect-error
-                const creature: Creature = Creature.cache.get(document._id) ?? new Creature(document);
+              for await (let document of cursor) {
+                const data = document as CreatureDump;
+                const creature: Creature = Creature.cache.get(data._id) ?? new Creature(data);
 
                 creature.heal(creature.$.stats.health.value + creature.$.stats.shield.value, HealType.Overheal);
                 creature.heal(creature.$.stats.mana.value, HealType.Mana);

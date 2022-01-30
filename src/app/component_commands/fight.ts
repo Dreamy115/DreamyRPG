@@ -1,4 +1,4 @@
-import { MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu, MessageSelectMenuOptions, MessageSelectOptionData } from "discord.js";
+import { Message, MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu, MessageSelectMenuOptions, MessageSelectOptionData } from "discord.js";
 import { AbilitiesManager, CONFIG, rotateLine, sleep } from "../..";
 import Creature, { diceRoll } from "../../game/Creature";
 import { DamageCause, DamageLog, damageLogEmbed, DamageMethod, DamageSource, ShieldReaction } from "../../game/Damage";
@@ -88,11 +88,11 @@ export default new ComponentCommandHandler(
 
     switch (args.shift()) {
       case "refresh": {
+        const message = interaction.message as Message;
+
         const channel = interaction.guild
-        // @ts-expect-error
-        ? await interaction.guild.channels.fetch(interaction.message.channelId ?? interaction.message.channel_id)
-        // @ts-expect-error
-        : await Bot.channels.fetch(interaction.message.channel_id)
+        ? await interaction.guild.channels.fetch(message.channelId ?? (interaction.message as Exclude<typeof interaction.message, Message>).channel_id)
+        : await Bot.channels.fetch((interaction.message as Exclude<typeof interaction.message, Message>).channel_id ?? message.channelId)
     
         if (!channel?.isText?.()) throw new Error("Channel isn't text")
     
@@ -431,11 +431,10 @@ export default new ComponentCommandHandler(
 
               await Promise.all(_promises);
               interaction.followUp(await fight.announceTurn(db, Bot));
-            } catch (e) {
+            } catch (e: any) {
               console.error(e);
               interaction.followUp({
                 ephemeral: true,
-                // @ts-expect-error
                 content: e?.message ?? e
               });
             }
@@ -580,11 +579,10 @@ export default new ComponentCommandHandler(
 
               await Promise.all(_promises);
               interaction.followUp(await fight.announceTurn(db, Bot));
-            } catch (e) {
+            } catch (e: any) {
               console.error(e);
               interaction.followUp({
                 ephemeral: true,
-                // @ts-expect-error
                 content: e?.message ?? e
               });
             }

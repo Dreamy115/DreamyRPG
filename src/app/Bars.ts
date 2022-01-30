@@ -23,7 +23,7 @@ function repeat(s: string, i: number) {
   return r;
 }
 export function make_bar(percent: number, bar_style: string, max_size: number) {
-  var d, full, m, middle, r: string, rest, x,
+  var d, full, m, middle, r = "", rest, x,
     min_delta = Number.POSITIVE_INFINITY,
     full_symbol = bar_style[bar_style.length - 1],
     n = bar_style.length - 1;
@@ -46,7 +46,7 @@ export function make_bar(percent: number, bar_style: string, max_size: number) {
       r = repeat(full_symbol, full) + m + repeat(bar_style[0], i-full-1);
     }
   }
-  // @ts-expect-error
+
   return {str: r, delta: min_delta};
 }
 // end shameless steal

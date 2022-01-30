@@ -4,12 +4,12 @@ import NodeCache from "node-cache";
 import { bar_styles } from "../app/Bars.js";
 import { AbilitiesManager, capitalize, ClassManager, CONFIG, db, EffectManager, ItemManager, LocationManager, PassivesManager, PerkManager, SchematicsManager, shuffle, SkillManager, SpeciesManager } from "../index.js";
 import { AppliedActiveEffect } from "./ActiveEffects.js";
-import { CraftingMaterials } from "./Crafting.js";
+import { CraftingMaterials, Material } from "./Crafting.js";
 import { CreatureAbility } from "./CreatureAbilities.js";
 import { DamageCause, DamageGroup, DamageLog, DamageMethod as DamageMethod, DamageType, DAMAGE_TO_INJURY_RATIO, reductionMultiplier, ShieldReaction } from "./Damage.js";
 import { Fight } from "./Fight.js";
 import { GameDirective } from "./GameDirectives.js";
-import { AttackData, AttackSet, Item, ItemSlot, InventoryItem, EquippableInventoryItem, WeaponInventoryItem, WearableInventoryItem, NormalWearableItemData, SlotDescriptions } from "./Items.js";
+import { AttackData, AttackSet, Item, ItemSlot, InventoryItem, EquippableInventoryItem, WeaponInventoryItem, WearableInventoryItem, NormalWearableItemData, SlotDescriptions, MaskWearableItemData, WeaponItemData, ShieldWearableItemData, VestWearableItemData, JacketWearableItemData, BackpackWearableItemData, GlovesWearableItemData, ConsumableItemData, GenericItemData } from "./Items.js";
 import { ItemStatModule, ModuleType } from "./Modules.js";
 import { PassiveEffect, NamedModifier } from "./PassiveEffects.js";
 import { CreaturePerk } from "./Perks.js";
@@ -85,8 +85,7 @@ export default class Creature {
         heat: (data.vitals?.heat ?? 1)
       },
       items: {
-        // @ts-expect-error
-        slotted: {},
+        slotted: {} as Record<ItemSlot, undefined>,
         weapons: data.items?.weapons ?? [],
         backpack: data.items?.backpack ?? [],
         primary_weapon: data.items?.primary_weapon ?? null,
@@ -108,20 +107,19 @@ export default class Creature {
     }
 
     function fixModule(item: WearableInventoryItem | InventoryItem) {
-      // @ts-expect-error
-      const module: ItemStatModule | undefined = item?.stat_module;
+      const module: ItemStatModule | undefined = (item as WearableInventoryItem | undefined)?.stat_module;
 
       if (module)
-        // @ts-expect-error
-        item.stat_module = new ItemStatModule(module.type ?? -1, module.value ?? 0);
+      (item as WearableInventoryItem).stat_module = new ItemStatModule(module.type ?? -1, module.value ?? 0);
     }
 
-    for (const i in data.items?.slotted) {
-      // @ts-expect-error
-      this.$.items.slotted[i] = data.items.slotted[i];
+    for (const _i in data.items?.slotted) {
+      const i = _i as ItemSlot;
+      this.$.items.slotted[i] = data?.items?.slotted[i];
 
-      // @ts-expect-error
-      fixModule(this.$.items.slotted[i]);
+      const item = this.$.items.slotted[i];
+      if (item)
+        fixModule(item);
     }
 
     for (const i of this.$.items.backpack) {
@@ -131,58 +129,44 @@ export default class Creature {
     this.checkItemConflicts();
     // PRELOAD
 
-    // @ts-expect-error
-    const slottedItems: Record<ItemSlot, Item | undefined> = {};
-    for (const slot in SlotDescriptions) {
-      // @ts-expect-error
+    const slottedItems = {} as Record<ItemSlot, Item | null>;
+    for (const _slot in SlotDescriptions) {
+      const slot = _slot as ItemSlot;
+
       slottedItems[slot] = ItemManager.map.get(this.$.items.slotted[slot]?.id ?? "") ?? null;
     }
 
     // ADDING ITEM BASES
     this.$.stats.ult_stack_target.base = this.ultimate?.$.cost ?? 0;
     
-    // @ts-expect-error
-    this.$.stats.damage.base += ItemManager.map.get(this.$.items.primary_weapon?.id ?? "")?.$.base_damage ?? 0;
+    this.$.stats.damage.base += (ItemManager.map.get(this.$.items.primary_weapon?.id ?? "")?.$ as WeaponItemData).base_damage ?? 0;
     
-    // @ts-expect-error
-    this.$.stats.filtering.base += slottedItems.mask?.$.base_filtering ?? 0;
+    this.$.stats.filtering.base += (slottedItems.mask?.$ as MaskWearableItemData).base_filtering ?? 0;
 
-    // @ts-expect-error
-    this.$.stats.shield.base += slottedItems.shield?.$.base_shield ?? 0;
-    // @ts-expect-error
-    this.$.stats.shield_regen.base += slottedItems.shield?.$.base_regen ?? 0;
-    
-    // @ts-expect-error
-    this.$.stats.armor.base += slottedItems.vest?.$.base_armor ?? 0;
-    // @ts-expect-error
-    this.$.stats.dissipate.base += slottedItems.vest?.$.base_dissipate ?? 0;
+    this.$.stats.shield.base += (slottedItems.shield?.$ as ShieldWearableItemData).base_shield ?? 0;
+    this.$.stats.shield_regen.base += (slottedItems.shield?.$ as ShieldWearableItemData).base_regen ?? 0;
 
-    // @ts-expect-error
-    this.$.stats.min_comfortable_temperature.base += slottedItems.jacket?.$.base_insulation ?? 0;
-    // @ts-expect-error
-    this.$.stats.heat_capacity.base += slottedItems.jacket?.$.base_heat_capacity ?? 0;
-    
-    // @ts-expect-error
-    this.$.stats.parry.base += slottedItems.backpack?.$.base_parry ?? 0;
-    // @ts-expect-error
-    this.$.stats.deflect.base += slottedItems.backpack?.$.base_deflect ?? 0;
-    
-    // @ts-expect-error
-    this.$.stats.mana.base += slottedItems.gloves?.$.base_mana ?? 0;
-    // @ts-expect-error
-    this.$.stats.mana_regen.base += slottedItems.gloves?.$.base_mana_regen ?? 0;
-    // @ts-expect-error
-    this.$.stats.tech.base += slottedItems.gloves?.$.tech ?? 0;
+    this.$.stats.armor.base += (slottedItems.vest?.$ as VestWearableItemData).base_armor ?? 0;
+    this.$.stats.dissipate.base += (slottedItems.vest?.$ as VestWearableItemData).base_dissipate ?? 0;
 
+    this.$.stats.min_comfortable_temperature.base += (slottedItems.jacket?.$ as JacketWearableItemData).base_insulation ?? 0;
+    this.$.stats.heat_capacity.base += (slottedItems.jacket?.$ as JacketWearableItemData).base_heat_capacity ?? 0;
+    
+    this.$.stats.parry.base += (slottedItems.backpack?.$ as BackpackWearableItemData).base_parry ?? 0;
+    this.$.stats.deflect.base += (slottedItems.backpack?.$ as BackpackWearableItemData).base_deflect ?? 0;
+    
+    this.$.stats.mana.base += (slottedItems.gloves?.$ as GlovesWearableItemData).base_mana ?? 0;
+    this.$.stats.mana_regen.base += (slottedItems.gloves?.$ as GlovesWearableItemData).base_mana_regen ?? 0;
+    this.$.stats.tech.base += (slottedItems.gloves?.$ as GlovesWearableItemData).base_tech ?? 0;
 
     // Modules
     for (const [type, mods] of this.getModuleCumulativeModifiers()) {
       for (const mod of mods)
         this.applyNamedModifier(mod)
     }
-    for (const slot in this.$.items.slotted) {
-      // @ts-expect-error
-      const item: WearableInventoryItem = this.$.items.slotted[slot];
+    for (const _slot in this.$.items.slotted) {
+      const slot = _slot as ItemSlot;
+      const item = this.$.items.slotted[slot] as WearableInventoryItem;
 
       for (const mod of item.modifier_modules ?? []) {
         this.applyNamedModifier(mod);
@@ -211,8 +195,8 @@ export default class Creature {
     }
     
     this.applyModifiersToBaseStats(Creature.LEVEL_MODS, this.$.experience.level - 1);
-    for (const a in this.$.attributes) {
-      // @ts-expect-error
+    for (const _a in this.$.attributes) {
+      const a = _a as Attributes; 
       this.applyModifiersToBaseStats(Creature.ATTRIBUTE_MODS[a], Math.round(this.$.attributes[a].value));
     }
 
@@ -265,8 +249,7 @@ export default class Creature {
 
   applyModifiersToBaseStats(list: NamedModifier[], amount: number) {
     for (const mod of list) {
-      // @ts-expect-error
-      const stat: TrackableStat = this.$.stats[mod.stat];
+      const stat: TrackableStat = this.$.stats[mod.stat as Stats];
       switch (mod.type) {
         case ModifierType.ADD:
         default:
@@ -294,13 +277,10 @@ export default class Creature {
 
   get stat_modules(): Map<ModuleType, ItemStatModule[]> {
     const map = new Map<ModuleType, ItemStatModule[]>();
-    for (const item of this.inventoryItems) {
-      // @ts-expect-error
-      if (item?.stat_module) {
-        // @ts-expect-error
-        const witem: WearableInventoryItem = item;
-        
-        map.set(witem.stat_module.type, [...(map.get(witem.stat_module.type) ?? []), witem.stat_module]);
+    for (const _item of this.inventoryItems) {
+      const item = _item as WearableInventoryItem;
+      if (item?.stat_module) {    
+        map.set(item.stat_module.type, [...(map.get(item.stat_module.type) ?? []), item.stat_module]);
       }
     }
     return map;
@@ -418,13 +398,13 @@ export default class Creature {
       }  
     }
 
-    for (const slot in this.$.items.slotted) {
-      // @ts-expect-error
-      const item = ItemManager.map.get(this.$.items.slotted[slot]?.id);
+    for (const _slot in this.$.items.slotted) {
+      const slot = _slot as ItemSlot;
+      const item = ItemManager.map.get(this.$.items.slotted[slot]?.id ?? "");
       if (item?.$.type !== "wearable" || item.$.slot !== slot) {
-        // @ts-expect-error
-        this.$.items.backpack.push(this.$.items.slotted[slot]);
-        // @ts-expect-error
+        const slotted = this.$.items.slotted[slot];
+        if (slotted)
+          this.$.items.backpack.push(slotted);
         this.$.items.slotted[slot] = null;
       }
     }
@@ -437,8 +417,7 @@ export default class Creature {
       backpack: [],
       crafting_materials: new CraftingMaterials({}),
       weapons: [],
-      // @ts-expect-error
-      slotted: {},
+      slotted: {} as Record<ItemSlot, undefined>,
       primary_weapon: null,
       skills: new Set(),
       schematics: new Set()
@@ -503,8 +482,7 @@ export default class Creature {
 
 
     for (const item of this.itemsData) {
-      // @ts-expect-error
-      globalOrLocalPusherArray(abilities, Array.from(item.$.abilities?.values() ?? []), AbilitiesManager);
+      globalOrLocalPusherArray(abilities, Array.from((item.$ as Exclude<typeof item.$, GenericItemData | ConsumableItemData>).abilities?.values() ?? []), AbilitiesManager);
     }
 
     const uniques: string[] = [];
@@ -544,8 +522,7 @@ export default class Creature {
 
 
     for (const item of this.itemsData) {
-      // @ts-expect-error
-      globalOrLocalPusherSet(passives, item.$.passives ?? new Set(), PassivesManager);
+      globalOrLocalPusherSet(passives, (item.$ as Exclude<typeof item.$, GenericItemData | ConsumableItemData>).passives ?? new Set(), PassivesManager);
     }
 
     const uniques = new Set<string>();
@@ -581,8 +558,9 @@ export default class Creature {
       const arr: InventoryItem[] = [];
 
       for (const slot in creature.$.items.slotted) {
-        // @ts-expect-error
-        arr.push(creature.$.items.slotted[slot]);
+        const slotted = creature.$.items.slotted[slot as ItemSlot];
+        if (slotted)
+          arr.push(slotted);
       }
 
       return arr;
@@ -938,8 +916,7 @@ export default class Creature {
 
   clearAttributes() {
     for (const a in this.$.attributes) {
-      // @ts-expect-error
-      this.$.attributes[a].base = 0;
+      this.$.attributes[a as Attributes].base = 0;
     }
   }
 
@@ -947,8 +924,7 @@ export default class Creature {
     let num = 0;
 
     for (const a in this.$.attributes) {
-      // @ts-expect-error
-      num += this.$.attributes[a]?.base ?? 0;
+      num += this.$.attributes[a as Attributes]?.base ?? 0;
     }
 
     return num;
@@ -975,8 +951,7 @@ export default class Creature {
 
     const items = this.itemsData;
     for (const item of items) {
-      // @ts-expect-error
-      globalOrLocalPusherSet(perks, item.$.perks ?? new Set(), PerkManager)
+      globalOrLocalPusherSet(perks, (item.$ as Exclude<typeof item.$, GenericItemData | ConsumableItemData>).perks ?? new Set(), PerkManager)
     }
 
     return [...perks];
@@ -1042,13 +1017,11 @@ export default class Creature {
         shield: this.$.vitals.shield / this.$.stats.shield.value,
         heat: this.$.vitals.heat / this.$.stats.heat_capacity.value
       },
-      // @ts-expect-error
-      attributes: {},
+      attributes: {} as Record<Attributes, undefined>,
       experience: this.$.experience,
       items: {
         backpack: this.$.items.backpack,
-        // @ts-expect-error
-        crafting_materials: this.$.items.crafting_materials,
+        crafting_materials: this.$.items.crafting_materials as Record<Material, number>,
         slotted: this.$.items.slotted,
         weapons: this.$.items.weapons,
         primary_weapon: this.$.items.primary_weapon,
@@ -1061,12 +1034,11 @@ export default class Creature {
       vars: this.$.vars
     }
 
-    for (const a in this.$.attributes) {
-      // @ts-expect-error
+    for (const _a in this.$.attributes) {
+      const a = _a as Attributes;
       const attr: TrackableStat = this.$.attributes[a];
 
-      // @ts-expect-error
-      dump.attributes[a] = attr.base;
+      (dump.attributes as Exclude<CreatureDump["attributes"], undefined>)[a] = attr.base;
     }
 
     return dump;
@@ -1079,15 +1051,13 @@ export default class Creature {
   static async fetch(id: string, db: typeof mongoose, cache = true): Promise<Creature> {
     if (cache) {
       if (this.cache.has(id)) {
-        // @ts-expect-error
-        return this.cache.get(id);
+        return this.cache.get(id) as Creature;
       }
     }
 
-    const data = await db.connection.collection(Creature.COLLECTION_NAME).findOne({_id: id});
+    const data = await db.connection.collection(Creature.COLLECTION_NAME).findOne({_id: id}) as CreatureDump;
     if (!data) throw new Error("Not found");
 
-    // @ts-expect-error
     const char = new Creature(data);
     Creature.cache.set(char.$._id, char);
     return char;
@@ -1095,8 +1065,7 @@ export default class Creature {
   async put(db: typeof mongoose) {
     Creature.cache.set(this.$._id, this);
     try {
-      // @ts-expect-error
-      await db.connection.collection(Creature.COLLECTION_NAME).insertOne(this.dump());
+      await db.connection.collection(Creature.COLLECTION_NAME).insertOne(this.dump() as unknown as Document);
     } catch {
       await db.connection.collection(Creature.COLLECTION_NAME).replaceOne({_id: this.$._id}, this.dump());
     }

@@ -16,8 +16,8 @@ export class ItemStatModule {
   }
 
   static generate(): ItemStatModule {
-    // @ts-expect-error
-    const type: ModuleType = ModuleType[ModuleType[diceRoll(Object.values(ModuleType).filter(x => !isNaN(Number(x))).length) - 1]];
+    const types = Object.values(ModuleType).filter(x => !isNaN(Number(x))) as ModuleType[]
+    const type = ModuleType[ModuleType[types[diceRoll(types.length) - 1]] as unknown as number] as unknown as ModuleType;
   
     return new ItemStatModule(
       type,

@@ -100,8 +100,7 @@ export class LootTable {
     for (const [key, pools] of this.$.pools) {
       if (perks.has(key)) return pools;
     }
-    // @ts-expect-error
-    return this.$.pools.get("");
+    return this.$.pools.get("") ?? [];
   }
 }
 

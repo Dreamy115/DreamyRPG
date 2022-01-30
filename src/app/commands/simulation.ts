@@ -1,7 +1,7 @@
 import { Client, Guild, NewsChannel, TextChannel } from "discord.js";
 import Mongoose from "mongoose";
 import { CONFIG, SETTINGS, sleep } from "../..";
-import Creature from "../../game/Creature";
+import Creature, { CreatureDump } from "../../game/Creature";
 import { ApplicationCommandHandler } from "../commands";
 import { infoEmbed } from "./char";
 
@@ -84,8 +84,8 @@ export async function setSim(guild: Guild, db: typeof Mongoose, Bot: Client) {
     console.log("Ticking...")
     for await (const document of db.connection.collection(Creature.COLLECTION_NAME).find()) {
       try {
-        // @ts-expect-error
-        const creature: Creature = Creature.cache.get(document._id) ?? new Creature(document);
+        const data = document as CreatureDump;
+        const creature: Creature = Creature.cache.get(data._id) ?? new Creature(data);
 
         if (!(await creature.getFightID(db))) {
           creature.tick();

@@ -1,11 +1,12 @@
 import { ApplicationCommandOptionChoice, MessageEmbed } from "discord.js";
 import { capitalize, CONFIG, ItemManager, LootTables } from "../..";
-import { CraftingMaterials } from "../../game/Crafting";
-import Creature, { HealType } from "../../game/Creature";
+import { CraftingMaterials, Material } from "../../game/Crafting";
+import Creature, { Attributes, HealType } from "../../game/Creature";
 import { replaceLore } from "../../game/CreatureAbilities";
 import { DamageType, DamageMethod, ShieldReaction, DamageCause, DamageGroup, damageLogEmbed } from "../../game/Damage";
-import { createItem, InventoryItem } from "../../game/Items";
+import { ConsumableItemData, createItem, InventoryItem, SpecializedWearableData, UltimateWearableItemData } from "../../game/Items";
 import { LootTable } from "../../game/LootTables";
+import { TrackableStat } from "../../game/Stats";
 import { ApplicationCommandHandler } from "../commands";
 import { ceditMenu, gm_ceditMenu } from "../component_commands/cedit";
 
@@ -89,8 +90,7 @@ export default new ApplicationCommandHandler({
           choices: function () {
             const options: ApplicationCommandOptionChoice[] = [];
 
-            // @ts-expect-error
-            for (const type of Object.values(DamageType).filter(x => !isNaN(x))) {
+            for (const type of Object.values(DamageType).filter(x => !isNaN(Number(x)))) {
               options.push({
                 name: DamageType[Number(type)],
                 value: type
@@ -108,8 +108,7 @@ export default new ApplicationCommandHandler({
           choices: function () {
             const options: ApplicationCommandOptionChoice[] = [];
 
-            // @ts-expect-error
-            for (const type of Object.values(DamageMethod).filter(x => !isNaN(x))) {
+            for (const type of Object.values(DamageMethod).filter(x => !isNaN(Number(x)))) {
               options.push({
                 name: DamageMethod[Number(type)],
                 value: type
@@ -158,8 +157,7 @@ export default new ApplicationCommandHandler({
           choices: function () {
             const options: ApplicationCommandOptionChoice[] = [];
 
-            // @ts-expect-error
-            for (const type of Object.values(ShieldReaction).filter(x => !isNaN(x))) {
+            for (const type of Object.values(ShieldReaction).filter(x => !isNaN(Number(x)))) {
               options.push({
                 name: ShieldReaction[Number(type)],
                 value: type
@@ -191,8 +189,7 @@ export default new ApplicationCommandHandler({
           choices: function () {
             const options: ApplicationCommandOptionChoice[] = [];
 
-            // @ts-expect-error
-            for (const type of Object.values(HealType).filter(x => !isNaN(x))) {
+            for (const type of Object.values(HealType).filter(x => !isNaN(Number(x)))) {
               options.push({
                 name: HealType[Number(type)],
                 value: type
@@ -716,13 +713,14 @@ export default new ApplicationCommandHandler({
 
         embed.addField(
           `${item?.displayName ?? "Unknown"}`,
-          // @ts-expect-error
-          `**${capitalize(item?.$.type ?? "Unknown")}**${item?.$.subtype ? `, ${capitalize(item?.$.subtype ?? "Unknown")}` : ""}\n` +
+          `**${capitalize(item?.$.type ?? "Unknown")}**${
+            (item?.$ as (undefined | Exclude<SpecializedWearableData, UltimateWearableItemData>))?.slot
+            ? `, ${capitalize((item?.$ as (undefined | Exclude<SpecializedWearableData, UltimateWearableItemData>))?.slot ?? "Unknown")}`
+            : ""
+          }\n` +
           `*${
-            // @ts-expect-error
-            item?.$.info.replacers
-            // @ts-expect-error
-            ? replaceLore(lore, item?.$.info.replacers, creature)
+            (item?.$ as (undefined | ConsumableItemData))?.info.replacers
+            ? replaceLore(lore, (item?.$ as (undefined | ConsumableItemData))?.info.replacers ?? [], creature)
             : lore
           }*`
         )
@@ -782,16 +780,13 @@ export default new ApplicationCommandHandler({
       )
     } break;
     case "crafting_materials": {
-      const mat = interaction.options.getString("material", true);
+      const mat = interaction.options.getString("material", true) as Material;
 
       switch (interaction.options.getSubcommand(true)) {
-        // @ts-expect-error
         case "set": creature.$.items.crafting_materials[mat] = interaction.options.getInteger("amount", true); break;
-        // @ts-expect-error
         case "add": creature.$.items.crafting_materials[mat] += interaction.options.getInteger("amount", true); break;
       }
 
-      // @ts-expect-error
       creature.$.items.crafting_materials[mat] = Math.max(creature.$.items.crafting_materials[mat], 0);
     } break;
     case "effects": {
@@ -806,14 +801,12 @@ export default new ApplicationCommandHandler({
         case "clear": {
           creature.clearActiveEffect(
             interaction.options.getString("effect", true),
-            // @ts-expect-error
-            interaction.options.getString("type", true)
+            interaction.options.getString("type", true) as "expire" | "delete"
           )
         } break;
         case "clear_all": {
           creature.clearAllEffects(
-            // @ts-expect-error
-            interaction.options.getString("type", true)
+            interaction.options.getString("type", true) as "expire" | "delete"
           )
         } break;
       }
@@ -875,15 +868,13 @@ export default new ApplicationCommandHandler({
       switch (interaction.options.getSubcommand(true)) {
         case "clear": {
           for (const a in creature.$.attributes) {
-            // @ts-expect-error
-            const attr: TrackableStat = creature.$.attributes[a];
+            const attr: TrackableStat = creature.$.attributes[a as Attributes];
     
             attr.base = 0;
           }
         } break;
         case "set": {
-          // @ts-expect-error
-          const attr: TrackableStat | undefined = creature.$.attributes[interaction.options.getString("attribute", true)];
+          const attr: TrackableStat | undefined = creature.$.attributes[interaction.options.getString("attribute", true) as Attributes];
           if (!attr) {
             interaction.followUp({
               ephemeral: true,

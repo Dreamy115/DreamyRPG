@@ -66,8 +66,7 @@ export function damageLogEmbed(log: DamageLog) {
   console.log(log.final.attacker)
   embed
     .setTitle("Damage Log")
-    // @ts-expect-error
-    .setAuthor(`${log.final?.attacker?.$?.info.display.name ?? log.final.attacker ?? "Unknown"} >>> ${(log.final.victim?.displayName ?? "Unknown")}`)
+    .setAuthor(`${(log.final?.attacker as (undefined | Creature))?.$?.info.display.name ?? log.final.attacker ?? "Unknown"} >>> ${(log.final.victim?.displayName ?? "Unknown")}`)
     .setColor("RED")
     .addField(
       "Before",

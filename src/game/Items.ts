@@ -106,6 +106,7 @@ export interface VestWearableItemData extends WearableItemData {
   base_dissipate: number
 }
 export interface GlovesWearableItemData extends WearableItemData {
+  tech: number;
   slot: "gloves"
   base_tech: number
   base_mana: number

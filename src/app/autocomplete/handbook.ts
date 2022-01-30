@@ -62,15 +62,13 @@ export async function getAutocompleteListOfItems(value: string, type: string): P
   }
 
   const keys = Array.from(list.keys());
-  // @ts-expect-error
-  const values: (ManagedItems[]) = Array.from(list.values());
+  const values: (ManagedItems[]) = Array.from(list.values() as Iterable<ManagedItems>);
   const input_regex = RegExp(value, "i");
 
   let choices: ApplicationCommandOptionChoice[] = []; 
   if (values[0] instanceof LootTable) {
     for (var i = 0; choices.length < MAX_RESULTS && i < keys.length; i++) {
-      // @ts-expect-error
-      const item: LootTable = values[i];
+      const item = values[i] as LootTable;
       if (!item) continue;
 
       if (input_regex.test(item.$.id ?? "")) { 
@@ -82,8 +80,7 @@ export async function getAutocompleteListOfItems(value: string, type: string): P
     }
   } else {
     for (var i = 0; choices.length < MAX_RESULTS && i < keys.length; i++) {
-      // @ts-expect-error
-      const item: Exclue<Exclude<ManagedItems, Schematic>, LootTable> = values[i];
+      const item = values[i] as Exclude<Exclude<ManagedItems, Schematic>, LootTable>;
       if (!item) continue;
 
       if (input_regex.test(item.$.id ?? "") || input_regex.test(item.$.info.name)) 

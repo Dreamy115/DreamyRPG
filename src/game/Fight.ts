@@ -280,7 +280,7 @@ export class Fight {
           .setCustomId(`fight/${this.$._id}/attack`)
           .setLabel("Attack" + `(${creature?.$.stats.attack_cost.value})`)
           .setStyle("PRIMARY")
-          .setDisabled(!creature?.isAbleToFight),
+          .setDisabled(!creature?.canUseAttacks),
         new MessageButton()
           .setCustomId(`cedit/${this.$.queue[0]}/edit/weapon_switch`)
           .setLabel("Switch Weapons")
@@ -294,7 +294,7 @@ export class Fight {
         new MessageSelectMenu()
           .setCustomId(`fight/${this.$._id}/ability`)
           .setPlaceholder(`Use Ability (${creature?.$.abilities.hand.length ?? 0}/${Creature.MAX_HAND_AMOUNT})`)
-          .setDisabled(!creature?.isAbleToFight)
+          .setDisabled(!creature?.canUseAbilities)
           .setOptions(await async function () {
             const array: MessageSelectOptionData[] = [];
 

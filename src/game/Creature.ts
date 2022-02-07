@@ -895,6 +895,16 @@ export default class Creature {
     this.tickVitals();
   }
 
+  get canUseAttacks(): boolean {
+    if (!this.isAbleToFight) return false;
+
+    return (this.active_effects.findIndex((v) => v.id === "dazed") === -1);
+  }
+  get canUseAbilities(): boolean {
+    if (!this.isAbleToFight) return false;
+
+    return (this.active_effects.findIndex((v) => v.id === "suppressed") === -1);
+  }
   get isAbleToFight(): boolean {
     if (this.$.vitals.health <= 0) return false;
     if (!this.alive) return false;

@@ -50,6 +50,26 @@ export default [
     }
   }),
   new ActiveEffect({
+    id: "suppressed",
+    consecutive_limit: 1,
+    display_severity: DisplaySeverity.NONE,
+    info: {
+      name: "Suppressed",
+      lore: "This Creature will not be able to use abilities until this expires",
+      replacers: []
+    }
+  }),
+  new ActiveEffect({
+    id: "dazed",
+    consecutive_limit: 1,
+    display_severity: DisplaySeverity.NONE,
+    info: {
+      name: "Dazed",
+      lore: "This Creature will not be able to use attacks until this expires",
+      replacers: []
+    }
+  }),
+  new ActiveEffect({
     id: "death",
     consecutive_limit: 1,
     display_severity: DisplaySeverity.NONE,

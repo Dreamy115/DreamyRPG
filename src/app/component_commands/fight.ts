@@ -149,9 +149,9 @@ export default new ComponentCommandHandler(
         await interaction.followUp(await fight.announceTurn(db, Bot));
       } break;
       case "attack": {
-        if (!creature.isAbleToFight) {
+        if (!creature.canUseAttacks) {
           interaction.editReply({
-            content: "You cannot Attack while downed."
+            content: "You cannot Attack right now."
           })
           return;
         }
@@ -231,9 +231,9 @@ export default new ComponentCommandHandler(
         }
       } break;
       case "attack_out": {
-        if (!creature.isAbleToFight) {
+        if (!creature.canUseAttacks) {
           interaction.editReply({
-            content: "You cannot Attack while downed."
+            content: "You cannot Attack right now."
           })
           return;
         }
@@ -488,9 +488,9 @@ export default new ComponentCommandHandler(
         }
       } break;
       case "ability": {
-        if (!creature.isAbleToFight) {
+        if (!creature.canUseAbilities) {
           interaction.editReply({
-            content: "You cannot use Abilities while downed."
+            content: "You cannot Attack right now."
           })
           return;
         }

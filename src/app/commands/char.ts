@@ -5,7 +5,7 @@ import Creature, { Attributes, diceRoll, Stats } from "../../game/Creature.js";
 import { CreatureAbility, replaceLore } from "../../game/CreatureAbilities.js";
 import { reductionMultiplier, DAMAGE_TO_INJURY_RATIO, DamageMethod, DamageType } from "../../game/Damage.js";
 import { CombatPosition } from "../../game/Fight.js";
-import { AttackData, SlotDescriptions, Item, ItemQualityEmoji, InventoryItem, EquippableInventoryItem, WearableInventoryItem, WearableItemData, WeaponItemData, ConsumableItemData, ItemSlot, SpecializedWearableData } from "../../game/Items.js";
+import { AttackData, SlotDescriptions, Item, ItemQualityEmoji, InventoryItem, EquippableInventoryItem, WearableInventoryItem, WearableItemData, WeaponItemData, ConsumableItemData, ItemSlot, SpecializedWearableData, WeaponCategory } from "../../game/Items.js";
 import { cToF } from "../../game/Locations.js";
 import { LootTable } from "../../game/LootTables.js";
 import { ItemStatModule, ModuleType } from "../../game/Modules.js";
@@ -1506,7 +1506,7 @@ export function describeItem(invitem?: InventoryItem, creature?: Creature) {
     switch (item.$.type) {
       case "weapon": {
         str += 
-          `\nWeapon Type: **${DamageMethod[item.$.attack.type]}**\n` +
+          `\nWeapon Type: **${DamageMethod[item.$.attack.type]}** | **${capitalize(String(WeaponCategory[item.$.category]))}**\n` +
           `- **Crit** Attack\n${attackDescriptor(item.$.attack.crit)}\n` +
           `- **Normal** Attack\n${attackDescriptor(item.$.attack.normal)}\n` +
           `- **Weak** Attack\n${attackDescriptor(item.$.attack.weak)}\n`

@@ -147,6 +147,7 @@ export class Fight {
     if (able <= 1) {
       const index = ableToFight.findIndex(b => b);
       if (index === -1) return -2;
+      return index;
     }
     return -1;
   }

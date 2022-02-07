@@ -85,7 +85,7 @@ export default [
     slot: "gloves",
     base_mana: 0,
     base_mana_regen: 0,
-    base_tech: 1
+    base_tech: 1,
   }),
   new Item({
     id: "starter_knife",

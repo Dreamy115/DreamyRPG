@@ -1,7 +1,7 @@
 import { CraftingMaterials } from "../Crafting";
 import { HealType } from "../Creature";
 import { DamageMethod, DamageType } from "../Damage";
-import { Item, ItemQuality } from "../Items";
+import { Item, ItemQuality, WeaponCategory } from "../Items";
 import { PassiveEffect } from "../PassiveEffects";
 
 export default [
@@ -95,6 +95,7 @@ export default [
       lore: "You found this laying around! You can make use of it!",
       quality: ItemQuality.Common
     },
+    category: WeaponCategory.knife,
     base_damage: 1,
     attack: {
       type: DamageMethod.Melee,
@@ -156,6 +157,7 @@ export default [
       lore: "Nothing special. This outdated revolver still uses .45 ACP.\n**Revolver Perk** - Damage group count increases with attack stability!",
       quality: ItemQuality.Common
     },
+    category: WeaponCategory.pistol,
     base_damage: 1,
     attack: {
       type: DamageMethod.Ranged,

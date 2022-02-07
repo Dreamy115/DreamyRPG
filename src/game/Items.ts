@@ -121,6 +121,11 @@ export interface WeaponItemData extends PassiveItemData {
   type: "weapon"
   base_damage: number
   attack: AttackSet
+  category: WeaponCategory
+}
+export enum WeaponCategory {
+  "sword", "axe", "knife", "spear", "blunt",
+  "bow", "pistol", "rifle", "shotgun", "throwable"
 }
 
 export interface ConsumableItemData extends BaseItemData {

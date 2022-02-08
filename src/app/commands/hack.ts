@@ -134,7 +134,7 @@ export default new ApplicationCommandHandler({
       clearInterval(int);
       HACK_playing.delete(creature.$._id);
 
-      interaction.followUp({
+      interaction.editReply({
         content: "Failed: Timed out\n" + `**${play.numbers.length}** sequences left unsolved... So close!`
       })
     }
@@ -147,7 +147,7 @@ export default new ApplicationCommandHandler({
     input.delete().catch(console.error);
 
     if (input.content === "#") {
-      interaction.followUp({
+      interaction.editReply({
         content: "Failed: Cancelled early."
       });
       HACK_playing.delete(creature.$._id);
@@ -157,7 +157,7 @@ export default new ApplicationCommandHandler({
     let guess: number[] = [];
     for (const char of input.content) {
       if (isNaN(Number(char))) {
-        interaction.followUp({
+        interaction.editReply({
           content: "Invalid guess! Must be numbers only. Example: **1234**"
         });
         return;
@@ -190,7 +190,7 @@ export default new ApplicationCommandHandler({
       }
     }
 
-    interaction.followUp({
+    interaction.editReply({
       content: `\`${guess.join("")}\` - **${game.time}s**, **${game.numbers.length}** left\n${feedback.join("")}`
     });
 
@@ -198,12 +198,12 @@ export default new ApplicationCommandHandler({
       game.numbers.shift();
 
       if (game.numbers.length === 0) {
-        interaction.followUp({
+        interaction.editReply({
           content: `Passed! Time left > **${game.time}s**`
         });
         HACK_playing.delete(creature.$._id)
       } else {
-        interaction.followUp({
+        interaction.editReply({
           content: `Sequence passed! **${game.numbers.length}** left. Proceed...`
         });
       }

@@ -16,6 +16,33 @@ export default new ApplicationCommandHandler({
   type: "CHAT_INPUT",
   options: [
     {
+      name: "changeid",
+      description: "Change the ID of the Creature",
+      type: "SUB_COMMAND",
+      options: [
+        {
+          name: "cid",
+          description: "Find by ID",
+          type: "STRING",
+          autocomplete: true,
+          required: true
+        },
+        {
+          name: "target",
+          description: "The new ID",
+          type: "STRING",
+          autocomplete: true,
+          required: true
+        },
+        {
+          name: "npc",
+          description: "Change the NPC status (if designating an NPC to a Player or vice-versa)",
+          type: "BOOLEAN",
+          required: false
+        }
+      ]
+    },
+    {
       name: "menu",
       description: "Editing GUI for the regular things",
       type: "SUB_COMMAND",
@@ -681,6 +708,23 @@ export default new ApplicationCommandHandler({
   }
 
   switch (interaction.options.getSubcommandGroup(false) ?? interaction.options.getSubcommand(true)) {
+    case "changeid": {
+      const target_id = interaction.options.getString("target", true);
+      if (!Creature.ID_REGEX.test(target_id)) {
+        interaction.editReply({
+          content: "Invalid ID"
+        });
+        return;
+      }
+      if (await Creature.fetch(target_id, db, true).catch(() => null)) {
+        interaction.editReply({
+          content: "Already exists!"
+        });
+        return;
+      }
+      creature.$._id = target_id;
+      creature.$.info.npc = interaction.options.getBoolean("npc", false) ?? creature.$.info.npc;
+    } break;
     case "grant_loot": {
       const table = LootTables.map.get(interaction.options.getString("loottable", true));
       if (!table) return;

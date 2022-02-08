@@ -632,20 +632,28 @@ export default new ApplicationCommandHandler(
 
         const page = interaction.options.getString("page", true);
 
-        if ((
-            page === "location" || page === "schematics" ||
-            page === "backpack" || page === "debug"
-          ) && char.$.info.npc) {
+        if (char.$.info.npc) {
           const guild = await Bot.guilds.fetch(CONFIG.guild?.id ?? "");
           await guild.roles.fetch();
       
           const member = await guild.members.fetch(interaction.user.id).catch(() => null);
-          if (!member || !member.roles.cache.has(CONFIG.guild?.gm_role ?? "")) {
-            interaction.editReply({
-              content: "Only GMs can access NPC location information"
-            })
-            return;
-          } 
+          
+          if (!member || !member.roles.cache.has(CONFIG.guild?.gm_role ?? "")) { 
+            if ((await Creature.fetch(interaction.user.id, db, true)).location?.$.id !== char.location?.$.id) {
+              interaction.editReply({
+                content: "You must be in the same location as the NPC to view their info"
+              });
+              return;
+            } else if (
+              page === "location" || page === "schematics" ||
+              page === "backpack" || page === "debug"
+            ) {
+              interaction.editReply({
+                content: "Only GMs can access this kind of information"
+              });
+              return;
+            }
+          }
         }
 
         const info = await infoEmbed(char, Bot, page);

@@ -1,4 +1,5 @@
 import { Message, MessageActionRow, MessageButton } from "discord.js";
+import { CONFIG } from "../..";
 import Creature from "../../game/Creature";
 import char, { infoEmbed } from "../commands/char";
 import { ComponentCommandHandler } from "../component_commands";
@@ -12,6 +13,33 @@ export default new ComponentCommandHandler(
       Creature.fetch(args.shift() ?? "", db),
       interaction.deferReply()
     ]);
+
+    const page = args.shift();
+
+    if (creature.$.info.npc) {
+      const guild = await Bot.guilds.fetch(CONFIG.guild?.id ?? "");
+      await guild.roles.fetch();
+  
+      const member = await guild.members.fetch(interaction.user.id).catch(() => null);
+      
+      if (!member || !member.roles.cache.has(CONFIG.guild?.gm_role ?? "")) { 
+        if ((await Creature.fetch(interaction.user.id, db, true)).location?.$.id !== creature.location?.$.id) {
+          interaction.editReply({
+            content: "You must be in the same location as the NPC to view their info"
+          });
+          return;
+        } else if (
+          page === "location" || page === "schematics" ||
+          page === "backpack" || page === "debug"
+        ) {
+          interaction.editReply({
+            content: "Only GMs can access this kind of information"
+          });
+          return;
+        }
+      }
+    }
+
     interaction.deleteReply();
 
     const message = interaction.message as Message;
@@ -24,10 +52,7 @@ export default new ComponentCommandHandler(
 
     const msg = await channel.messages.fetch(interaction.message.id);
 
-    const page = args.shift();
-
     let index = Number(args.shift());
-
     const info = await infoEmbed(creature, Bot, page ?? "", index);
     
     const components = info.scrollable

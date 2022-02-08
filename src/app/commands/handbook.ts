@@ -698,9 +698,9 @@ export function passivesDescriptor(passives: (string | PassiveEffect)[]) {
   if (passives.length > 0) {
     for (const passive of passives) {
       if (typeof passive === "string") {
-        str += `[**G**] ${PassivesManager.map.get(passive)?.$.info.name} \`${passive}\`\n`;
+        str += `[**G**] **${PassivesManager.map.get(passive)?.$.info.name}** \`${passive}\`\n`;
       } else {
-        str += `[**L**] ${passive.$.info.name}\n*${passive.$.info.lore}*\n${(passive.$.unique ?? new Set()).size > 0 ? `Unique flags: ${Array.from(passive.$.unique ?? []).join(", ")}\n` : ""}\n${(passive.$.modifiers ?? []).length > 0 ? `**Modifiers**\n${modifiersDescriptor(passive.$.modifiers ?? [])}` : ""}`;
+        str += `[**L**] **${passive.$.info.name}**\n*${passive.$.info.lore}*\n${(passive.$.unique ?? new Set()).size > 0 ? `Unique flags: ${Array.from(passive.$.unique ?? []).join(", ")}\n` : ""}\n${(passive.$.modifiers ?? []).length > 0 ? `**Modifiers**\n${modifiersDescriptor(passive.$.modifiers ?? [])}` : ""}\n\n`;
       }
     }
     str += "\n"
@@ -712,7 +712,7 @@ export function perksDescriptor(perks: (string | CreaturePerk)[]) {
   if (perks.length > 0) {
     for (const perk of perks) {
       if (typeof perk === "string") {
-        str += `[**G**] ${PassivesManager.map.get(perk)?.$.info.name} \`${perk}\`\n`;
+        str += `[**G**] ${PerkManager.map.get(perk)?.$.info.name} \`${perk}\`\n`;
       } else {
         str += `[**L**] ${perk.$.info.name}\n*${perk.$.info.lore}*\n`;
       }

@@ -279,12 +279,12 @@ export class Fight {
       new MessageActionRow().setComponents([
         new MessageButton()
           .setCustomId(`fight/${this.$._id}/attack`)
-          .setLabel("Attack" + `(${creature?.$.stats.attack_cost.value})`)
+          .setLabel(`Attack (${creature?.$.stats.attack_cost.value} MP)`)
           .setStyle("PRIMARY")
           .setDisabled(!creature?.canUseAttacks),
         new MessageButton()
           .setCustomId(`cedit/${this.$.queue[0]}/edit/weapon_switch`)
-          .setLabel("Switch Weapons")
+          .setLabel(`Switch Weapons (${creature?.combat_switch_cost} MP)`)
           .setStyle("SECONDARY"),
         new MessageButton()
           .setCustomId(`fight/${this.$._id}/endturn`)

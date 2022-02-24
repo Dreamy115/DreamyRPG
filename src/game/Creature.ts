@@ -1100,6 +1100,10 @@ export default class Creature {
   static readonly MIN_LEVEL_FOR_CLASS = 5;
 
   static readonly MAX_EQUIPPED_WEAPONS = 2;
+  static readonly COMBAT_WEAPON_SWITCH_MULT = 0.2;
+  get combat_switch_cost() {
+    return Math.max(1, Math.round((this.$.stats.attack_cost.value ?? 0) * Creature.COMBAT_WEAPON_SWITCH_MULT))
+  }
   
   static readonly PROFICIENCY_ACCURACY_SCALE = 0.5
   static readonly PROFICIENCY_DAMAGE_SCALE = 1;

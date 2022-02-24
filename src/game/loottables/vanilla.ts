@@ -2,48 +2,48 @@ import { LootPool, LootTable } from "../LootTables";
 
 export default [
   new LootTable({
-    id: "starter_items",
+    id: "example_items",
     note: "Use to grant starter items at once",
     pools: new Map<string, LootPool[]>().set("", [
       {
         min_rolls: 1,
         max_rolls: 1,
-        entries: [{ weight: 1, items: ["starter_shield"]}]
+        entries: [{ weight: 1, items: ["example_shield"]}]
       },
       {
         min_rolls: 1,
         max_rolls: 1,
-        entries: [{ weight: 1, items: ["starter_mask"]}]
+        entries: [{ weight: 1, items: ["example_mask"]}]
       },
       {
         min_rolls: 1,
         max_rolls: 1,
-        entries: [{ weight: 1, items: ["starter_backpack"]}]
+        entries: [{ weight: 1, items: ["example_backpack"]}]
       },
       {
         min_rolls: 1,
         max_rolls: 1,
-        entries: [{ weight: 1, items: ["starter_vest"]}]
+        entries: [{ weight: 1, items: ["example_vest"]}]
       },
       {
         min_rolls: 1,
         max_rolls: 1,
-        entries: [{ weight: 1, items: ["starter_jacket"]}]
+        entries: [{ weight: 1, items: ["example_jacket"]}]
       },
       {
         min_rolls: 1,
         max_rolls: 1,
-        entries: [{ weight: 1, items: ["starter_gloves"]}]
+        entries: [{ weight: 1, items: ["example_gloves"]}]
       },
       {
         min_rolls: 1,
         max_rolls: 1,
-        entries: [{ weight: 1, items: ["starter_knife"]}]
+        entries: [{ weight: 1, items: ["example_knife"]}]
       },
       {
         min_rolls: 1,
         max_rolls: 1,
-        entries: [{ weight: 1, items: ["starter_revolver"]}]
+        entries: [{ weight: 1, items: ["example_revolver"]}]
       }
     ])
   }),

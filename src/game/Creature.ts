@@ -48,9 +48,9 @@ export default class Creature {
         dissipate: new TrackableStat(0),
         melee: new TrackableStat(100),
         ranged: new TrackableStat(100),
-        damage: new TrackableStat(20),
+        damage: new TrackableStat(16),
         health: new TrackableStat(100),
-        mana: new TrackableStat(20),
+        mana: new TrackableStat(30),
         mana_regen: new TrackableStat(8),
         shield: new TrackableStat(0),
         shield_regen: new TrackableStat(0),
@@ -1122,47 +1122,17 @@ export default class Creature {
   static readonly LEVEL_MODS: NamedModifier[] = [
     {
       type: ModifierType.ADD_PERCENT,
-      value: 0.162,
+      value: 0.15,
       stat: "damage"
     },
     {
       type: ModifierType.ADD_PERCENT,
-      value: 0.1,
-      stat: "armor"
-    },
-    {
-      type: ModifierType.ADD_PERCENT,
-      value: 0.1,
-      stat: "dissipate"
-    },
-    {
-      type: ModifierType.ADD,
-      value: 2,
-      stat: "lethality"
-    },
-    {
-      type: ModifierType.ADD,
-      value: 2,
-      stat: "passthrough"
-    },
-    {
-      type: ModifierType.ADD_PERCENT,
-      value: 0.05,
+      value: 0.075,
       stat: "health"
     },
     {
       type: ModifierType.ADD_PERCENT,
-      value: 0.011,
-      stat: "mana"
-    },
-    {
-      type: ModifierType.ADD_PERCENT,
-      value: 0.0078,
-      stat: "mana_regen"
-    },
-    {
-      type: ModifierType.ADD_PERCENT,
-      value: 0.06,
+      value: 0.075,
       stat: "shield_regen"
     },
     {
@@ -1172,37 +1142,17 @@ export default class Creature {
     },
     {
       type: ModifierType.ADD_PERCENT,
-      value: 0.065,
-      stat: "accuracy"
-    },
-    {
-      type: ModifierType.ADD_PERCENT,
-      value: 0.1,
-      stat: "parry"
-    },
-    {
-      type: ModifierType.ADD_PERCENT,
-      value: 0.1,
-      stat: "deflect"
-    },
-    {
-      type: ModifierType.ADD_PERCENT,
-      value: 0.135,
+      value: 0.14,
       stat: "tech"
     },
     {
       type: ModifierType.ADD,
-      value: 1,
-      stat: "attack_cost"
-    },
-    {
-      type: ModifierType.ADD,
-      value: 1.5,
+      value: 0.1,
       stat: "mana_regen"
     },
     {
       type: ModifierType.ADD,
-      value: 2,
+      value: 0.5,
       stat: "mana"
     }
   ]

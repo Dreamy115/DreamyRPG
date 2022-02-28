@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 
 import Creature, { Attributes, Stats } from "./Creature";
+import { DamageGroup, DamageLog } from "./Damage";
 import { Modifier } from "./Stats";
 
 export default class PassiveEffectManager {
@@ -56,10 +57,10 @@ export class PassiveEffect {
     postload?: (creature: Creature) => void
     modifiers?: NamedModifier[]
 
-    beforeDamageTaken?: (creature: Creature) => void
-    afterDamageTaken?: (creature: Creature) => void
-    beforeDamageGiven?: (creature: Creature) => void
-    afterDamageGiven?: (creature: Creature) => void
+    beforeDamageTaken?: (creature: Creature, damage: DamageGroup) => void
+    afterDamageTaken?: (creature: Creature, log: DamageLog) => void
+    beforeDamageGiven?: (creature: Creature, damage: DamageGroup) => void
+    afterDamageGiven?: (creature: Creature, log: DamageLog) => void
   }
 
   constructor(data: PassiveEffect["$"]) {

@@ -56,7 +56,7 @@ export default class Creature {
         shield_regen: new TrackableStat(0),
         parry: new TrackableStat(10),
         deflect: new TrackableStat(5),
-        tenacity: new TrackableStat(42),
+        tenacity: new TrackableStat(32),
         tech: new TrackableStat(0),
         vamp: new TrackableStat(0),
         siphon: new TrackableStat(0),
@@ -606,11 +606,11 @@ export default class Creature {
     log.final.victim = this;
 
     for (const passive of this.passives) {
-      passive.$.beforeDamageTaken?.(this);
+      passive.$.beforeDamageTaken?.(this, group);
     }
     if (group.attacker instanceof Creature) {
       for (const passive of group.attacker.passives) {
-        passive.$.beforeDamageGiven?.(group.attacker);
+        passive.$.beforeDamageGiven?.(group.attacker, group);
       }
     }
 
@@ -712,14 +712,14 @@ export default class Creature {
     }
     
     for (const passive of this.passives) {
-      passive.$.afterDamageTaken?.(this);
+      passive.$.afterDamageTaken?.(this, log);
     }
     if (group.attacker instanceof Creature) {
       group.attacker.heal(Math.round(log.total_physical_damage * group.attacker.$.stats.vamp.value / 100), HealType.Health);
       group.attacker.heal(Math.round(log.total_energy_damage * group.attacker.$.stats.siphon.value / 100), HealType.Shield);
 
       for (const passive of group.attacker.passives) {
-        passive.$.afterDamageGiven?.(group.attacker);
+        passive.$.afterDamageGiven?.(group.attacker, log);
       }
     }
 
@@ -1111,7 +1111,7 @@ export default class Creature {
   static readonly ATTACK_MAX_STACKS = 12;
   static readonly ATTACK_STACK_DIE_SIZE = 6;
 
-  static readonly MIN_HAND_AMOUNT = 3;
+  static readonly MIN_HAND_AMOUNT = 4;
   static readonly MAX_HAND_AMOUNT = 6;
 
   static readonly ATTACK_VALUES = [
@@ -1122,7 +1122,7 @@ export default class Creature {
   static readonly LEVEL_MODS: NamedModifier[] = [
     {
       type: ModifierType.ADD_PERCENT,
-      value: 0.15,
+      value: 0.162,
       stat: "damage"
     },
     {
@@ -1152,27 +1152,27 @@ export default class Creature {
     },
     {
       type: ModifierType.ADD_PERCENT,
-      value: 0.01,
+      value: 0.011,
       stat: "mana"
     },
     {
       type: ModifierType.ADD_PERCENT,
-      value: 0.0075,
+      value: 0.0078,
       stat: "mana_regen"
     },
     {
       type: ModifierType.ADD_PERCENT,
-      value: 0.05,
+      value: 0.06,
       stat: "shield_regen"
     },
     {
       type: ModifierType.ADD_PERCENT,
-      value: 0.08,
+      value: 0.085,
       stat: "shield"
     },
     {
       type: ModifierType.ADD_PERCENT,
-      value: 0.05,
+      value: 0.065,
       stat: "accuracy"
     },
     {
@@ -1197,12 +1197,12 @@ export default class Creature {
     },
     {
       type: ModifierType.ADD,
-      value: 1,
+      value: 1.5,
       stat: "mana_regen"
     },
     {
       type: ModifierType.ADD,
-      value: 1,
+      value: 2,
       stat: "mana"
     }
   ]
@@ -1273,7 +1273,7 @@ export default class Creature {
     INT: [
       {
         type: ModifierType.ADD,
-        value: 2,
+        value: 1,
         stat: "tech"
       },
       {

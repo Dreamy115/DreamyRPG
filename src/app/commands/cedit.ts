@@ -592,6 +592,53 @@ export default new ApplicationCommandHandler({
       ]
     },
     {
+      name: "ult_stacks",
+      description: "Manage the Creature's ult stacks",
+      type: "SUB_COMMAND_GROUP",
+      options: [
+        {
+          name: "set",
+          description: "Set the stacks amount",
+          type: "SUB_COMMAND",
+          options: [
+            {
+              name: "cid",
+              description: "Find by ID",
+              type: "STRING",
+              autocomplete: true,
+              required: true
+            },
+            {
+              name: "amount",
+              description: "The amount to set to",
+              type: "INTEGER",
+              required: true
+            }
+          ]
+        },
+        {
+          name: "add",
+          description: "Add/remove stacks",
+          type: "SUB_COMMAND",
+          options: [
+            {
+              name: "cid",
+              description: "Find by ID",
+              type: "STRING",
+              autocomplete: true,
+              required: true
+            },
+            {
+              name: "amount",
+              description: "The amount to add. Negative amounts supported",
+              type: "INTEGER",
+              required: true
+            }
+          ]
+        }
+      ]
+    },
+    {
       name: "level_set",
       description: "Set the Creature's level",
       type: "SUB_COMMAND",
@@ -832,6 +879,14 @@ export default new ApplicationCommandHandler({
       }
 
       creature.$.items.crafting_materials[mat] = Math.max(creature.$.items.crafting_materials[mat], 0);
+    } break;
+    case "ult_stacks": {
+      switch (interaction.options.getSubcommand(true)) {
+        case "set": creature.$.abilities.ult_stacks = interaction.options.getInteger("amount", true); break;
+        case "add": creature.$.abilities.ult_stacks += interaction.options.getInteger("amount", true); break;
+      }
+
+      creature.$.abilities.ult_stacks = Math.max(creature.$.abilities.ult_stacks, 0);
     } break;
     case "effects": {
       switch (interaction.options.getSubcommand(true)) {

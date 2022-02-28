@@ -43,7 +43,7 @@ export default [
       {
         min_rolls: 1,
         max_rolls: 1,
-        entries: [{ weight: 1, items: ["example_revolver"]}]
+        entries: [{ weight: 1, items: ["example_pistol"]}]
       }
     ])
   }),

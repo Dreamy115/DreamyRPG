@@ -80,9 +80,9 @@ export default new ApplicationCommandHandler({
   }
 
   const diff = interaction.options.getInteger("sequences", true);
-  if (diff <= 0) {
+  if (diff <= 0 || diff > 16) {
     interaction.editReply({
-      content: "Hacking: Difficulty must be 1 "
+      content: "Hacking: Difficulty must be 1 to 16"
     })
     setTimeout(() => {
       interaction.deleteReply().catch();
@@ -99,7 +99,7 @@ export default new ApplicationCommandHandler({
     numbers.push(arr);
   }
 
-  const time = ((diff - 1) * 30) + 45 + ((5 + diff * 5) * creature.$.attributes.INT.value);
+  const time = Math.max(1, ((diff - 1) * 20) + 30 + ((5 + diff * 5) * creature.$.attributes.INT.value));
 
   HACK_playing.set(creature.$._id, {
     numbers,

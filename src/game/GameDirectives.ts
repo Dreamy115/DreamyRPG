@@ -33,7 +33,7 @@ export class GameDirective {
   static get enabled(): Set<GameDirective> {
     const set = new Set<GameDirective>();
 
-    for (const gd of SETTINGS?.$.directives ?? new Set<string>()) {
+    for (const gd of SETTINGS?.$?.directives ?? new Set<string>()) {
       const directive = Directives.map.get(gd);
       if (directive)
         set.add(directive);

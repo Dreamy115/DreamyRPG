@@ -87,10 +87,13 @@ export const SETTINGS = new class Settings {
     this.data = val ?? {};
   }
   constructor () {
-    this.data = YAML.parse(fs.readFileSync(path.join(__dirname, "../settings.yml")).toString()) ?? {};
+    this.data = {};
+  }
+  async load(p: fs.PathLike) {
+    const read = await fs.promises.readFile(p).then((b) => b.toString()).catch(() => "");
+    this.data = YAML.parse(read) ?? {};
   }
 }
-
 export const Directives = new DirectiveManager();
 //
 export const db = Mongoose.connect(CONFIG.database.uri).then((v) => {console.log(v.connection); return v});
@@ -206,10 +209,13 @@ Bot.on("ready", async () => {
     }
   })
 
-  // Sim
-  if ((SETTINGS.$.simspeed ?? 0) >= 10) {
-    setSim(guild, await db, Bot);
-  }
+  console.log("Loading Settings...");
+  await SETTINGS.load(path.join(__dirname, "../settings.yml")).then(async () => {
+    if ((SETTINGS?.$?.simspeed ?? 0) >= 10) {
+      setSim(guild, await db, Bot);
+    }
+  });
+  console.log("Loading Settings Complete")
 })
 
 Bot.login(CONFIG.client.token);

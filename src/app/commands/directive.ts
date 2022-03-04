@@ -163,6 +163,8 @@ export default new ApplicationCommandHandler({
   }
   SETTINGS.$ = Object.assign(SETTINGS.$, {directives});
 
+  Creature.cache.flushAll();
+
   interaction.reply({
     content: "Done!",
     ephemeral: true

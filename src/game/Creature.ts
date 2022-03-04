@@ -39,7 +39,7 @@ export default class Creature {
       },
       stats: {
         ult_stack_target: new TrackableStat(0),
-        attack_cost: new TrackableStat(6),
+        attack_cost: new TrackableStat(8),
         accuracy: new TrackableStat(90),
         armor: new TrackableStat(0),
         lethality: new TrackableStat(0),
@@ -51,7 +51,7 @@ export default class Creature {
         damage: new TrackableStat(16),
         health: new TrackableStat(100),
         mana: new TrackableStat(30),
-        mana_regen: new TrackableStat(8),
+        mana_regen: new TrackableStat(10),
         shield: new TrackableStat(0),
         shield_regen: new TrackableStat(0),
         parry: new TrackableStat(10),

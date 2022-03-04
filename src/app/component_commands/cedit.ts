@@ -1,6 +1,6 @@
 import { ButtonInteraction, CommandInteraction, Message, MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu, MessageSelectOptionData } from "discord.js";
 import Mongoose from "mongoose";
-import { capitalize, clamp, ClassManager, CONFIG, invLerp, ItemManager, lerp, limitString, LootTables, messageInput, PerkManager, removeMarkdown, SchematicsManager, SkillManager, SpeciesManager } from "../..";
+import { capitalize, clamp, ClassManager, CONFIG, invLerp, ItemManager, lerp, limitString, LootTables, messageInput, PerkManager, removeMarkdown, removeVowels, SchematicsManager, SkillManager, SpeciesManager } from "../..";
 import { CraftingMaterials, Material } from "../../game/Crafting";
 import Creature, { Attributes, CreatureDump, HealType } from "../../game/Creature";
 import { AbilityUseLog } from "../../game/CreatureAbilities";
@@ -10,7 +10,7 @@ import { LootTable } from "../../game/LootTables";
 import { ItemStatModule, ModuleType } from "../../game/Modules";
 import { ModifierType, TrackableStat } from "../../game/Stats";
 import { infoEmbed } from "../commands/char";
-import { modifierDescriptor } from "../commands/handbook";
+import { namedModifierDescriptor, modifierDescirptor } from "../commands/handbook";
 import { ComponentCommandHandler } from "../component_commands";
 
 export default new ComponentCommandHandler(
@@ -430,11 +430,11 @@ export default new ComponentCommandHandler(
                           const it = _it as EquippableInventoryItem;
                           if (item.$.optimize_cost)
                             opt_items.push({
-                              label: item.$.info.name,
+                              label: `${capitalize((item.$ as SpecializedWearableData).slot ?? item.$.type)}: ${item.$.info.name}`,
                               emoji: ItemQualityEmoji[item.$.info.quality],
                               value: i,
                               description: limitString(removeMarkdown(
-                                `${capitalize((item.$ as SpecializedWearableData).slot ?? item.$.type)} ` + 
+                                `${removeVowels((item.$ as SpecializedWearableData).slot ?? item.$.type).toUpperCase()} ` + 
                                 (
                                   (it as WearableInventoryItem).stat_module ? (
                                     `${ModuleType[(it as WearableInventoryItem).stat_module.type]} ` +
@@ -446,7 +446,7 @@ export default new ComponentCommandHandler(
                                     const _mods: string[] = [];
                                     for (const mod of it.modifier_modules ?? []) {
                                       const reference = (item.$ as WearableItemData | WeaponItemData).modifier_module?.mods.get(mod.stat);
-                                      _mods.push(`${modifierDescriptor(mod)} _(${reference ? `${`**${
+                                      _mods.push(`${namedModifierDescriptor(mod)} _(${reference ? `${`**${
                                         reference.range[0] === reference.range[1]
                                         ? ""
                                         : (100 * invLerp(mod.value, reference.range[0], reference.range[1])).toFixed(1)
@@ -460,21 +460,25 @@ export default new ComponentCommandHandler(
                             })
                           if (item.$.recalibrate_cost && it.modifier_modules) {
                             rec_items.push({
-                              label: item.$.info.name,
+                              label: `${capitalize((item.$ as SpecializedWearableData).slot ?? item.$.type)}: ${item.$.info.name}`,
                               emoji: ItemQualityEmoji[item.$.info.quality],
                               value: i,
-                              description: limitString(removeMarkdown(function() {
-                                const _mods: string[] = [];
-                                for (const mod of (it as EquippableInventoryItem)?.modifier_modules ?? []) {
-                                  const reference = (item.$ as WearableItemData | WeaponItemData).modifier_module?.mods.get(mod.stat);
-                                  _mods.push(`${modifierDescriptor(mod)} _(${reference ? `${`**${
-                                    reference.range[0] === reference.range[1]
-                                    ? ""
-                                    : (100 * invLerp(mod.value, reference.range[0], reference.range[1])).toFixed(1)
-                                  }%**`}` : "NUL"})_`);
-                                }
-                                return _mods.join(", ")
-                              }()).trim(), 100)
+                              description: limitString(
+                                removeMarkdown(
+                                  function() {
+                                    const _mods: string[] = [];
+                                    for (const mod of (it as EquippableInventoryItem)?.modifier_modules ?? []) {
+                                      const reference = (item.$ as WearableItemData | WeaponItemData).modifier_module?.mods.get(mod.stat);
+                                      _mods.push(`${namedModifierDescriptor(mod)} _(${reference ? `${`**${
+                                        reference.range[0] === reference.range[1]
+                                        ? ""
+                                        : (100 * invLerp(mod.value, reference.range[0], reference.range[1])).toFixed(1)
+                                      }%**`}` : "NUL"})_`);
+                                    }
+                                  return _mods.join(", ")
+                                  }()
+                                ).trim(), 100
+                              )
                             })
                           }
                         }
@@ -611,7 +615,7 @@ export default new ComponentCommandHandler(
                           continue;
                         }
 
-                        _mods.push(`${modifierDescriptor(mod)} (**${(100 * invLerp(mod.value, reference.range[0], reference.range[1])).toFixed(1)}%**)`);
+                        _mods.push(`${namedModifierDescriptor(mod)} (**${(100 * invLerp(mod.value, reference.range[0], reference.range[1])).toFixed(1)}%**)`);
                       }
 
                       creature.put(db);
@@ -733,11 +737,11 @@ export default new ComponentCommandHandler(
                     const _item = ItemManager.map.get(_it?.id);
                     if (!_item || _item.$.type === "consumable") continue;
 
-                    const data = _item.$ as unknown as ConsumableItemData;
+                    const data = _item.$;
                     const it = _it as InventoryItem;
 
                     items.push({
-                      label: data.info.name,
+                      label: `${capitalize((data as SpecializedWearableData).slot ?? data.type)}: ${data.info.name}`,
                       emoji: ItemQualityEmoji[data.info.quality],
                       value: i,
                       description: limitString(
@@ -765,7 +769,7 @@ export default new ComponentCommandHandler(
                             const str: string[] = [];
 
                             for (const mod of mods) {
-                              str.push(modifierDescriptor(mod));
+                              str.push(namedModifierDescriptor(mod));
                             }
                             output += ` ${str.join(", ")}`;
                           }
@@ -1140,14 +1144,14 @@ export default new ComponentCommandHandler(
                                   let lerped = invLerp(mod.value, reference.range[0], reference.range[1]);
 
                                   str.push(
-                                    `${modifierDescriptor(mod)} ` +
+                                    `${namedModifierDescriptor(mod)} ` +
                                     `(**${(100 * lerped).toFixed(1)}%**) -> ` +
-                                    `${modifierDescriptor({
+                                    `${namedModifierDescriptor({
                                       stat: mod.stat,
                                       type: mod.type,
                                       value: lerp(clamp(lerped + (data.$.optimize_step ?? DEFAULT_ITEM_OPT_STEP), 0, 1), reference.range[0], reference.range[1])
                                     })}` +
-                                    `(**${(100 * Math.min(1, lerped + ((data.$ as WearableItemData | WeaponItemData).optimize_step ?? DEFAULT_ITEM_OPT_STEP))).toFixed(1)}%**)`
+                                    ` (**${(100 * Math.min(1, lerped + ((data.$ as WearableItemData | WeaponItemData).optimize_step ?? DEFAULT_ITEM_OPT_STEP))).toFixed(1)}%**)`
                                   )
                                 }
 
@@ -1234,7 +1238,7 @@ export default new ComponentCommandHandler(
                                   let lerped = invLerp(mod.value, reference.range[0], reference.range[1]);
 
                                   str.push(
-                                    `${modifierDescriptor(mod)} ` +
+                                    `${namedModifierDescriptor(mod)} ` +
                                     `(**${(100 * lerped).toFixed(1)}%**) -> ` +
                                     `[Random] (**??%**)`
                                   )
@@ -1243,8 +1247,7 @@ export default new ComponentCommandHandler(
                                 return `${str.join("\n")}\n\n**Possibilities:**\n${function() {
                                   var s = "";
                                   for (const [stat, mod] of data.$.modifier_module?.mods.entries() ?? []) {
-                                    // TODO make it prettier
-                                    s += `${capitalize(stat).replaceAll(/_/g, " ")} **${mod.range[0]}** to **${mod.range[1]}** *(${capitalize(ModifierType[mod.type].toLowerCase()).replaceAll(/_/g, " ")})*\n`;
+                                    s += `${capitalize(stat).replaceAll(/_/g, " ")} **${modifierDescirptor({value: mod.range[0], type: mod.type})}** to **${modifierDescirptor({value: mod.range[1], type: mod.type})}**\n`;
                                   }
                                   return s.trim();
                                 }()}`;

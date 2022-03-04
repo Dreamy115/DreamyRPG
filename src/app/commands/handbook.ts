@@ -13,7 +13,7 @@ import { PassiveEffect, NamedModifier } from "../../game/PassiveEffects";
 import { CreaturePerk } from "../../game/Perks";
 import { CreatureSkill } from "../../game/Skills";
 import { CreatureSpecies } from "../../game/Species";
-import { ModifierType } from "../../game/Stats";
+import { Modifier, ModifierType } from "../../game/Stats";
 import { ApplicationCommandHandler } from "../commands";
 import { tableDescriptor } from "./char";
 
@@ -657,7 +657,10 @@ export function attackDescriptor(attacks: AttackData[]) {
   return str;
 }
 
-export function modifierDescriptor(modifier: NamedModifier) {
+export function namedModifierDescriptor(modifier: NamedModifier) {
+  return `${modifierDescirptor(modifier)} ${capitalize(modifier.stat.replaceAll(/_/g, " "))}`
+}
+export function modifierDescirptor(modifier: Modifier) {
   return `**${function() {
     switch (modifier.type) {
       case ModifierType.MULTIPLY: return `${modifier.value.toFixed(2)}x`;
@@ -665,14 +668,14 @@ export function modifierDescriptor(modifier: NamedModifier) {
       case ModifierType.CAP_MAX: return `${modifier.value.toFixed(0)}^`;
       case ModifierType.ADD: return `${modifier.value >= 0 ? "+" : "-"}${Math.abs(modifier.value).toFixed(1)}`;
     }
-  }()}** ${capitalize(modifier.stat.replaceAll(/_/g, " "))}`
+  }()}**`
 }
 
 export function modifiersDescriptor(modifiers: NamedModifier[], spacer = "\n") {
   var str: string[] = [];
   if (modifiers.length > 0) {
     for (const mod of modifiers) {
-      str.push(modifierDescriptor(mod));
+      str.push(namedModifierDescriptor(mod));
     }
   }
   return str.join(spacer);

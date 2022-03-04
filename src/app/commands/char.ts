@@ -16,7 +16,7 @@ import { SpeciesManager, ClassManager, capitalize, ItemManager, EffectManager, A
 import { bar_styles, make_bar } from "../Bars.js";
 import { ApplicationCommandHandler } from "../commands.js";
 import { attributeComponents, ceditMenu, consumeMenu, scrapMenu } from "../component_commands/cedit.js";
-import { abilitiesDescriptor, attackDescriptor, modifierDescriptor, modifiersDescriptor, passivesDescriptor, perksDescriptor } from "./handbook.js";
+import { abilitiesDescriptor, attackDescriptor, namedModifierDescriptor, modifiersDescriptor, passivesDescriptor, perksDescriptor } from "./handbook.js";
 
 export default new ApplicationCommandHandler(
   {
@@ -1405,7 +1405,7 @@ export function describeItem(invitem?: InventoryItem, creature?: Creature) {
     const _mods: string[] = [];
     for (const mod of (invitem as EquippableInventoryItem)?.modifier_modules ?? []) {
       const reference = (item.$ as WearableItemData | WeaponItemData).modifier_module?.mods.get(mod.stat);
-      _mods.push(`${modifierDescriptor(mod)} _(${reference ? `${`**${
+      _mods.push(`${namedModifierDescriptor(mod)} _(${reference ? `${`**${
         reference.range[0] === reference.range[1]
         ? ""
         : (100 * invLerp(mod.value, reference.range[0], reference.range[1])).toFixed(1)

@@ -166,9 +166,9 @@ export default class Creature {
     }
     for (const _slot in this.$.items.slotted) {
       const slot = _slot as ItemSlot;
-      const item = this.$.items.slotted[slot] as WearableInventoryItem;
+      const item = this.$.items.slotted[slot] as WearableInventoryItem | null | undefined;
 
-      for (const mod of item.modifier_modules ?? []) {
+      for (const mod of item?.modifier_modules ?? []) {
         this.applyNamedModifier(mod);
       }
     }

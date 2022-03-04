@@ -3,7 +3,7 @@ import { NamedModifier } from "./PassiveEffects";
 import { Modifier, ModifierType } from "./Stats";
 
 export enum ModuleType {
-  "Offensive", "Defensive", "Technical"
+  "Offensive", "Shielding", "Technical", "Reducing"
 }
 
 export class ItemStatModule {
@@ -54,22 +54,12 @@ export class ItemStatModule {
       ]
     ],
     [
-      ModuleType.Defensive,
+      ModuleType.Shielding,
       [
         {
           stat: "shield",
           type: ModifierType.ADD_PERCENT,
           value: 0.1
-        },
-        {
-          stat: "armor",
-          type: ModifierType.ADD_PERCENT,
-          value: 0.15
-        },
-        {
-          stat: "dissipate",
-          type: ModifierType.ADD_PERCENT,
-          value: 0.15
         }
       ]
     ],
@@ -80,6 +70,21 @@ export class ItemStatModule {
           stat: "tech",
           type: ModifierType.ADD_PERCENT,
           value: 0.25
+        }
+      ]
+    ],
+    [
+      ModuleType.Reducing,
+      [
+        {
+          stat: "armor",
+          type: ModifierType.ADD_PERCENT,
+          value: 0.125
+        },
+        {
+          stat: "dissipate",
+          type: ModifierType.ADD_PERCENT,
+          value: 0.125
         }
       ]
     ]

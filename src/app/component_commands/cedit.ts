@@ -742,27 +742,35 @@ export default new ComponentCommandHandler(
                       value: i,
                       description: limitString(
                         `${function() {
-                          const itm = (it as EquippableInventoryItem);
+                          const itm = (it as EquippableInventoryItem | WearableInventoryItem);
                           const _data = (data as unknown as WearableItemData | WeaponItemData);
-                          if (!itm.modifier_modules) return "";
 
-                          const mods = [...itm.modifier_modules].sort((a, b) => {
-                            const range_a = _data.modifier_module?.mods.get(a.stat)?.range ?? [0, 0];
-                            const val_a = invLerp(a.value, range_a[0], range_a[1]);
+                          var output = "";
+                          if ((itm as WearableInventoryItem).stat_module) {
+                            const _itm = itm as WearableInventoryItem;
+                            output += `${(100 * _itm.stat_module.value).toFixed(1)}% ${capitalize(ModuleType[_itm.stat_module.type])}`
+                          }
+                          if (itm.modifier_modules) {
 
-                            const range_b = _data.modifier_module?.mods.get(b.stat)?.range ?? [0, 0];
-                            const val_b = invLerp(b.value, range_b[0], range_b[1]);
+                            const mods = [...itm.modifier_modules].sort((a, b) => {
+                              const range_a = _data.modifier_module?.mods.get(a.stat)?.range ?? [0, 0];
+                              const val_a = invLerp(a.value, range_a[0], range_a[1]);
 
-                            return val_a - val_b;
-                          });
+                              const range_b = _data.modifier_module?.mods.get(b.stat)?.range ?? [0, 0];
+                              const val_b = invLerp(b.value, range_b[0], range_b[1]);
 
-                          const str: string[] = [];
+                              return val_a - val_b;
+                            });
 
-                          for (const mod of mods) {
-                            str.push(modifierDescriptor(mod));
+                            const str: string[] = [];
+
+                            for (const mod of mods) {
+                              str.push(modifierDescriptor(mod));
+                            }
+                            output += ` ${str.join(", ")}`;
                           }
 
-                          return removeMarkdown(str.join(", "));
+                          return removeMarkdown(output.trim());
                         }()}`,
                         100
                       )

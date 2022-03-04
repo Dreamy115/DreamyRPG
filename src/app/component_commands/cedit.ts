@@ -8,7 +8,7 @@ import { DamageCause, DamageGroup, damageLogEmbed, DamageMethod, DamageType, Shi
 import { ConsumableItemData, createItem, DEFAULT_ITEM_OPT_STEP, EquippableInventoryItem, InventoryItem, Item, ItemQualityEmoji, SpecializedWearableData, WeaponItemData, WearableInventoryItem, WearableItemData } from "../../game/Items";
 import { LootTable } from "../../game/LootTables";
 import { ItemStatModule, ModuleType } from "../../game/Modules";
-import { TrackableStat } from "../../game/Stats";
+import { ModifierType, TrackableStat } from "../../game/Stats";
 import { infoEmbed } from "../commands/char";
 import { modifierDescriptor } from "../commands/handbook";
 import { ComponentCommandHandler } from "../component_commands";
@@ -1101,6 +1101,7 @@ export default new ComponentCommandHandler(
                         return;
                       }
 
+                      var reqs = true;
                       try {
                         for (const _mat in data.$.optimize_cost) {
                           const mat = _mat as Material;
@@ -1109,10 +1110,10 @@ export default new ComponentCommandHandler(
                           if (creature.$.items.crafting_materials[mat] < material) throw new Error(`Not enough materials; need more ${capitalize(mat)}`)
                         }
                       } catch (e: any) {
-                        interaction.editReply({
-                          content: `Your character doesn't meet the requirements:\n*${e?.message}*`
+                        await interaction.editReply({
+                          content: `Your character doesn't meet the requirements:\n*${e?.message}*\nShowing anyway...`
                         });
-                        return;
+                        reqs = false;
                       }
     
                       interaction.followUp({
@@ -1173,8 +1174,9 @@ export default new ComponentCommandHandler(
                           new MessageActionRow().setComponents([
                             new MessageButton()
                               .setCustomId(`cedit/${creature.$._id}/edit/item/modify/optimize/${index}`)
-                              .setLabel("Confirm")
+                              .setLabel(reqs ? "Confirm" : "Missing Requirement")
                               .setStyle("SUCCESS")
+                              .setDisabled(!reqs)
                           ])
                         ]
                       })
@@ -1194,6 +1196,7 @@ export default new ComponentCommandHandler(
                         return;
                       }
 
+                      var reqs = true;
                       try {
                         for (const _mat in data.$.recalibrate_cost) {
                           const mat = _mat as Material;
@@ -1202,10 +1205,10 @@ export default new ComponentCommandHandler(
                           if (creature.$.items.crafting_materials[mat] < material) throw new Error(`Not enough materials; need more ${capitalize(mat)}`)
                         }
                       } catch (e: any) {
-                        interaction.editReply({
-                          content: `Your character doesn't meet the requirements:\n*${e?.message}*`
+                        await interaction.editReply({
+                          content: `Your character doesn't meet the requirements:\n*${e?.message}*\nShowing anyway...`
                         });
-                        return;
+                        reqs = false;
                       }
     
                       interaction.followUp({
@@ -1233,11 +1236,18 @@ export default new ComponentCommandHandler(
                                   str.push(
                                     `${modifierDescriptor(mod)} ` +
                                     `(**${(100 * lerped).toFixed(1)}%**) -> ` +
-                                    `${capitalize(Array.from(data.$.modifier_module?.mods.keys() ?? []).join(" | ").replaceAll(/_/g, " "))} (**??%**)`
+                                    `[Random] (**??%**)`
                                   )
                                 }
 
-                                return str.join("\n");
+                                return `${str.join("\n")}\n\n**Possibilities:**\n${function() {
+                                  var s = "";
+                                  for (const [stat, mod] of data.$.modifier_module?.mods.entries() ?? []) {
+                                    // TODO make it prettier
+                                    s += `${capitalize(stat).replaceAll(/_/g, " ")} **${mod.range[0]}** to **${mod.range[1]}** *(${capitalize(ModifierType[mod.type].toLowerCase()).replaceAll(/_/g, " ")})*\n`;
+                                  }
+                                  return s.trim();
+                                }()}`;
                               }()
                             ).addField(
                               "Cost",
@@ -1260,8 +1270,9 @@ export default new ComponentCommandHandler(
                           new MessageActionRow().setComponents([
                             new MessageButton()
                               .setCustomId(`cedit/${creature.$._id}/edit/item/modify/recalibrate/${index}`)
-                              .setLabel("Confirm")
+                              .setLabel(reqs ? "Confirm" : "Missing Requirement")
                               .setStyle("SUCCESS")
+                              .setDisabled(!reqs)
                           ])
                         ]
                       })

@@ -208,10 +208,9 @@ export class Fight {
                   (
                     char.$.stats.shield.value > 0
                     ? (make_bar(100 * char.$.vitals.shield / char.$.stats.shield.value, Creature.BAR_STYLES.Shield, shield_length_mod * BAR_LENGTH).str || "") +
-                    ` **Shield** ${textStat(char.$.vitals.shield, char.$.stats.shield.value)} ` +
-                    `**${char.$.stats.shield_regen.value}**/t`
-                    : "No **Shield**"
-                  ) + "\n" +
+                    ` **Shield** ${textStat(char.$.vitals.shield, char.$.stats.shield.value)} `
+                    : "No **Shield** "
+                  ) + `**${creature.$.stats.shield_regen.value}**/t\n` +
                   (make_bar(100 * char.$.vitals.health / (char.$.stats.health.value - char.$.vitals.injuries), Creature.BAR_STYLES.Health, Math.max(1, health_length_mod * Math.floor(BAR_LENGTH * health_injury_proportions))).str || "") +
                   (
                     char.$.vitals.injuries > 0

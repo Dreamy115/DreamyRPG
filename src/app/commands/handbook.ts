@@ -5,7 +5,7 @@ import { CreatureClass } from "../../game/Classes";
 import { Material, Schematic } from "../../game/Crafting";
 import Creature from "../../game/Creature";
 import { CreatureAbility, replaceLore } from "../../game/CreatureAbilities";
-import { DamageMethod, DamageType } from "../../game/Damage";
+import { DamageMethod, DamageType, ShieldReaction, shieldReactionInfo } from "../../game/Damage";
 import { GameDirective } from "../../game/GameDirectives";
 import { AttackData, Item, ItemQualityColor, ItemQualityEmoji } from "../../game/Items";
 import { cToF, GameLocation } from "../../game/Locations";
@@ -648,7 +648,8 @@ export function attackDescriptor(attacks: AttackData[]) {
       var str = "";
 
       for (const source of attackdata.sources) {
-        str += `[**${source.flat_bonus} + ${(source.from_skill).toFixed(2)}x ${DamageType[source.type]}**]\n`
+        var reaction = shieldReactionInfo(source.shieldReaction ?? ShieldReaction.Normal);
+        str += `[**${source.flat_bonus} + ${(source.from_skill).toFixed(2)}x ${DamageType[source.type]}**${reaction ? ` **${reaction}**` : ""}]\n`
       }
 
       return str;

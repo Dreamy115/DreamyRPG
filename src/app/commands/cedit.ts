@@ -841,7 +841,6 @@ export default new ApplicationCommandHandler({
         cause: DamageCause.Other,
         method: interaction.options.getInteger("method", true),
         chance: interaction.options.getNumber("chance", false) ?? 100,
-        shieldReaction: interaction.options.getInteger("shield_reaction", false) ?? ShieldReaction.Normal,
         useDodge: interaction.options.getBoolean("dodgeable", true),
         penetration: {
           lethality: interaction.options.getInteger("penetration", false) ?? undefined,
@@ -850,7 +849,8 @@ export default new ApplicationCommandHandler({
         },
         sources: [{
           type: interaction.options.getInteger("type", true),
-          value: interaction.options.getNumber("amount", true)
+          value: interaction.options.getNumber("amount", true),
+          shieldReaction: interaction.options.getInteger("shield_reaction", false) ?? ShieldReaction.Normal
         }],
         attacker: interaction.options.getString("attacker", false) ?? undefined
       }

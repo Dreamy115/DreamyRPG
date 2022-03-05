@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 
 import { NamedModifier, PassiveEffect } from "./PassiveEffects";
-import { DamageMethod, DamageType } from "./Damage";
+import { DamageMethod, DamageType, ShieldReaction } from "./Damage";
 import { CreaturePerk } from "./Perks";
 import Creature, { Attributes, diceRoll, Stats } from "./Creature";
 import { AbilityUseLog, LoreReplacer } from "./CreatureAbilities";
@@ -161,6 +161,7 @@ export interface AttackData {
     type: DamageType
     from_skill: number
     flat_bonus: number
+    shieldReaction?: ShieldReaction
   }[]
 }
 

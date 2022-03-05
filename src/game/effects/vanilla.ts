@@ -24,11 +24,11 @@ export default [
         cause: DamageCause.DoT,
         chance: 100,
         method: DamageMethod.Direct,
-        shieldReaction: ShieldReaction.Ignore,
         useDodge: false,
         sources: [{
           type: DamageType.True,
-          value: severity
+          value: severity,
+          shieldReaction: ShieldReaction.Ignore
         }]
       })
     }
@@ -107,8 +107,7 @@ export default [
         cause: DamageCause.DoT,
         chance: 100,
         method: DamageMethod.Direct,
-        shieldReaction: ShieldReaction.Ignore,
-        sources: [{type: DamageType.True, value: Math.max(1, 0.025 * creature.$.stats.health.value)}],
+        sources: [{type: DamageType.True, value: Math.max(1, 0.025 * creature.$.stats.health.value), shieldReaction: ShieldReaction.Ignore}],
         useDodge: false,
         attacker: "Hypothermia",
       })
@@ -133,8 +132,7 @@ export default [
         cause: DamageCause.DoT,
         chance: 100,
         method: DamageMethod.Direct,
-        shieldReaction: ShieldReaction.Ignore,
-        sources: [{type: DamageType.True, value: Math.max(1, severity * 0.03 * creature.$.stats.health.value)}],
+        sources: [{type: DamageType.True, value: Math.max(1, severity * 0.03 * creature.$.stats.health.value), shieldReaction: ShieldReaction.Ignore}],
         useDodge: false,
         attacker: "Chemical Burns",
       })

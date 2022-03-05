@@ -304,7 +304,6 @@ export default new ComponentCommandHandler(
                 passthrough: (set.modifiers?.passthrough ?? 0) + creature.$.stats.passthrough.value,
                 cutting: (set.modifiers?.cutting ?? 0) + creature.$.stats.cutting.value
               },
-              shieldReaction: ShieldReaction.Normal,
               useDodge: true,
               attacker: creature,
               victim: target,
@@ -314,7 +313,8 @@ export default new ComponentCommandHandler(
                 for (const src of set.sources) {
                   array.push({
                     type: src.type,
-                    value: Math.round(src.flat_bonus + (creature.$.stats.damage.value * rotateLine(skill_value / 100, Creature.PROFICIENCY_DAMAGE_SCALE, 1) * src.from_skill))
+                    value: Math.round(src.flat_bonus + (creature.$.stats.damage.value * rotateLine(skill_value / 100, Creature.PROFICIENCY_DAMAGE_SCALE, 1) * src.from_skill)),
+                    shieldReaction: src.shieldReaction ?? ShieldReaction.Normal
                   })
                 }
 

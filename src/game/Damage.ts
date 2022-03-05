@@ -11,6 +11,7 @@ export enum DamageMethod {
 export interface DamageSource {
   type: DamageType
   value: number
+  shieldReaction: ShieldReaction
 }
 
 export interface DamageGroup {
@@ -25,7 +26,6 @@ export interface DamageGroup {
   }
   chance: number
   useDodge: boolean
-  shieldReaction: ShieldReaction
   cause: DamageCause
 }
 
@@ -54,6 +54,14 @@ export enum DamageCause {
 
 export enum ShieldReaction {
   "Normal", "Ignore", "Only"
+}
+export function shieldReactionInfo(type: ShieldReaction): string {
+  switch (type) {
+    default: return "Undefined";
+    case ShieldReaction.Normal: return "";
+    case ShieldReaction.Only: return "Only Shield";
+    case ShieldReaction.Ignore: return "Ignore Shield"
+  }
 }
 
 export const DAMAGE_TO_INJURY_RATIO = 0.66;
@@ -99,14 +107,15 @@ export function damageLogEmbed(log: DamageLog) {
 }
 
 function damageGroupString(group: DamageGroup) {
-  return `**${group.chance}%** Chance\n**${DamageMethod[group.method]} ${DamageCause[group.cause]}**, Shield reaction: **${ShieldReaction[group.shieldReaction]}**\n` +
+  return `**${group.chance}%** Chance\n**${DamageMethod[group.method]} ${DamageCause[group.cause]}**\n` +
   `*${!group.useDodge ? "Not " : ""}Dodgeable*\n` +
   `Lethality **${group.penetration?.lethality ?? 0}** | **${group.penetration?.passthrough ?? 0}** Passthrough | **${group.penetration?.cutting ?? 0}** Cutting\n\n` +
   `**Sources**\n` +
   `${function() {
     var str = "";
     for (const source of group.sources) {
-      str += `[**${source.value} ${DamageType[source.type]}**]\n`
+      var reaction = shieldReactionInfo(source.shieldReaction);
+      str += `[**${source.value} ${DamageType[source.type]}**${reaction ? ` **${reaction}**` : ""}]\n`
     }
 
     return str.trim();;

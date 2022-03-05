@@ -604,6 +604,7 @@ export default class Creature {
     }
 
     log.final.victim = this;
+    log.original.victim = this;
 
     for (const passive of this.passives) {
       passive.$.beforeDamageTaken?.(this, group);
@@ -638,7 +639,7 @@ export default class Creature {
         }
         source.value = Math.round(source.value);
 
-        switch (group.shieldReaction) {
+        switch (source.shieldReaction) {
           case ShieldReaction.Normal:
           default: {
             log.total_shield_damage += source.value;
@@ -813,8 +814,10 @@ export default class Creature {
     }
 
     effectData.$.onApply?.(this, effect);
-
-    this.reload();
+    
+    if (effectData.$.preload || effectData.$.postload ||effectData.$.passives)
+      this.reload();
+      
     return true;
   }
   clearActiveEffect(id: string, type: "expire" | "delete"): boolean {

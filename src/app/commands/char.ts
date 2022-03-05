@@ -770,10 +770,9 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
           (
             creature.$.stats.shield.value > 0
             ? make_bar(100 * creature.$.vitals.shield / creature.$.stats.shield.value, Creature.BAR_STYLES.Shield, shield_length_mod * BAR_LENGTH).str +
-            ` **Shield** ${textStat(creature.$.vitals.shield, creature.$.stats.shield.value)} ` +
-            `**${creature.$.stats.shield_regen.value}**/t`
-            : "No **Shield**"
-          ) + "\n" +
+            ` **Shield** ${textStat(creature.$.vitals.shield, creature.$.stats.shield.value)} `
+            : "No **Shield** "
+          ) + `**${creature.$.stats.shield_regen.value}**/t\n` +
           (make_bar(100 * creature.$.vitals.health / (creature.$.stats.health.value - creature.$.vitals.injuries), Creature.BAR_STYLES.Health, Math.max(1, health_length_mod * Math.floor(BAR_LENGTH * health_injury_proportions))).str ?? "") +
           (
             creature.$.vitals.injuries > 0

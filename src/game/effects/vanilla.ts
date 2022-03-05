@@ -120,7 +120,7 @@ export default [
     display_severity: DisplaySeverity.ROMAN,
     info: {
       name: "Failing Filters",
-      lore: "Your air filter is not enough. Chemical Burns: **{0}** Health True Damage every tick.",
+      lore: "Your air filter is not enough. Chemical Burns: {0} Health True Damage every tick.",
       replacers: [
         {
           multiply: 0.03,

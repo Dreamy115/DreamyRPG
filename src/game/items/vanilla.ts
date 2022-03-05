@@ -206,7 +206,7 @@ export default [
     type: "consumable",
     info: {
       name: "Makeshift Bandage",
-      lore: "A bandage to stop **Bleeding** and heal **{0}** Injuries",
+      lore: "A bandage to stop **Bleeding** and heal {0} Injuries",
       quality: ItemQuality.Common,
       replacers: [
         {
@@ -243,7 +243,7 @@ export default [
     type: "consumable",
     info: {
       name: "Makeshift Bandage",
-      lore: "A bandage to stop **Bleeding** and heal **{0}** Injuries",
+      lore: "A bandage to stop **Bleeding** and heal {0} Injuries",
       quality: ItemQuality.Uncommon,
       replacers: [
         {

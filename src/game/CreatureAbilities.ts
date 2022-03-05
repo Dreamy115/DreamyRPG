@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { capitalize } from "..";
-import Creature, { Stats } from "./Creature";
+import Creature, { Attributes, Stats } from "./Creature";
 import { DamageLog } from "./Damage";
 
 export default class CreatureAbilitiesManager {
@@ -55,7 +55,7 @@ export class CreatureAbility {
 }
 
 export interface LoreReplacer {
-  stat: string
+  stat: Stats | Attributes
   bonus?: number
   multiplier: number
 }
@@ -68,10 +68,10 @@ export function replaceLore(input: string, replacers: LoreReplacer[], creature?:
 
     str = str.replaceAll(
       `{${r}}`,
-      `${(100 * replacer.multiplier).toFixed(1)}% ${replacer.bonus ? ((replacer.bonus > 0 ? "+" : "-") + Math.abs(replacer.bonus)) : ""} ${capitalize(replacer.stat.replaceAll(/_/g, " "))}` +
+      `**${replacer.multiplier !== 1 ? `${(100 * replacer.multiplier).toFixed(1)}% ` : ""}${replacer.bonus ? ((replacer.bonus > 0 ? "+" : "-") + Math.abs(replacer.bonus)) : ""} ${capitalize(replacer.stat.replaceAll(/_/g, " "))}**` +
       (
         creature
-        ? ` (${(creature.$.stats[replacer.stat as Stats]?.value * replacer.multiplier) + (replacer.bonus ?? 0)}) `
+        ? ` (**${(creature.$.stats[replacer.stat as Stats]?.value * replacer.multiplier) + (replacer.bonus ?? 0)}**) `
         : ""
       )
     );

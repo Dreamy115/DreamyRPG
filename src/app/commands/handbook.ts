@@ -3,6 +3,7 @@ import { AbilitiesManager, capitalize, ClassManager, CONFIG, Directives, EffectM
 import { ActiveEffect, DisplaySeverity, romanNumeral } from "../../game/ActiveEffects";
 import { CreatureClass } from "../../game/Classes";
 import { Material, Schematic } from "../../game/Crafting";
+import Creature from "../../game/Creature";
 import { CreatureAbility, replaceLore } from "../../game/CreatureAbilities";
 import { DamageMethod, DamageType } from "../../game/Damage";
 import { GameDirective } from "../../game/GameDirectives";
@@ -696,14 +697,14 @@ export function abilitiesDescriptor(abilities: string[]) {
 }
 
 
-export function passivesDescriptor(passives: (string | PassiveEffect)[]) {
+export function passivesDescriptor(passives: (string | PassiveEffect)[], creature?: Creature) {
   var str = "";
   if (passives.length > 0) {
     for (const passive of passives) {
       if (typeof passive === "string") {
         str += `[**G**] **${PassivesManager.map.get(passive)?.$.info.name}** \`${passive}\`\n`;
       } else {
-        str += `[**L**] **${passive.$.info.name}**\n*${passive.$.info.lore}*\n${(passive.$.unique ?? new Set()).size > 0 ? `Unique flags: ${Array.from(passive.$.unique ?? []).join(", ")}\n` : ""}\n${(passive.$.modifiers ?? []).length > 0 ? `**Modifiers**\n${modifiersDescriptor(passive.$.modifiers ?? [])}` : ""}\n\n`;
+        str += `[**L**] **${passive.$.info.name}**\n*${replaceLore(passive.$.info.lore, passive.$.info.replacers ?? [], creature)}*\n${(passive.$.unique ?? new Set()).size > 0 ? `Unique flags: ${Array.from(passive.$.unique ?? []).join(", ")}\n` : ""}\n${(passive.$.modifiers ?? []).length > 0 ? `**Modifiers**\n${modifiersDescriptor(passive.$.modifiers ?? [])}` : ""}\n\n`;
       }
     }
     str += "\n"

@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 
 import Creature, { Attributes, Stats } from "./Creature";
+import { LoreReplacer } from "./CreatureAbilities";
 import { DamageGroup, DamageLog } from "./Damage";
 import { Modifier } from "./Stats";
 
@@ -49,6 +50,7 @@ export class PassiveEffect {
     info: {
       name: string
       lore: string
+      replacers?: LoreReplacer[]
     }
     unique?: Set<string>
     // preload is called while parsing, BEFORE vitals are loaded.

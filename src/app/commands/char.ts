@@ -830,7 +830,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
         embed.addField(
           `<${i+1}> ${passive.$.info.name}`,
           function() {
-            var str = `*${passive.$.info.lore}*`;
+            var str = `*${replaceLore(passive.$.info.lore, passive.$.info.replacers ?? [], creature)}*`;
             if ((passive.$.modifiers ?? []).length > 0) {
               str += `\n- **Modifiers**\n`;
               for (const mod of passive.$.modifiers ?? []) {

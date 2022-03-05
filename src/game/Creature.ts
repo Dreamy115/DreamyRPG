@@ -2,7 +2,7 @@ import { Client, MessageEmbed } from "discord.js";
 import mongoose from "mongoose";
 import NodeCache from "node-cache";
 import { bar_styles } from "../app/Bars.js";
-import { AbilitiesManager, capitalize, ClassManager, CONFIG, db, EffectManager, ItemManager, LocationManager, PassivesManager, PerkManager, SchematicsManager, shuffle, SkillManager, SpeciesManager } from "../index.js";
+import { AbilitiesManager, capitalize, ClassManager, CONFIG, db, EffectManager, ItemManager, LocationManager, PassivesManager, PerkManager, rotateLine, SchematicsManager, shuffle, SkillManager, SpeciesManager } from "../index.js";
 import { AppliedActiveEffect } from "./ActiveEffects.js";
 import { CraftingMaterials, Material } from "./Crafting.js";
 import { CreatureAbility } from "./CreatureAbilities.js";
@@ -352,6 +352,14 @@ export default class Creature {
     
     return weapon.$.attack ?? this.defaultAttackSet;
   }
+  getFinalDamage(method: Exclude<DamageMethod, DamageMethod.Direct>) {
+    let stat = (method === DamageMethod.Melee
+    ? this.$.stats.melee
+    : this.$.stats.ranged
+    ).value
+
+    return (this.$.stats.damage.value * rotateLine(stat / 100, Creature.PROFICIENCY_DAMAGE_SCALE, 1))
+  }
 
   vitalsIntegrity() {
     this.$.vitals.injuries = Math.round(Math.min(Math.max(0, this.$.vitals.injuries), this.$.stats.health.value));
@@ -602,6 +610,9 @@ export default class Creature {
       total_shield_damage: 0,
       total_true_damage: 0
     }
+
+    group.victim = original.victim;
+    group.attacker = original.attacker;
 
     log.final.victim = this;
     log.original.victim = this;
@@ -1064,7 +1075,7 @@ export default class Creature {
   static async fetch(id: string, db: typeof mongoose, cache = true): Promise<Creature> {
     if (cache) {
       if (this.cache.has(id)) {
-        return this.cache.get(id) as Creature;
+        return new Creature((this.cache.get(id) as Creature).dump());
       }
     }
 

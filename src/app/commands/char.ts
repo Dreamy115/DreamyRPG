@@ -794,7 +794,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
           value: 
             `**${creature.$.stats.accuracy.value}%** Accuracy *(Hit Chance)*\n` +
             `Melee **${creature.$.stats.melee.value}%** | **${creature.$.stats.ranged.value}%** Ranged *(Weapon Proficiency)*\n` +
-            `**${creature.$.stats.damage.value}** Damage Rating *(Melee **${(creature.$.stats.damage.value * rotateLine(creature.$.stats.melee.value / 100, Creature.PROFICIENCY_DAMAGE_SCALE, 1)).toFixed(1)}** | **${(creature.$.stats.damage.value * rotateLine(creature.$.stats.ranged.value / 100, Creature.PROFICIENCY_DAMAGE_SCALE, 1)).toFixed(1)}** Ranged)*\n` +
+            `**${creature.$.stats.damage.value}** Damage Rating *(Melee **${creature.getFinalDamage(DamageMethod.Melee).toFixed(1)}** | **${creature.getFinalDamage(DamageMethod.Ranged).toFixed(1)}** Ranged)*\n` +
             `**${creature.$.stats.tech.value}** Tech *(Ability Power)*\n` +
             "\n" +
             `**${creature.$.stats.lethality.value}** Lethality | **${creature.$.stats.passthrough.value}** Passthrough | **${creature.$.stats.cutting.value}** Cutting\n` +

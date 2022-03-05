@@ -1,5 +1,5 @@
 import NodeCache from "node-cache";
-import { AbilitiesManager, CONFIG, EffectManager, limitString, removeMarkdown, shuffle } from "..";
+import { AbilitiesManager, CONFIG, EffectManager, ItemManager, limitString, removeMarkdown, shuffle } from "..";
 import Mongoose from "mongoose";
 import { Client, EmbedFieldData, InteractionReplyOptions, MessageActionRow, MessageButton, MessageEmbed, MessagePayload, MessageSelectMenu, MessageSelectOptionData, SnowflakeUtil, User } from "discord.js";
 import Creature, { HealType } from "./Creature";
@@ -7,6 +7,8 @@ import { textStat } from "./Stats";
 import { replaceLore } from "./CreatureAbilities";
 import { bar_styles, make_bar } from "../app/Bars";
 import { DisplaySeverity, romanNumeral } from "./ActiveEffects";
+import { DamageMethod } from "./Damage";
+import { WeaponItemData } from "./Items";
 
 export class Fight {
   static cache = new NodeCache({
@@ -202,6 +204,8 @@ export class Fight {
                 }
                 shield_length_mod = 1 - health_length_mod;
 
+                const weapon = ItemManager.map.get(creature.$.items.primary_weapon?.id ?? "");
+
                 str += 
                   `- **${char.displayName}** (${CombatPosition[combatants.get(char.$._id)?.position ?? 0]})\n` +
                   `*(**${char.$.stats.health.value}** Health - **${char.$.vitals.injuries}** Injuries)*\n` +
@@ -222,19 +226,24 @@ export class Fight {
                   make_bar(100 *char.$.vitals.mana / char.$.stats.mana.value, Creature.BAR_STYLES.Mana, BAR_LENGTH / 3).str +
                   ` **Mana** ${textStat(char.$.vitals.mana, char.$.stats.mana.value)} `+
                   `**${char.$.stats.mana_regen.value}**/t\n` +
-                  (function () {
+                  (
+                    weapon
+                    ? `${weapon.displayName} -> **${char.getFinalDamage((weapon.$ as WeaponItemData).attack.type).toFixed(1)}**`
+                    : `Unarmed -> **${char.getFinalDamage(DamageMethod.Melee).toFixed(1)}**`
+                  ) + "\n" +
+                  (function() {
                     const arr: string[] = [];
                     for (const active of char.active_effects) {
                       const effect = EffectManager.map.get(active.id);
                       if (!effect) continue;
 
-                      arr.push(`${effect.$.info.name}${
+                      arr.push(`${effect.$.info.name} ${
                         effect.$.display_severity === DisplaySeverity.ARABIC
                         ? active.severity
                         : effect.$.display_severity === DisplaySeverity.ROMAN
                           ? romanNumeral(active.severity)
                           : ""
-                      }**${active.ticks !== -1 ? ` *(${active.ticks}t)*` : ""}`)
+                      }**${active.ticks !== -1 ? ` *(${active.ticks}t)*` : ""}`.trim())
                     }
                     if (arr.length > 0)
                       return `**${arr.join(", **")}`

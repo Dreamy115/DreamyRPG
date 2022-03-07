@@ -1,8 +1,9 @@
 import { Message, MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu, MessageSelectMenuOptions, MessageSelectOptionData } from "discord.js";
-import { AbilitiesManager, CONFIG, rotateLine, sleep } from "../..";
+import { AbilitiesManager, CONFIG, ItemManager, limitString, rotateLine, sleep } from "../..";
 import Creature, { diceRoll } from "../../game/Creature";
 import { DamageCause, DamageLog, damageLogEmbed, DamageMethod, DamageSource, ShieldReaction } from "../../game/Damage";
 import { Combatant, CombatPosition, Fight } from "../../game/Fight";
+import { Item, ItemQualityEmoji } from "../../game/Items";
 import { ComponentCommandHandler } from "../component_commands";
 
 export default new ComponentCommandHandler(
@@ -415,7 +416,7 @@ export default new ComponentCommandHandler(
                 damage_embeds.push(damageLogEmbed(log));
               }
 
-              interaction.editReply({
+              await interaction.editReply({
                 content: Math.round(Math.random() * 100) == 1 ? "200 OK" : "OK"
               });
               await interaction.followUp({
@@ -490,7 +491,7 @@ export default new ComponentCommandHandler(
       case "ability": {
         if (!creature.canUseAbilities) {
           interaction.editReply({
-            content: "You cannot Attack right now."
+            content: "You cannot use Abilities right now."
           })
           return;
         }
@@ -563,7 +564,7 @@ export default new ComponentCommandHandler(
                 damage_embeds.push(damageLogEmbed(log));
               }
 
-              interaction.editReply({
+              await interaction.editReply({
                 content: Math.round(Math.random() * 100) == 1 ? "200 OK" : "OK"
               });
               await interaction.followUp({
@@ -643,6 +644,150 @@ export default new ComponentCommandHandler(
               ])]
             })
           }
+        }
+      } break;
+      case "ability_discard": {
+        if (!creature.canUseAbilities) {
+          interaction.editReply({
+            content: "You cannot use Abilities right now."
+          })
+          return;
+        }
+
+        if (interaction.isSelectMenu()) {
+          const ability_id = interaction.values[0];
+
+          if (!creature.$.abilities.hand.includes(ability_id)) {
+            interaction.followUp({
+              ephemeral: true,
+              content: "Ability not in hand."
+            });
+            return;
+          }
+
+          const ability = AbilitiesManager.map.get(ability_id);
+          if (!ability) {
+            interaction.followUp({
+              ephemeral: true,
+              content: "Invalid ability"
+            });
+            return;
+          }
+
+          if (creature.$.vitals.mana < Creature.ABILITY_DISCARD_COST) {
+            interaction.followUp({
+              ephemeral: true,
+              content: "Not enough mana"
+            })
+            return;
+          }
+
+          creature.$.abilities.hand.splice(creature.$.abilities.hand.findIndex((v) => v === ability.$.id), 1);
+          creature.$.vitals.mana -= Creature.ABILITY_DISCARD_COST;
+          const new_ability = creature.drawAbilityCard();
+
+          await interaction.editReply({
+            content: Math.round(Math.random() * 100) == 1 ? "200 OK" : "OK"
+          });
+          await interaction.followUp({
+            ephemeral: false,
+            content: `**${ability.$.info.name}** discarded${new_ability ? ` and replaced by **${new_ability.$.info.name}**.` : ""}.`
+          });
+          interaction.followUp(await fight.announceTurn(db, Bot));
+        }
+      } break;
+      case "weapon_switch": {
+        if (creature.$.vitals.mana < creature.combat_switch_cost) {
+          interaction.followUp({
+            ephemeral: true,
+            content: `Changing weapons mid-fight requires **${(100 * Creature.COMBAT_WEAPON_SWITCH_MULT).toFixed(0)}%** Attack Cost mana.`
+          })
+          return;
+        }
+        if (interaction.isSelectMenu()) {
+          const id = String(interaction.values[0]);
+          if (!id) {
+            interaction.followUp({
+              ephemeral: true,
+              content: "Invalid item"
+            })
+            return;
+          }
+
+          let item: Item | null = null;
+          var index = 0;
+          for (index; creature.$.items.weapons.length > index; index++) {
+            const equipped = ItemManager.map.get(creature.$.items.weapons[index].id);
+            if (equipped?.$.type !== "weapon") continue;
+
+            item = equipped;
+            break;
+          }
+
+          if (!item) {
+            interaction.followUp({
+              ephemeral: true,
+              content: "Invalid item"
+            })
+            return;
+          }
+
+          let old: Item | null = null;
+          if (creature.$.items.primary_weapon) {
+            creature.$.items.weapons.push(creature.$.items.primary_weapon);
+            old = ItemManager.map.get(creature.$.items.primary_weapon.id) ?? null;
+          }
+          creature.$.items.primary_weapon = creature.$.items.weapons.splice(index, 1)[0];
+          
+          creature.$.vitals.mana -= creature.combat_switch_cost;
+          creature.reload();
+
+          await creature.put(db);
+
+          await interaction.editReply({
+            content: Math.round(Math.random() * 100) == 1 ? "200 OK" : "OK"
+          });
+          await interaction.followUp({
+            ephemeral: false,
+            content: `**${creature.displayName}** switched weapons ${old ? `**${old.displayName}** -> ` : ""}**${item.displayName}**`
+          })
+          interaction.followUp(await fight.announceTurn(db, Bot));
+        } else if(interaction.isButton()) {
+          interaction.followUp({
+            ephemeral: true,
+            content: "Choose a weapon from your equipped slots!",
+            components: [
+              new MessageActionRow().addComponents([
+                new MessageSelectMenu()
+                  .setCustomId(`fight/${fight.$._id}/weapon_switch`)
+                  .setOptions(function() {
+                    const array: MessageSelectOptionData[] = [];
+
+                    for (const i of creature.$.items.weapons) {
+                      const item = ItemManager.map.get(i.id);
+                      if (item?.$.type != "weapon") continue;
+
+                      array.push({
+                        label: item.$.info.name,
+                        description: limitString(item.$.info.lore, 100),
+                        emoji: ItemQualityEmoji[item.$.info.quality],
+                        value: item.$.id ?? "",
+                      })
+                    }
+
+                    if (array.length == 0) {
+                      array.push({
+                        label: "None",
+                        value: "null",
+                        description: "No weapons found"
+                      })
+                    }
+
+                    return array;
+                  }())
+              ])
+            ]
+          })
         }
       } break;
     }

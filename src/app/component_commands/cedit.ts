@@ -209,13 +209,11 @@ export default new ComponentCommandHandler(
           } break;
           case "weapon_switch": {
             if (await creature.getFightID(db).catch(() => null)) {
-              if (creature.$.vitals.mana < creature.combat_switch_cost) {
-                interaction.followUp({
-                  ephemeral: true,
-                  content: `Changing weapons mid-fight requires **${(100 * Creature.COMBAT_WEAPON_SWITCH_MULT).toFixed(0)}%** Attack Cost mana.`
-                })
-                return;
-              }
+              interaction.followUp({
+                ephemeral: true,
+                content: "Use the weapon switch from the fight menu instead."
+              });
+              return;
             }
             if (interaction.isSelectMenu()) {
               const id = String(interaction.values[0]);
@@ -249,8 +247,7 @@ export default new ComponentCommandHandler(
                 creature.$.items.weapons.push(creature.$.items.primary_weapon)
               creature.$.items.primary_weapon = creature.$.items.weapons.splice(index, 1)[0];
               
-              creature.$.vitals.mana -= creature.combat_switch_cost;
-              creature = new Creature(creature.dump());
+              creature.reload();
 
             } else if(interaction.isButton()) {
               interaction.followUp({

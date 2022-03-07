@@ -204,7 +204,7 @@ export class Fight {
                 }
                 shield_length_mod = 1 - health_length_mod;
 
-                const weapon = ItemManager.map.get(creature.$.items.primary_weapon?.id ?? "");
+                const weapon = ItemManager.map.get(char.$.items.primary_weapon?.id ?? "");
 
                 str += 
                   `- **${char.displayName}** (${CombatPosition[combatants.get(char.$._id)?.position ?? 0]})\n` +
@@ -214,7 +214,7 @@ export class Fight {
                     ? (make_bar(100 * char.$.vitals.shield / char.$.stats.shield.value, Creature.BAR_STYLES.Shield, shield_length_mod * BAR_LENGTH).str || "") +
                     ` **Shield** ${textStat(char.$.vitals.shield, char.$.stats.shield.value)} `
                     : "No **Shield** "
-                  ) + `**${creature.$.stats.shield_regen.value}**/t\n` +
+                  ) + `**${char.$.stats.shield_regen.value}**/t\n` +
                   (make_bar(100 * char.$.vitals.health / (char.$.stats.health.value - char.$.vitals.injuries), Creature.BAR_STYLES.Health, Math.max(1, health_length_mod * Math.floor(BAR_LENGTH * health_injury_proportions))).str || "") +
                   (
                     char.$.vitals.injuries > 0
@@ -291,7 +291,7 @@ export class Fight {
           .setStyle("PRIMARY")
           .setDisabled(!creature?.canUseAttacks),
         new MessageButton()
-          .setCustomId(`cedit/${this.$.queue[0]}/edit/weapon_switch`)
+          .setCustomId(`fight/${this.$._id}/weapon_switch`)
           .setLabel(`Switch Weapons (${creature?.combat_switch_cost} MP)`)
           .setStyle("SECONDARY"),
         new MessageButton()
@@ -314,21 +314,49 @@ export class Fight {
               const index = array.findIndex((v) => v.value === ability.$.id)
               if (index === -1) {
                 const test: void | Error = await ability.$.test(creature).catch(e => typeof e === "string" ? new Error(e) : e);
-                if (test instanceof Error) {
-                  array.push({
-                    label: `${ability.$.info.name} (${ability.$.cost} Mana) []`,
-                    emoji: "⚠️",
-                    value: ability.$.id,
-                    description: limitString(removeMarkdown(replaceLore(ability.$.info.lore, ability.$.info.lore_replacers)), 100)
-                  })
-                  continue;
-                }
-
                 array.push({
-                  label: `${ability.$.info.name} (${ability.$.cost} Mana) []`,
+                  label: `${ability.$.info.name} (${ability.$.cost} MP) []`,
+                  emoji: (test instanceof Error ? "⚠️" : undefined),
                   value: ability.$.id,
                   description: limitString(removeMarkdown(replaceLore(ability.$.info.lore, ability.$.info.lore_replacers)), 100)
                 })
+                continue;
+              } else {
+                array[index].label += "[]";
+              }
+            }
+
+            if (array.length == 0)
+              array.push({
+                label: "No abilities in hand",
+                value: "null"
+              })
+
+            return array;
+          }())
+      ]),
+      new MessageActionRow().setComponents([
+        new MessageSelectMenu()
+          .setCustomId(`fight/${this.$._id}/ability_discard`)
+          .setPlaceholder(`Discard Ability [2 MP] (${creature?.$.abilities.hand.length ?? 0}/${Creature.MAX_HAND_AMOUNT})`)
+          .setOptions(await async function () {
+            const array: MessageSelectOptionData[] = [];
+
+            if (creature) for (const a of creature.$.abilities.hand) {
+              const ability = AbilitiesManager.map.get(a);
+              if (!ability) continue;
+
+              const index = array.findIndex((v) => v.value === ability.$.id)
+              if (index === -1) {
+                const test: void | Error = await ability.$.test(creature).catch(e => typeof e === "string" ? new Error(e) : e);
+                array.push({
+                  label: `${ability.$.info.name} (${ability.$.cost} MP) []`,
+                  emoji: (test instanceof Error ? "⚠️" : undefined),
+                  value: ability.$.id,
+                  description: limitString(removeMarkdown(replaceLore(ability.$.info.lore, ability.$.info.lore_replacers)), 100)
+                })
+                continue;
+
               } else {
                 array[index].label += "[]";
               }

@@ -71,7 +71,6 @@ export function reductionMultiplier(protection: number): number {
 
 export function damageLogEmbed(log: DamageLog) {
   const embed = new MessageEmbed();
-  console.log(log.final.attacker)
   embed
     .setTitle("Damage Log")
     .setAuthor(`${(log.final?.attacker as (undefined | Creature))?.$?.info.display.name ?? log.final.attacker ?? "Unknown"} >>> ${(log.final.victim?.displayName ?? "Unknown")}`)
@@ -91,7 +90,7 @@ export function damageLogEmbed(log: DamageLog) {
   } else {
     embed.addField(
       "Failed",
-      `**${log.final.chance}%** Chance`,
+      `**${log.final.chance.toFixed(2)}%** Chance`,
       true
     )
   }
@@ -107,7 +106,7 @@ export function damageLogEmbed(log: DamageLog) {
 }
 
 function damageGroupString(group: DamageGroup) {
-  return `**${group.chance}%** Chance\n**${DamageMethod[group.method]} ${DamageCause[group.cause]}**\n` +
+  return `**${group.chance.toFixed(2)}%** Chance\n**${DamageMethod[group.method]} ${DamageCause[group.cause]}**\n` +
   `*${!group.useDodge ? "Not " : ""}Dodgeable*\n` +
   `Lethality **${group.penetration?.lethality ?? 0}** | **${group.penetration?.passthrough ?? 0}** Passthrough | **${group.penetration?.cutting ?? 0}** Cutting\n\n` +
   `**Sources**\n` +

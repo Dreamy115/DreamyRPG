@@ -1089,7 +1089,7 @@ export default class Creature {
     Heat: bar_styles[3]
   }
 
-  static readonly MIN_LEVEL_FOR_CLASS = 5;
+  static readonly ABILITY_DISCARD_COST = 2;
 
   static readonly MAX_EQUIPPED_WEAPONS = 2;
   static readonly COMBAT_WEAPON_SWITCH_MULT = 0.2;
@@ -1266,7 +1266,7 @@ export default class Creature {
   }
   static readonly ATTRIBUTE_MAX = 8;
 
-  static readonly ID_REGEX = /^([A-Za-z0-9]|[_-]){3,96}$/
+  static readonly ID_REGEX = /^([A-Za-z0-9]|[_-]){3,96}$/;
   static readonly ID_REGEX_ERR_MSG = "Invalid ID. Must be between **3**-**96** in length, and contain only **A-Z**, **a-z**, **0-9** and **\_**, **-** characters.";
 
   static readonly COLLECTION_NAME = "Creatures";

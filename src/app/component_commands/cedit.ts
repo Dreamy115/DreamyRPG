@@ -1,6 +1,6 @@
 import { ButtonInteraction, CommandInteraction, Message, MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu, MessageSelectOptionData } from "discord.js";
 import Mongoose from "mongoose";
-import { capitalize, clamp, ClassManager, CONFIG, invLerp, ItemManager, lerp, limitString, LootTables, messageInput, PerkManager, removeMarkdown, removeVowels, SchematicsManager, SkillManager, SpeciesManager } from "../..";
+import { capitalize, clamp, CONFIG, invLerp, ItemManager, lerp, limitString, LootTables, messageInput, PerkManager, removeMarkdown, removeVowels, SchematicsManager, SkillManager, SpeciesManager } from "../..";
 import { CraftingMaterials, Material } from "../../game/Crafting";
 import Creature, { Attributes, CreatureDump, HealType } from "../../game/Creature";
 import { AbilityUseLog } from "../../game/CreatureAbilities";
@@ -205,112 +205,6 @@ export default new ComponentCommandHandler(
               creature.clearAttributes();
 
               creature.$.info.locked = true;
-            }
-          } break;
-          case "class": {
-            if (!IS_GM && await creature.getFightID(db)) {
-              interaction.followUp({
-                ephemeral: true,
-                content: "Cannot do that while fighting!"
-              });
-              return;
-            }
-
-            if (creature.$.info.locked && !IS_GM) {
-              if (creature.$.info.class && ClassManager.map.has(creature.$.info.class)) {
-                interaction.followUp({
-                  ephemeral: true,
-                  content: "You cannot change the class."
-                });
-                return;
-              } else if (creature.$.experience.level < Creature.MIN_LEVEL_FOR_CLASS) {
-                interaction.followUp({
-                  ephemeral: true,
-                  content: `You must be level **${Creature.MIN_LEVEL_FOR_CLASS}** or higher to equip a class.`
-                });
-                return;
-              }
-            }
-
-            if (interaction.isSelectMenu()) {
-              const chosen_class = ClassManager.map.get(interaction.values[0]);
-              if (!chosen_class) {
-                interaction.followUp({
-                  ephemeral: true,
-                  content: "Invalid class!"
-                })
-                return;
-              }
-
-              if (chosen_class.$.compatibleSpecies.size > 0 && !chosen_class.$.compatibleSpecies.has(creature.$.info.species)) {
-                interaction.followUp({
-                  ephemeral: true,
-                  content: "Class incompatible with race"
-                })
-                return;
-              }
-
-              if (creature.$.info.locked) {
-                interaction.followUp({
-                  ephemeral: true,
-                  content: 
-                    `Picked - **${chosen_class.$.info.name}** \`${chosen_class.$.id}\`\n` +
-                    "Please hit the button to confirm. You cannot change this later!\n" +
-                    "You can safely dismiss this message.",
-                  components: [
-                    new MessageActionRow().setComponents([
-                      new MessageButton()
-                        .setCustomId(`cedit/${creature.$._id}/edit/class/${chosen_class.$.id}`)
-                        .setLabel("Confirm")
-                        .setStyle("DANGER")
-                    ])
-                  ]
-                })
-              } else {
-                let dump = creature.dump();
-
-                (dump.info as Exclude<CreatureDump["info"], undefined>).class = chosen_class.$.id;
-  
-                creature = new Creature(dump);
-  
-                interaction.followUp({
-                  ephemeral: true,
-                  content: "Class assigned!"
-                })
-                creature.put(db);
-                return;
-              }
-              return;
-            } else if (interaction.isButton()) {
-              const chosen_class = ClassManager.map.get(args.shift() ?? "");
-              if (!chosen_class) {
-                interaction.followUp({
-                  ephemeral: true,
-                  content: "Invalid class!"
-                })
-                return;
-              }
-
-              if (chosen_class.$.compatibleSpecies.size > 0 && !chosen_class.$.compatibleSpecies.has(creature.$.info.species)) {
-                interaction.followUp({
-                  ephemeral: true,
-                  content: "Class incompatible with race"
-                })
-                return;
-              }
-
-              let dump = creature.dump();
-
-              (dump.info as Exclude<CreatureDump["info"], undefined>).class = chosen_class.$.id;
-
-              creature = new Creature(dump);
-
-              interaction.followUp({
-                ephemeral: true,
-                content: "Class assigned!"
-              })
-              creature.put(db);
-              return;
             }
           } break;
           case "weapon_switch": {
@@ -1536,33 +1430,6 @@ export function ceditMenu(creature: Creature): MessageActionRow[] {
         }
 
         return [...new Set(array)];
-      }())
-    ]),
-    new MessageActionRow().addComponents([
-      new MessageSelectMenu()
-        .setCustomId(`cedit/${creature.$._id}/edit/class`)
-        .setPlaceholder("Change Class")
-        .addOptions(function() {
-        const array: MessageSelectOptionData[] = [];
-
-        for (const itemclass of ClassManager.map.values()) {
-          if (itemclass.$.compatibleSpecies.size == 0 || itemclass.$.compatibleSpecies.has(creature.$.info.species))
-            array.push({
-              label: itemclass.$.info.name,
-              value: itemclass.$.id,
-              description: removeMarkdown(itemclass.$.info.lore)
-            })
-        }
-
-        if (array.length == 0) {
-          array.push({
-            label: "Not Found",
-            value: "nothing",
-            description: "No compatible kits found"
-          })
-        }
-
-        return array;
       }())
     ]),
   ];

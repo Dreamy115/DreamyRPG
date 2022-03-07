@@ -2,7 +2,7 @@ import { Client, MessageEmbed } from "discord.js";
 import mongoose from "mongoose";
 import NodeCache from "node-cache";
 import { bar_styles } from "../app/Bars.js";
-import { AbilitiesManager, capitalize, ClassManager, CONFIG, db, EffectManager, ItemManager, LocationManager, PassivesManager, PerkManager, rotateLine, SchematicsManager, shuffle, SkillManager, SpeciesManager } from "../index.js";
+import { AbilitiesManager, capitalize, CONFIG, db, EffectManager, ItemManager, LocationManager, PassivesManager, PerkManager, rotateLine, SchematicsManager, shuffle, SkillManager, SpeciesManager } from "../index.js";
 import { AppliedActiveEffect } from "./ActiveEffects.js";
 import { CraftingMaterials, Material } from "./Crafting.js";
 import { CreatureAbility } from "./CreatureAbilities.js";
@@ -270,10 +270,6 @@ export default class Creature {
   get displayName() {
     return this.$.info.display.name;
   }
-  get class() {
-    return ClassManager.map.get(this.$.info.class ?? "");
-  }
-
 
   get stat_modules(): Map<ModuleType, ItemStatModule[]> {
     const map = new Map<ModuleType, ItemStatModule[]>();
@@ -483,12 +479,6 @@ export default class Creature {
       globalOrLocalPusherArray(abilities, Array.from(species.$.abilities?.values() ?? []), AbilitiesManager);
     }
 
-    const kit = ClassManager.map.get(this.$.info.class ?? "");
-    if (kit) {
-      globalOrLocalPusherArray(abilities, Array.from(kit.$.abilities?.values() ?? []), AbilitiesManager);
-    } 
-
-
     for (const item of this.itemsData) {
       globalOrLocalPusherArray(abilities, Array.from((item.$ as Exclude<typeof item.$, GenericItemData | ConsumableItemData>).abilities?.values() ?? []), AbilitiesManager);
     }
@@ -522,12 +512,6 @@ export default class Creature {
     for (const directive of GameDirective.enabled) {
       globalOrLocalPusherSet(passives, directive.$.passives ?? new Set(), PassivesManager);
     }
-
-    const kit = ClassManager.map.get(this.$.info.class ?? "");
-    if (kit) {
-      globalOrLocalPusherSet(passives, kit.$.passives ?? new Set(), PassivesManager);
-    } 
-
 
     for (const item of this.itemsData) {
       globalOrLocalPusherSet(passives, (item.$ as Exclude<typeof item.$, GenericItemData | ConsumableItemData>).passives ?? new Set(), PassivesManager);
@@ -966,9 +950,6 @@ export default class Creature {
       globalOrLocalPusherSet(perks, directive.$.perks ?? new Set(), PerkManager);
     }
 
-    const kit = ClassManager.map.get(this.$.info.class ?? "");
-    globalOrLocalPusherSet(perks, kit?.$.perks ?? new Set(), PerkManager);
-    
     for (const skill of this.skills) {
       globalOrLocalPusherSet(perks, skill.$.perks ?? new Set(), PerkManager);
     }
@@ -1020,12 +1001,9 @@ export default class Creature {
   }
 
   get schematics() {
-    return new Set([...SchematicsManager.free, ...(this.species?.$.schematics ?? []), ...(this.itemClass?.$.schematics ?? []), ...this.$.items.schematics])
+    return new Set([...SchematicsManager.free, ...(this.species?.$.schematics ?? []), ...this.$.items.schematics])
   }
 
-  get itemClass () {
-    return ClassManager.map.get(this.$.info.class ?? "")
-  }
   get species() {
     return SpeciesManager.map.get(this.$.info.species)
   }

@@ -34,7 +34,6 @@ export class CreaturePerk {
       lore: string
     }
     compatibleSpecies?: Set<string>
-    compatibleClasses?: Set<string>
   }
 
   constructor(data: CreaturePerk["$"]) {

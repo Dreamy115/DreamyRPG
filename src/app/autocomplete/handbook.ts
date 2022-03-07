@@ -1,7 +1,6 @@
 import { ApplicationCommandOptionChoice, Interaction } from "discord.js";
-import { ItemManager, SpeciesManager, ClassManager, PassivesManager, AbilitiesManager, EffectManager, PerkManager, SkillManager, SchematicsManager, LocationManager, LootTables, Directives } from "../..";
+import { ItemManager, SpeciesManager, PassivesManager, AbilitiesManager, EffectManager, PerkManager, SkillManager, SchematicsManager, LocationManager, LootTables, Directives } from "../..";
 import ActiveEffectManager, { ActiveEffect } from "../../game/ActiveEffects";
-import CreatureClassManager, { CreatureClass } from "../../game/Classes";
 import { Schematic } from "../../game/Crafting";
 import CreatureAbilitiesManager, { CreatureAbility } from "../../game/CreatureAbilities";
 import ItemsManager, { Item } from "../../game/Items";
@@ -27,9 +26,6 @@ export async function getAutocompleteListOfItems(value: string, type: string): P
       break;
     case "species":
       list = SpeciesManager.map;
-      break;
-    case "classes":
-      list = ClassManager.map;
       break;
     case "passives":
       list = PassivesManager.map;

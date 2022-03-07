@@ -1,7 +1,6 @@
 import { ApplicationCommandOptionData, ColorResolvable, MessageActionRow, MessageButton, MessageEmbed } from "discord.js";
-import { AbilitiesManager, capitalize, ClassManager, CONFIG, Directives, EffectManager, ItemManager, LocationManager, LootTables, PassivesManager, PerkManager, SchematicsManager, SkillManager, SpeciesManager } from "../..";
+import { AbilitiesManager, capitalize, CONFIG, Directives, EffectManager, ItemManager, LocationManager, LootTables, PassivesManager, PerkManager, SchematicsManager, SkillManager, SpeciesManager } from "../..";
 import { ActiveEffect, DisplaySeverity, romanNumeral } from "../../game/ActiveEffects";
-import { CreatureClass } from "../../game/Classes";
 import { Material, Schematic } from "../../game/Crafting";
 import Creature from "../../game/Creature";
 import { CreatureAbility, replaceLore } from "../../game/CreatureAbilities";
@@ -151,10 +150,6 @@ export default new ApplicationCommandHandler(
       case "species":
         list = SpeciesManager.map;
         title = "Species";
-        break;
-      case "classes":
-        list = ClassManager.map;
-        title = "Classes";
         break;
       case "passives":
         list = PassivesManager.map;
@@ -431,36 +426,6 @@ export default new ApplicationCommandHandler(
                 value: perksDescriptor(Array.from(item.$.perks?.values() ?? [])) || "None"
               }
             ]);
-          } else if (item instanceof CreatureClass) {
-            embed.addFields([
-              { 
-                name: "Passives",
-                value: passivesDescriptor(Array.from(item.$.passives ?? [])) || "None"
-              },
-              { 
-                name: "Abilities",
-                value: abilitiesDescriptor(Array.from(item.$.abilities ?? [])) || "None"
-              },
-              {
-                name: "Perks",
-                value: perksDescriptor(Array.from(item.$.perks ?? []) || "None")
-              }
-            ]);
-
-            if (item.$.compatibleSpecies && item.$.compatibleSpecies.size > 0) {
-              const species: string[] = [];
-              for (const r of item.$.compatibleSpecies) {
-                const race = SpeciesManager.map.get(r);
-                if (!race) continue;
-
-                species.push(race.$.info.name);
-              }
-
-              embed.addField(
-                "Compatible Species",
-                species.join(", ")
-              )
-            }
           } else if (item instanceof PassiveEffect) {
             embed.addField(
               "Modifiers",
@@ -525,20 +490,6 @@ export default new ApplicationCommandHandler(
               embed.addField(
                 "Compatible Species",
                 species.join(", ")
-              )
-            }
-            if (item.$.compatibleClasses && item.$.compatibleClasses.size > 0) {
-              const classes: string[] = [];
-              for (const c of item.$.compatibleClasses) {
-                const kit = ClassManager.map.get(c);
-                if (!kit) continue;
-
-                classes.push(kit.$.info.name);
-              }
-
-              embed.addField(
-                "Compatible Classes",
-                classes.join(", ")
               )
             }
           } else if (item instanceof Schematic) {
@@ -728,5 +679,5 @@ export function perksDescriptor(perks: (string | CreaturePerk)[]) {
 }
 
 export type ManagedItems = 
-  Item | CreatureClass | CreatureSpecies | PassiveEffect | CreatureAbility | GameDirective |
+  Item | CreatureSpecies | PassiveEffect | CreatureAbility | GameDirective |
   ActiveEffect | CreatureSkill | CreaturePerk | Schematic | GameLocation | LootTable;

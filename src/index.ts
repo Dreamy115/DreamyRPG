@@ -10,7 +10,6 @@ import ComponentCommandManager from "./app/component_commands.js";
 import CreatureSpeciesManager from "./game/Species.js";
 import PassiveEffectManager from "./game/PassiveEffects.js";
 import ItemsManager from "./game/Items.js";
-import CreatureClassManager from "./game/Classes.js";
 import CreatureAbilitiesManager from "./game/CreatureAbilities.js";
 import ActiveEffectManager, { romanNumeral } from "./game/ActiveEffects.js";
 import AutocompleteManager from "./app/autocomplete.js";
@@ -23,7 +22,6 @@ import LootTableManager from "./game/LootTables.js";
 import DirectiveManager from "./game/GameDirectives.js";
 
 export const ItemManager = new ItemsManager();
-export const ClassManager = new CreatureClassManager();
 export const SpeciesManager = new CreatureSpeciesManager();
 export const PassivesManager = new PassiveEffectManager();
 export const AbilitiesManager = new CreatureAbilitiesManager();
@@ -102,7 +100,6 @@ export function gameLoad() {
   console.log("Loading game items");
   
   ItemManager.load(path.join(__dirname, "game/items"));
-  ClassManager.load(path.join(__dirname, "game/classes"));
   PassivesManager.load(path.join(__dirname, "game/passives"));
   SpeciesManager.load(path.join(__dirname, "game/species"));
   AbilitiesManager.load(path.join(__dirname, "game/abilities"));

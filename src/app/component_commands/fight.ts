@@ -418,6 +418,12 @@ export default new ComponentCommandHandler(
                 damage_embeds.push(damageLogEmbed(log));
               }
 
+              await creature.put(db);
+              for (const target of targets) {
+                if (target.id !== creature.id)
+                  await target.put(db)
+              }
+
               await interaction.editReply({
                 content: Math.round(Math.random() * 100) == 1 ? "200 OK" : "OK"
               });
@@ -427,12 +433,6 @@ export default new ComponentCommandHandler(
                 embeds: damage_embeds.length > 0 ? damage_embeds : undefined
               })
 
-              var _promises: Promise<unknown>[] = [creature.put(db)];
-              for (const target of targets) {
-                _promises.push(target.put(db));
-              }
-
-              await Promise.all(_promises);
               interaction.followUp(await fight.announceTurn(db, Bot));
             } catch (e: any) {
               console.error(e);
@@ -483,7 +483,7 @@ export default new ComponentCommandHandler(
                 new MessageEmbed()
                   .setTitle(ability.$.info.name)
                   .setDescription(
-                    replaceLore(ability.$.info.lore, ability.$.info.lore_replacers) +
+                    replaceLore(ability.$.info.lore, ability.$.info.lore_replacers, creature) +
                     `\n\n` +
                     `Cost **${ability.$.cost}**\n` +
                     `Haste **${ability.$.haste ?? 1}**\n` +
@@ -586,7 +586,8 @@ export default new ComponentCommandHandler(
 
               await creature.put(db);
               for (const target of targets) {
-                await target.put(db)
+                if (target.id !== creature.id)
+                  await target.put(db)
               }
               
               await interaction.editReply({
@@ -658,7 +659,7 @@ export default new ComponentCommandHandler(
                 new MessageEmbed()
                   .setTitle(ability.$.info.name)
                   .setDescription(
-                    replaceLore(ability.$.info.lore, ability.$.info.lore_replacers) +
+                    replaceLore(ability.$.info.lore, ability.$.info.lore_replacers, creature) +
                     `\n\n` +
                     `Cost **${ability.$.cost}**\n` +
                     `Haste **${ability.$.haste ?? 1}**\n` +
@@ -831,7 +832,7 @@ export default new ComponentCommandHandler(
       } break;
     }
 
-    fight.put(db);
+    await fight.put(db);
   }
 )
 

@@ -433,8 +433,11 @@ export default new ApplicationCommandHandler(
             )
           } else if (item instanceof CreatureAbility) {
             embed.description =
-              replaceLore(embed.description ?? "", item.$.info.lore_replacers) +
-              `\n\nHaste **${item.$.haste ?? 1}**\n${item.$.attackLike ? `**Attack-Like** *(Affected by Positioning)*\n` : ""}`
+              replaceLore(embed.description || "", item.$.info.lore_replacers) +
+              `\n\n` +
+              `Cost **${item.$.cost}**\n` +
+              `Haste **${item.$.haste ?? 1}**\n` +
+              `${item.$.attackLike ? `**Attack-Like** *(Affected by Positioning)*\n` : ""}`
           } else if (item instanceof ActiveEffect) {
             embed.setDescription(function () {
               var str = item.$.info.lore;

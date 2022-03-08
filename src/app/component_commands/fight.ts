@@ -1,9 +1,11 @@
 import { Message, MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu, MessageSelectMenuOptions, MessageSelectOptionData } from "discord.js";
 import { AbilitiesManager, CONFIG, ItemManager, limitString, rotateLine, sleep } from "../..";
 import Creature, { diceRoll } from "../../game/Creature";
+import { replaceLore } from "../../game/CreatureAbilities";
 import { DamageCause, DamageLog, damageLogEmbed, DamageMethod, DamageSource, ShieldReaction } from "../../game/Damage";
 import { Combatant, CombatPosition, Fight } from "../../game/Fight";
 import { Item, ItemQualityEmoji } from "../../game/Items";
+import { abilitiesDescriptor } from "../commands/handbook";
 import { ComponentCommandHandler } from "../component_commands";
 
 export default new ComponentCommandHandler(
@@ -477,12 +479,30 @@ export default new ComponentCommandHandler(
             interaction.followUp({
               ephemeral: true,
               content: "Pick your targets",
+              embeds: [
+                new MessageEmbed()
+                  .setTitle(ability.$.info.name)
+                  .setDescription(
+                    replaceLore(ability.$.info.lore, ability.$.info.lore_replacers) +
+                    `\n\n` +
+                    `Cost **${ability.$.cost}**\n` +
+                    `Haste **${ability.$.haste ?? 1}**\n` +
+                    `${ability.$.attackLike ? `**Attack-Like** *(Affected by Positioning)*\n` : ""}`
+                  )
+              ],
               components: [new MessageActionRow().setComponents([new MessageSelectMenu()
                 .setCustomId(`fight/${fight.$._id}/ult/${ability.$.id}`)
                 .setMinValues(ability.$.min_targets)
-                .setMaxValues(Math.min(ability.$.max_targets ?? ability.$.min_targets, target_choices.length))
+                .setMaxValues(Math.min(ability.$.max_targets ?? (ability.$.min_targets || 1), target_choices.length))
                 .setPlaceholder("Creatures")
-                .setOptions(target_choices)
+                .setOptions(
+                  ability.$.min_targets === 0
+                  ? [{
+                    value: creature.id,
+                    label: creature.displayName,
+                    description: "You can only pick yourself for this ability."
+                  }]
+                  : target_choices)
               ])]
             })
           }
@@ -564,6 +584,11 @@ export default new ComponentCommandHandler(
                 damage_embeds.push(damageLogEmbed(log));
               }
 
+              await creature.put(db);
+              for (const target of targets) {
+                await target.put(db)
+              }
+              
               await interaction.editReply({
                 content: Math.round(Math.random() * 100) == 1 ? "200 OK" : "OK"
               });
@@ -573,12 +598,6 @@ export default new ComponentCommandHandler(
                 embeds: damage_embeds.length > 0 ? damage_embeds : undefined
               })
 
-              var _promises: Promise<unknown>[] = [creature.put(db)];
-              for (const target of targets) {
-                _promises.push(target.put(db));
-              }
-
-              await Promise.all(_promises);
               interaction.followUp(await fight.announceTurn(db, Bot));
             } catch (e: any) {
               console.error(e);
@@ -635,12 +654,30 @@ export default new ComponentCommandHandler(
             interaction.followUp({
               ephemeral: true,
               content: "Pick your targets",
+              embeds: [
+                new MessageEmbed()
+                  .setTitle(ability.$.info.name)
+                  .setDescription(
+                    replaceLore(ability.$.info.lore, ability.$.info.lore_replacers) +
+                    `\n\n` +
+                    `Cost **${ability.$.cost}**\n` +
+                    `Haste **${ability.$.haste ?? 1}**\n` +
+                    `${ability.$.attackLike ? `**Attack-Like** *(Affected by Positioning)*\n` : ""}`
+                  )
+              ],
               components: [new MessageActionRow().setComponents([new MessageSelectMenu()
                 .setCustomId(`fight/${fight.$._id}/ability/${ability.$.id}`)
                 .setMinValues(ability.$.min_targets)
-                .setMaxValues(Math.min(ability.$.max_targets ?? ability.$.min_targets, target_choices.length))
+                .setMaxValues(Math.min(ability.$.max_targets ?? (ability.$.min_targets || 1), target_choices.length))
                 .setPlaceholder("Creatures")
-                .setOptions(target_choices)
+                .setOptions(
+                  ability.$.min_targets === 0
+                  ? [{
+                    value: creature.id,
+                    label: creature.displayName,
+                    description: "You can only pick yourself for this ability."
+                  }]
+                  : target_choices)
               ])]
             })
           }
@@ -685,6 +722,8 @@ export default new ComponentCommandHandler(
           creature.$.abilities.hand.splice(creature.$.abilities.hand.findIndex((v) => v === ability.$.id), 1);
           creature.$.vitals.mana -= Creature.ABILITY_DISCARD_COST;
           const new_ability = creature.drawAbilityCard();
+
+          await creature.put(db);
 
           await interaction.editReply({
             content: Math.round(Math.random() * 100) == 1 ? "200 OK" : "OK"

@@ -437,6 +437,7 @@ export default class Creature {
       const id = this.$.abilities.deck.shift();
       if (id) {
         ability = AbilitiesManager.map.get(id);
+        shuffled = false;
       } else {
         if (!shuffled) {
           this.reshuffleAbilityDeck();

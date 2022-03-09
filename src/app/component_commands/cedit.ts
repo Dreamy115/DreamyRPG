@@ -169,7 +169,6 @@ export default new ComponentCommandHandler(
             creature.wipeItems();
             let dump = creature.dump();
             (dump.info as Exclude<CreatureDump["info"], undefined>).species = interaction.values[0];
-            (dump.info as Exclude<CreatureDump["info"], undefined>).class = undefined;
 
             creature = new Creature(dump);
           } break;
@@ -198,7 +197,6 @@ export default new ComponentCommandHandler(
               }
 
               creature.wipeItems();
-              creature.$.info.class = undefined;
               creature.$.experience = {
                 level: 1
               }

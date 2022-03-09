@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 
 import Creature, { Attributes, Stats } from "./Creature";
-import { LoreReplacer } from "./CreatureAbilities";
+import { LoreReplacer } from "./LoreReplacer";
 import { DamageGroup, DamageLog } from "./Damage";
 import { Modifier } from "./Stats";
 

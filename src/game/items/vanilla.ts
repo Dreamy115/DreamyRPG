@@ -86,7 +86,7 @@ export default [
       quality: ItemQuality.Common
     },
     category: WeaponCategory.knife,
-    base_damage: 1,
+    base_damage: 2,
     attack: {
       type: DamageMethod.Melee,
       weak: [
@@ -148,7 +148,7 @@ export default [
       quality: ItemQuality.Common
     },
     category: WeaponCategory.pistol,
-    base_damage: 1,
+    base_damage: 2,
     attack: {
       type: DamageMethod.Ranged,
       weak: [

@@ -2,7 +2,7 @@ import { ApplicationCommandOptionChoice, MessageEmbed } from "discord.js";
 import { capitalize, CONFIG, ItemManager, LootTables } from "../..";
 import { CraftingMaterials, Material } from "../../game/Crafting";
 import Creature, { Attributes, HealType } from "../../game/Creature";
-import { replaceLore } from "../../game/CreatureAbilities";
+import { replaceLore } from "../../game/LoreReplacer";
 import { DamageType, DamageMethod, ShieldReaction, DamageCause, DamageGroup, damageLogEmbed } from "../../game/Damage";
 import { ConsumableItemData, createItem, InventoryItem, SpecializedWearableData, UltimateWearableItemData } from "../../game/Items";
 import { LootTable } from "../../game/LootTables";

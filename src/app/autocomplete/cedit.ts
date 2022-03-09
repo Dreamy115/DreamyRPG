@@ -41,7 +41,6 @@ export default new AutocompleteHandler(
           for (const skill of SkillManager.map.values()) {
             if (search.test(skill.$.id) || search.test(skill.$.info.name))
               if (
-                (!skill.$.compatibleClasses || (char.$.info.class && skill.$.compatibleClasses.has(char.$.info.class))) &&
                 (!skill.$.compatibleSpecies || (char.$.info.species && skill.$.compatibleSpecies.has(char.$.info.species)))
               )
               array.push({

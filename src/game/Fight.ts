@@ -4,7 +4,7 @@ import Mongoose from "mongoose";
 import { Client, EmbedFieldData, InteractionReplyOptions, MessageActionRow, MessageButton, MessageEmbed, MessagePayload, MessageSelectMenu, MessageSelectOptionData, SnowflakeUtil, User } from "discord.js";
 import Creature, { HealType } from "./Creature";
 import { textStat } from "./Stats";
-import { replaceLore } from "./CreatureAbilities";
+import { replaceLore } from "./LoreReplacer";
 import { bar_styles, make_bar } from "../app/Bars";
 import { DisplaySeverity, romanNumeral } from "./ActiveEffects";
 import { DamageMethod } from "./Damage";

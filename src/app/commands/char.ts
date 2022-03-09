@@ -2,7 +2,8 @@ import { ApplicationCommandOptionChoice, Client, EmbedFieldData, Invite, Message
 import { DisplaySeverity, replaceEffectLore, romanNumeral } from "../../game/ActiveEffects.js";
 import { Material, Schematic } from "../../game/Crafting.js";
 import Creature, { Attributes, diceRoll, Stats } from "../../game/Creature.js";
-import { CreatureAbility, replaceLore } from "../../game/CreatureAbilities.js";
+import { CreatureAbility } from "../../game/CreatureAbilities.js";
+import { replaceLore } from "../../game/LoreReplacer";
 import { reductionMultiplier, DAMAGE_TO_INJURY_RATIO, DamageMethod, DamageType } from "../../game/Damage.js";
 import { CombatPosition } from "../../game/Fight.js";
 import { AttackData, SlotDescriptions, Item, ItemQualityEmoji, InventoryItem, EquippableInventoryItem, WearableInventoryItem, WearableItemData, WeaponItemData, ConsumableItemData, ItemSlot, SpecializedWearableData, WeaponCategory } from "../../game/Items.js";

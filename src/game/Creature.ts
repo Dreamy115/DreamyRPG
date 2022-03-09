@@ -34,7 +34,6 @@ export default class Creature {
         location: data.info?.location ?? "default",
         locked: data.info?.locked ?? false,
         species: data.info?.species ?? "default",
-        class: data.info?.class,
         npc: data.info?.npc ?? false,
       },
       stats: {
@@ -48,7 +47,7 @@ export default class Creature {
         dissipate: new TrackableStat(0),
         melee: new TrackableStat(100),
         ranged: new TrackableStat(100),
-        damage: new TrackableStat(16),
+        damage: new TrackableStat(15),
         health: new TrackableStat(100),
         mana: new TrackableStat(30),
         mana_regen: new TrackableStat(10),
@@ -308,8 +307,8 @@ export default class Creature {
         },
         sources: [{
           type: DamageType.Physical,
-          flat_bonus: 2,
-          from_skill: 0.6
+          flat_bonus: 0,
+          from_skill: 1
         }],
       }],
       crit: [{
@@ -320,8 +319,8 @@ export default class Creature {
         },
         sources: [{
           type: DamageType.Physical,
-          flat_bonus: 4,
-          from_skill: 0.75
+          flat_bonus: 0,
+          from_skill: 1.25
         }],
       }],
       weak: [{
@@ -1108,7 +1107,7 @@ export default class Creature {
 
   static readonly ATTACK_VALUES = [
     undefined, null, null, null, null, null, DamageCause.Weak_Attack,
-    DamageCause.Weak_Attack, DamageCause.Weak_Attack, DamageCause.Normal_Attack, DamageCause.Normal_Attack, DamageCause.Normal_Attack, DamageCause.Critical_Attack
+    DamageCause.Weak_Attack, DamageCause.Weak_Attack, DamageCause.Weak_Attack, DamageCause.Normal_Attack, DamageCause.Normal_Attack, DamageCause.Critical_Attack
   ]
 
   static readonly LEVEL_MODS: NamedModifier[] = [
@@ -1285,7 +1284,6 @@ export interface CreatureData {
     location: string
     locked: boolean
     species: string
-    class?: string
     npc: boolean
   }
   stats: Record<Stats, TrackableStat>
@@ -1326,7 +1324,6 @@ export interface CreatureDump {
     location?: string
     locked?: boolean
     species?: string
-    class?: string
     npc?: boolean
   }
   vitals?: Record<Vitals, undefined | number>

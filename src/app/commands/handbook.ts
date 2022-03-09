@@ -3,7 +3,8 @@ import { AbilitiesManager, capitalize, CONFIG, Directives, EffectManager, ItemMa
 import { ActiveEffect, DisplaySeverity, romanNumeral } from "../../game/ActiveEffects";
 import { Material, Schematic } from "../../game/Crafting";
 import Creature from "../../game/Creature";
-import { CreatureAbility, replaceLore } from "../../game/CreatureAbilities";
+import { CreatureAbility } from "../../game/CreatureAbilities";
+import { replaceLore } from "../../game/LoreReplacer";
 import { DamageMethod, DamageType, ShieldReaction, shieldReactionInfo } from "../../game/Damage";
 import { GameDirective } from "../../game/GameDirectives";
 import { AttackData, Item, ItemQualityColor, ItemQualityEmoji } from "../../game/Items";

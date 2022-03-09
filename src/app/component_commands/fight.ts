@@ -1,7 +1,7 @@
 import { Message, MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu, MessageSelectMenuOptions, MessageSelectOptionData } from "discord.js";
 import { AbilitiesManager, CONFIG, ItemManager, limitString, rotateLine, sleep } from "../..";
 import Creature, { diceRoll } from "../../game/Creature";
-import { replaceLore } from "../../game/CreatureAbilities";
+import { replaceLore } from "../../game/LoreReplacer";
 import { DamageCause, DamageLog, damageLogEmbed, DamageMethod, DamageSource, ShieldReaction } from "../../game/Damage";
 import { Combatant, CombatPosition, Fight } from "../../game/Fight";
 import { Item, ItemQualityEmoji } from "../../game/Items";

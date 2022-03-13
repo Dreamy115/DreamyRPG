@@ -619,6 +619,8 @@ export default class Creature {
       for (const s of group.sources) {
         log.total_damage_mitigated += s.value;
       }
+      for (const passive of this.passives)
+        passive.$.onDodge?.(this, log);
     } else {
       for (const source of group.sources) {
         switch (source.type) {
@@ -704,20 +706,21 @@ export default class Creature {
         }
         log.total_damage_taken += source.value;
       }
-    }
-    
-    for (const passive of this.passives) {
-      passive.$.afterDamageTaken?.(this, log);
-    }
-    if (group.attacker instanceof Creature) {
-      group.attacker.heal(Math.round(log.total_physical_damage * group.attacker.$.stats.vamp.value / 100), HealType.Health);
-      group.attacker.heal(Math.round(log.total_energy_damage * group.attacker.$.stats.siphon.value / 100), HealType.Shield);
 
-      for (const passive of group.attacker.passives) {
-        passive.$.afterDamageGiven?.(group.attacker, log);
+      for (const passive of this.passives) {
+        passive.$.afterDamageTaken?.(this, log);
+      }
+
+      if (group.attacker instanceof Creature) {
+        group.attacker.heal(Math.round(log.total_physical_damage * group.attacker.$.stats.vamp.value / 100), HealType.Health);
+        group.attacker.heal(Math.round(log.total_energy_damage * group.attacker.$.stats.siphon.value / 100), HealType.Shield);
+  
+        for (const passive of group.attacker.passives) {
+          passive.$.afterDamageGiven?.(group.attacker, log);
+        }
       }
     }
-
+    
     this.vitalsIntegrity();
 
     return log;
@@ -888,8 +891,14 @@ export default class Creature {
   }
 
   tick() {
+    for (const passive of this.passives)
+      passive.$.beforeTick?.(this);
+      
     this.tickEffects();
     this.tickVitals();
+      
+    for (const passive of this.passives)
+      passive.$.afterTick?.(this);
   }
 
   get canUseAttacks(): boolean {

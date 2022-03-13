@@ -224,6 +224,10 @@ export default new ComponentCommandHandler(
             await interaction.editReply({
               content: `Rolled: **${rolled}** *(**${creature.$.abilities.stacks + rolled}**)*\n **~BUSTED~**`
             })
+            
+            for (const passive of creature.passives)
+              passive.$.onBust?.(creature);
+
             creature.$.abilities.stacks = 0;
             const msg = await fight.announceTurn(db, Bot);
             msg.content = "**Busted an attack**";
@@ -329,7 +333,10 @@ export default new ComponentCommandHandler(
           const embeds: MessageEmbed[] = []; 
           for (const log of logs) {
             embeds.push(damageLogEmbed(log));
+            for (const passive of creature.passives)
+              passive.$.onAttack?.(creature, log);
           }
+
 
           creature.$.abilities.stacks = 0;
 
@@ -417,6 +424,9 @@ export default new ComponentCommandHandler(
               for (const log of uselog.damageLogs ?? []) {
                 damage_embeds.push(damageLogEmbed(log));
               }
+
+              for (const passive of creature.passives)
+                passive.$.onAbility?.(creature, ability, true);
 
               await creature.put(db);
               for (const target of targets) {
@@ -583,6 +593,9 @@ export default new ComponentCommandHandler(
               for (const log of uselog.damageLogs ?? []) {
                 damage_embeds.push(damageLogEmbed(log));
               }
+
+              for (const passive of creature.passives)
+                passive.$.onAbility?.(creature, ability, false);
 
               await creature.put(db);
               for (const target of targets) {

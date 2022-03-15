@@ -167,8 +167,8 @@ export interface AttackData {
 }
 
 export enum ItemQuality {
-  "Common",
-  "Uncommon",
+  "Poor",
+  "Standard",
   "Rare",
   "Enhanced",
   "Legendary",

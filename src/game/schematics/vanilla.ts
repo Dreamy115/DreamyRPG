@@ -7,7 +7,7 @@ export default [
     info: {
       name: "Makeshift Bandage",
       lore: "A schematic for you to craft a basic bandage",
-      quality: ItemQuality.Common
+      quality: ItemQuality.Poor
     },
     requirements: {
       enhancedCrafting: true,

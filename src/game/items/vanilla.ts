@@ -10,7 +10,7 @@ export default [
     info: {
       name: "Basic Shield",
       lore: "A basic, used shield primer. Will stop a ping-pong ball thrown in your face but don't expect too much.",
-      quality: ItemQuality.Common
+      quality: ItemQuality.Poor
     },
     type: "wearable",
     slot: "shield",
@@ -22,7 +22,7 @@ export default [
     info: {
       name: "Basic Mask",
       lore: "It's capable of filtering out bigger particles. That's what the point of the mask is.",
-      quality: ItemQuality.Common
+      quality: ItemQuality.Poor
     },
     type: "wearable",
     slot: "mask",
@@ -33,7 +33,7 @@ export default [
     info: {
       name: "Rag Jacket",
       lore: "Something to put over yourself to stop the wind.",
-      quality: ItemQuality.Common
+      quality: ItemQuality.Poor
     },
     type: "wearable",
     slot: "jacket",
@@ -45,7 +45,7 @@ export default [
     info: {
       name: "Scrap Vest",
       lore: "A bunch of scrap taped together for protection.. Eeeeh good enough?",
-      quality: ItemQuality.Common
+      quality: ItemQuality.Poor
     },
     type: "wearable",
     slot: "vest",
@@ -57,7 +57,7 @@ export default [
     info: {
       name: "Rag-Pack",
       lore: "Introducing the Rag-Pack, it holds things! -uh... That's everything? Where's the rest of the script? Is this thing still on?",
-      quality: ItemQuality.Common
+      quality: ItemQuality.Poor
     },
     type: "wearable",
     slot: "backpack",
@@ -69,7 +69,7 @@ export default [
     info: {
       name: "Used Bike Gloves",
       lore: "Something to put your pawsies into, not much.",
-      quality: ItemQuality.Common
+      quality: ItemQuality.Poor
     },
     type: "wearable",
     slot: "gloves",
@@ -83,7 +83,7 @@ export default [
     info: {
       name: "Kitchen Knife",
       lore: "You found this laying around! You can make use of it!",
-      quality: ItemQuality.Common
+      quality: ItemQuality.Poor
     },
     category: WeaponCategory.knife,
     base_damage: 2,
@@ -145,7 +145,7 @@ export default [
     info: {
       name: "P258",
       lore: "It's a pistol. Hope it still works.",
-      quality: ItemQuality.Common
+      quality: ItemQuality.Poor
     },
     category: WeaponCategory.pistol,
     base_damage: 2,
@@ -207,7 +207,7 @@ export default [
     info: {
       name: "Makeshift Bandage",
       lore: "A bandage to stop **Bleeding** and heal {0} Injuries",
-      quality: ItemQuality.Common,
+      quality: ItemQuality.Poor,
       replacers: [
         {
           stat: "tech",
@@ -244,7 +244,7 @@ export default [
     info: {
       name: "Makeshift Bandage",
       lore: "A bandage to stop **Bleeding** and heal {0} Injuries",
-      quality: ItemQuality.Uncommon,
+      quality: ItemQuality.Standard,
       replacers: [
         {
           stat: "tech",

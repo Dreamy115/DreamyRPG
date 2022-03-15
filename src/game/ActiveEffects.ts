@@ -38,7 +38,7 @@ export class ActiveEffect {
       replacers: EffectLoreReplacer[]
     }
     display_severity?: DisplaySeverity
-    passives?: (PassiveEffect | string)[]
+    passives?: Set<PassiveEffect | string>
     consecutive_limit: number
     onApply?: (creature: Creature, {ticks, severity}: AppliedActiveEffect) => void
     onTick?: (creature: Creature, {ticks, severity}: AppliedActiveEffect) => void

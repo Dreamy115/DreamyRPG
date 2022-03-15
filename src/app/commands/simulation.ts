@@ -48,11 +48,13 @@ export default new ApplicationCommandHandler({
     if (sim_interval !== null)
       clearInterval(sim_interval);
 
+    SETTINGS.$ = Object.assign(SETTINGS.$, {simspeed: 0});
+
     interaction.reply({
       content: "Simulation stopped",
       ephemeral: true
     })
-    return;6
+    return;
   }
   if (time < 10) {
     interaction.reply({

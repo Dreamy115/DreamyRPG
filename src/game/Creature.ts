@@ -516,6 +516,13 @@ export default class Creature {
       globalOrLocalPusherSet(passives, (item.$ as Exclude<typeof item.$, GenericItemData | ConsumableItemData>).passives ?? new Set(), PassivesManager);
     }
 
+    for (const a of this.active_effects) {
+      const effect = EffectManager.map.get(a.id);
+      if (!effect) continue;
+
+      globalOrLocalPusherSet(passives, effect.$.passives ?? new Set(), PassivesManager);
+    }
+
     const uniques = new Set<string>();
     for (const passive of passives) {
       for (const u of passive.$.unique ?? []) {

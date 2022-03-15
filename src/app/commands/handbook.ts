@@ -412,7 +412,6 @@ export default new ApplicationCommandHandler(
               ]);
           } else if (item instanceof CreatureSpecies) {
             embed.description += "\n" + (item.$.playable ? "**✅ Playable**" : "**❎ Unplayable**");
-            console.log(item.$.passives)
             embed.addFields([
               { 
                 name: "Passives",

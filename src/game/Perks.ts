@@ -33,6 +33,7 @@ export class CreaturePerk {
       name: string
       lore: string
     }
+    hidden?: boolean
     compatibleSpecies?: Set<string>
   }
 

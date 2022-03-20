@@ -40,6 +40,7 @@ export class ActiveEffect {
     display_severity?: DisplaySeverity
     passives?: Set<PassiveEffect | string>
     consecutive_limit: number
+    stacking?: EffectStacking
     onApply?: (creature: Creature, {ticks, severity}: AppliedActiveEffect) => void
     onTick?: (creature: Creature, {ticks, severity}: AppliedActiveEffect) => void
     onDelete?: (creature: Creature, {ticks, severity}: AppliedActiveEffect) => void
@@ -60,6 +61,9 @@ export interface AppliedActiveEffect {
 
 export enum DisplaySeverity {
   "NONE", "ROMAN", "ARABIC"
+}
+export enum EffectStacking {
+  "None", "Duration", "Severity", "Both"
 }
 
 export interface EffectLoreReplacer {

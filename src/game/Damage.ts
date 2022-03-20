@@ -2,6 +2,7 @@ import { MessageEmbed } from "discord.js";
 import Creature from "./Creature";
 
 export enum DamageType {
+  "Stress" = -1,
   "True", "Physical", "Energy"
 }
 export enum DamageMethod {
@@ -44,6 +45,9 @@ export interface DamageLog {
 
   total_damage_mitigated: number
   total_damage_taken: number
+
+  total_stress_applied: number
+  total_stress_mitigated: number
 }
 
 export enum DamageCause {
@@ -99,7 +103,8 @@ export function damageLogEmbed(log: DamageLog) {
     "Total",
     `**${log.total_damage_taken}** Damage Taken\n**${log.total_damage_mitigated}** Damage Mitigated\n\n` +
     `**${log.total_shield_damage}** Shield Damage\n**${log.total_health_damage}** Health Damage\n**${log.total_injuries}** Injuries\n\n` +
-    `**${log.total_physical_damage}**/**${log.total_energy_damage}**/**${log.total_true_damage}** Physical/Energy/True`
+    `**${log.total_physical_damage}**/**${log.total_energy_damage}**/**${log.total_true_damage}** Physical/Energy/True\n` +
+    `Stress **${log.total_stress_applied}** Applied | **${log.total_stress_mitigated}** Mitigated`
   )
  
   return embed;
@@ -113,7 +118,7 @@ function damageGroupString(group: DamageGroup) {
   `${function() {
     var str = "";
     for (const source of group.sources) {
-      var reaction = shieldReactionInfo(source.shieldReaction);
+      var reaction = source.type !== DamageType.Stress ? shieldReactionInfo(source.shieldReaction) : null;
       str += `[**${source.value} ${DamageType[source.type]}**${reaction ? ` **${reaction}**` : ""}]\n`
     }
 

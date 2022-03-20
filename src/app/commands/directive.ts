@@ -67,12 +67,12 @@ export default new ApplicationCommandHandler({
         `${gd.$.info.lore}\n\n` + 
         (
           gd.$.passives
-          ? `- **Passives**'\n${passivesDescriptor(Array.from(gd.$.passives ?? [])) || "None"}\n`
+          ? `- **Passives**\n${passivesDescriptor(Array.from(gd.$.passives ?? [])) || "None"}\n`
           : ""  
         ) +
         (
           gd.$.perks
-          ? `- **Perks**'\n${perksDescriptor(Array.from(gd.$.perks ?? [])) || "None"}\n`
+          ? `- **Perks**\n${perksDescriptor(Array.from(gd.$.perks ?? [])) || "None"}\n`
           : ""  
         ) +
         (

@@ -15,30 +15,33 @@ export default new ComponentCommandHandler(
     ]);
 
     const page = args.shift();
+    
+    const guild = await Bot.guilds.fetch(CONFIG.guild?.id ?? "");
+    await guild.roles.fetch();
 
-    if (creature.$.info.npc) {
-      const guild = await Bot.guilds.fetch(CONFIG.guild?.id ?? "");
-      await guild.roles.fetch();
-  
-      const member = await guild.members.fetch(interaction.user.id).catch(() => null);
-      
-      if (!member || !member.roles.cache.has(CONFIG.guild?.gm_role ?? "")) { 
-        if ((await Creature.fetch(interaction.user.id, db, true)).location?.$.id !== creature.location?.$.id) {
-          interaction.editReply({
-            content: "You must be in the same location as the NPC to view their info"
-          });
-          return;
-        } else if (
-          page === "location" || page === "schematics" ||
-          page === "backpack" || page === "debug"
-        ) {
-          interaction.editReply({
-            content: "Only GMs can access this kind of information"
-          });
-          return;
-        }
-      }
+    const member = await guild.members.fetch(interaction.user.id).catch(() => null);
+    
+    let IS_GM = true;
+    if (!member || !member.roles.cache.has(CONFIG.guild?.gm_role ?? "")) { 
+      IS_GM = false;
     }
+
+    if (creature.$.info.npc && !IS_GM) {
+      if ((await Creature.fetch(interaction.user.id, db, true)).location?.$.id !== creature.location?.$.id) {
+        interaction.editReply({
+          content: "You must be in the same location as the NPC to view their info"
+        });
+        return;
+      } else if (
+        page === "location" || page === "schematics" ||
+        page === "backpack" || page === "debug"
+      ) {
+        interaction.editReply({
+          content: "Only GMs can access this kind of information"
+        });
+        return;
+      }
+    }  
 
     interaction.deleteReply();
 
@@ -82,13 +85,20 @@ export default new ComponentCommandHandler(
     }
 
     const payload = {
-      embeds: [info.embed],
+      embeds: [info.embeds[0]],
       components
     }
 
     msg.edit(payload).catch(() => {
       msg.delete();
       channel.send(payload);
-    })
+    });
+
+    if (IS_GM && info.embeds[1].fields.length > 0 || info.embeds[1].description) 
+      interaction.followUp({
+        ephemeral: true,
+        content: "PSST! Gm Only info found!",
+        embeds: [info.embeds[1]]
+      })
   }
 )

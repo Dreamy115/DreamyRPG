@@ -5,6 +5,11 @@ import YAML from "yaml";
 import fs from "fs";
 import path from "path";
 
+var clamp = (amt: number, min: number, max: number) => {
+  return Math.min(max, Math.max(min, amt));
+}
+export {clamp};
+
 import ApplicationCommandManager from "./app/commands.js";
 import ComponentCommandManager from "./app/component_commands.js";
 import CreatureSpeciesManager from "./game/Species.js";
@@ -36,7 +41,6 @@ export const SchematicsManager = new CraftingManager();
 export const LootTables = new LootTableManager();
 
 import { setSim } from "./app/commands/simulation.js";
-import { ItemStatModule } from "./game/Modules.js";
 
 process.on("uncaughtException", (e) => {
   console.error(e);
@@ -72,6 +76,8 @@ if (!CONFIG.guild?.id) throw new Error("guild/id not defined in configuration fi
 if (!CONFIG.guild?.gm_role) throw new Error("guild/gm_role not defined in configuration file");
 //
 
+export const Directives = new DirectiveManager();
+
 export const SETTINGS = new class Settings {
   private data: {
     simspeed?: number
@@ -92,7 +98,6 @@ export const SETTINGS = new class Settings {
     this.data = YAML.parse(read) ?? {};
   }
 }
-export const Directives = new DirectiveManager();
 //
 export const db = Mongoose.connect(CONFIG.database.uri).then((v) => {console.log(v.connection); return v});
 
@@ -303,7 +308,4 @@ export function invLerp(amt: number, min: number, max: number) {
 }
 export function lerp(amt: number, min: number, max: number) {
   return (1 - amt) * min + amt * max;
-}
-export function clamp(amt: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, amt));
 }

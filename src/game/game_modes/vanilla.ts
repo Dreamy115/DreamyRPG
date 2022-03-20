@@ -4,6 +4,52 @@ import { ModifierType } from "../Stats";
 
 export default [
   new GameDirective({
+    id: "vanilla",
+    info: {
+      name: "Vanilla Logic",
+      lore: "This Directive adds default logic such as Death at max injuries. Do not disable unless you know what you're doing!"
+    },
+    passives: new Set([
+      new PassiveEffect({
+        info: {
+          name: "Vanilla Logic",
+          lore: "Bundled DreamyRPG vanilla logic is acting upon this Creature"
+        },
+        hidden: true,
+        beforeTick: (creature) => {
+          if (creature.$.vitals.heat <= 0) {
+            creature.applyActiveEffect({
+              id: "hypothermia",
+              ticks: 1,
+              severity: 1
+            }, true)
+          }
+      
+          if (creature.$.stats.filtering.value < (creature.location?.$.rads ?? 0)) {
+            creature.applyActiveEffect({
+              id: "filter_fail",
+              ticks: 1,
+              severity: (creature.location?.$.rads ?? 0) - creature.$.stats.filtering.value
+            }, true)
+          }
+
+          if (creature.alive) {
+            if (creature.$.vitals.injuries >= creature.$.stats.health.value) {
+              creature.applyActiveEffect({
+                id: "death",
+                severity: 1,
+                ticks: -1
+              }, true)
+            }
+          } else {
+            creature.$.vitals.health = 0;
+            creature.$.vitals.stress = 0;
+          }
+        }
+      })
+    ])
+  }),
+  new GameDirective({
     id: "decisive",
     info: {
       name: "Decisive",

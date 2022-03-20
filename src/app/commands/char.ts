@@ -246,11 +246,20 @@ export default new ApplicationCommandHandler(
   async function (interaction, Bot, db) {
     if (!interaction.isCommand()) return;
 
+    const guild = await Bot.guilds.fetch(CONFIG.guild?.id ?? "");
+
+    await guild.roles.fetch();
+    
+    const member = await guild.members.fetch(interaction.user.id).catch(() => null);
+    let IS_GM = true;
+    if (!member || !member.roles.cache.has(CONFIG.guild?.gm_role ?? "")) {
+      IS_GM = false;
+    } 
+
     switch (interaction.options.getSubcommand(true)) {
       case "scrap_item": {
-        const [creature,guild] = await Promise.all([
+        const [creature] = await Promise.all([
           Creature.fetch(interaction.user.id, db).catch(() => null),
-          Bot.guilds.fetch(CONFIG.guild?.id ?? ""),
           interaction.deferReply({ephemeral: true})
         ]);
 
@@ -260,14 +269,6 @@ export default new ApplicationCommandHandler(
           })
           return;
         }
-
-        await guild.roles.fetch();
-    
-        const member = await guild.members.fetch(interaction.user.id).catch(() => null);
-        let IS_GM = true;
-        if (!member || !member.roles.cache.has(CONFIG.guild?.gm_role ?? "")) {
-          IS_GM = false;
-        } 
 
         await scrapMenu(interaction, creature, db, IS_GM)
         return
@@ -621,7 +622,7 @@ export default new ApplicationCommandHandler(
           })
       } break;
       case "info": {
-        await interaction.deferReply({});
+        await interaction.deferReply({ephemeral: false});
 
         const char = await Creature.fetch(interaction.options.getString("id", false)?.split(" ")[0] ?? interaction.options.getUser("user")?.id ?? interaction.user.id, db, false).catch(() => null);
         if (!char) {
@@ -679,12 +680,18 @@ export default new ApplicationCommandHandler(
           ])
         )
 
-        interaction.followUp({
+        await interaction.followUp({
           ephemeral: false,
-          embeds: [info.embed],
+          embeds: [info.embeds[0]],
           components,
           files: info.attachments
-        })
+        });
+        if (IS_GM && info.embeds[1].fields.length > 0 || info.embeds[1].description) 
+          interaction.followUp({
+            ephemeral: true,
+            content: "PSST! Gm Only info found!",
+            embeds: [info.embeds[1]]
+          })
       } break;
       case "editmenu": {
         await interaction.deferReply({});
@@ -707,8 +714,9 @@ export default new ApplicationCommandHandler(
 )
 
 const PER_INDEX_PAGE = 6;
-export async function infoEmbed(creature: Creature, Bot: Client, page: string, index = 0): Promise<{embed: MessageEmbed, attachments?: MessageAttachment[], scrollable: boolean}> {
+export async function infoEmbed(creature: Creature, Bot: Client, page: string, index = 0): Promise<{embeds: MessageEmbed[], attachments?: MessageAttachment[], scrollable: boolean}> {
   const embed = new MessageEmbed();
+  const gm_embed = new MessageEmbed();
 
   const owner = await Bot.users.fetch(creature.$._id).catch(() => null);
 
@@ -781,13 +789,15 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
           ) +
           ` **Health** **${creature.$.vitals.health}**/**${creature.$.stats.health.value - creature.$.vitals.injuries}** ` + 
           `(**${(100 * creature.$.vitals.health / creature.$.stats.health.value).toFixed(0)}%**)\n` +
-          make_bar(100 * creature.$.vitals.mana / creature.$.stats.mana.value, Creature.BAR_STYLES.Mana, BAR_LENGTH / 3).str +
+          make_bar(100 * creature.$.vitals.mana / creature.$.stats.mana.value, Creature.BAR_STYLES.Mana, creature.$.stats.mana.value / creature.$.stats.attack_cost.value).str +
           ` **Mana** ${textStat(creature.$.vitals.mana, creature.$.stats.mana.value)} ` +
           `**${creature.$.stats.mana_regen.value}**/t\n\n` +
           make_bar(100 * creature.$.vitals.heat / creature.$.stats.heat_capacity.value, Creature.BAR_STYLES.Heat, BAR_LENGTH / 3).str +
           ` **Heat** ${textStat(creature.$.vitals.heat, creature.$.stats.heat_capacity.value)} ` +
           `**${creature.deltaHeat}**/t${creature.deltaHeat < 0 ? " ⚠️" : ""}\n` +
-          `**${creature.$.stats.filtering.value}** Filtering >> **${(creature.location?.$.rads ?? 0)}** Area${(creature.location?.$.rads ?? 0) > creature.$.stats.filtering.value ? " ⚠️" : ""}`
+          `**${creature.$.stats.filtering.value}** Filtering >> **${(creature.location?.$.rads ?? 0)}** Area${(creature.location?.$.rads ?? 0) > creature.$.stats.filtering.value ? " ⚠️" : ""}\n` +
+          "\n" +
+          `**Stress** ${textStat(creature.$.vitals.stress, Creature.STRESS_CAPACITY)}`
         },
         {
           name: "Offense",
@@ -813,7 +823,9 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
           "\n" +
           `**${creature.$.stats.tenacity.value}** Tenacity *(Taking **${(100 * reductionMultiplier(creature.$.stats.tenacity.value) * DAMAGE_TO_INJURY_RATIO).toFixed(1)}%** health damage as **Injuries**)*` +
           "\n" +
-          `**${creature.$.stats.min_comfortable_temperature.value}**°C (**${(cToF(creature.$.stats.min_comfortable_temperature.value)).toFixed(1)}**°F) Min Comfortable Temperature *(**${creature.deltaHeat}**°C Delta)*`
+          `**${creature.$.stats.min_comfortable_temperature.value}**°C (**${(cToF(creature.$.stats.min_comfortable_temperature.value)).toFixed(1)}**°F) Min Comfortable Temperature *(**${creature.deltaHeat}**°C Delta)*` +
+          "\n\n" +
+          `**${creature.$.stats.stress_resistance.value}** Stress Resistance *(**${(100 * (1 - reductionMultiplier(creature.$.stats.stress_resistance.value))).toFixed(1)}%** Reduced Stress Damage)*`
         }
       ])
     } break;
@@ -826,7 +838,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
       for (var i = index * PER_INDEX_PAGE; i < passives.length && i < PER_INDEX_PAGE * (index + 1); i++) {
         const passive = passives[i];
 
-        embed.addField(
+        (passive.$.hidden ? gm_embed : embed).addField(
           `<${i+1}> ${passive.$.info.name}`,
           function() {
             var str = `*${replaceLore(passive.$.info.lore, passive.$.info.replacers ?? [], creature)}*`;
@@ -845,8 +857,8 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
             }
             return str;
           }()
-        )  
-      }    
+        )
+      }
     } break;
     case "items": {   
       const weapons = new Array<InventoryItem | null>().concat(creature.$.items.primary_weapon, ...creature.$.items.weapons); 
@@ -1136,9 +1148,11 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
 
       const perks = creature.perks;
       total = perks.length;
+
       for (var i = index * PER_INDEX_PAGE; i < perks.length && i < PER_INDEX_PAGE * (index + 1); i++) {
-        const perk = perks[i]
-        embed.addField(
+        const perk = perks[i];
+
+        (perk.$.hidden ? gm_embed : embed).addField(
           `<${i+1}> ${perk.$.id ? `\`${perk.$.id}\`` : ""} **${perk.$.info.name}**`,
           `${perk.$.info.lore}`
         )
@@ -1149,6 +1163,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
 
       const skills = creature.skills;
       total = skills.length;
+
       for (var i = index * PER_INDEX_PAGE; i < skills.length && i < PER_INDEX_PAGE * (index + 1); i++) {
         const skill = skills[i];
 
@@ -1218,11 +1233,11 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
           }()}`
         }
 
-        embed.addField(
+        (skill.$.hidden ? gm_embed : embed).addField(
           `<${i+1}> \`${skill.$.id}\` **${skill.$.info.name}**`,
           `*${skill.$.info.lore}*\n\n${str}` 
         )
-      }
+      }   
     } break;
     case "schematics": {
       scrollable = true;
@@ -1297,7 +1312,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
     : "")
   )
 
-  return {embed, scrollable, attachments};
+  return {embeds: [embed, gm_embed], scrollable, attachments};
 }
 
 const BAR_LENGTH = 20;

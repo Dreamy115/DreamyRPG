@@ -35,6 +35,7 @@ export class CreatureSkill {
       name: string
       lore: string
     }
+    hidden?: boolean
     compatibleSpecies?: Set<string>
     passives?: Set<(string | PassiveEffect)>
     abilities?: Set<string>

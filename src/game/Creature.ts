@@ -2,8 +2,8 @@ import { Client, MessageEmbed } from "discord.js";
 import mongoose from "mongoose";
 import NodeCache from "node-cache";
 import { bar_styles } from "../app/Bars.js";
-import { AbilitiesManager, capitalize, CONFIG, db, EffectManager, ItemManager, LocationManager, PassivesManager, PerkManager, rotateLine, SchematicsManager, shuffle, SkillManager, SpeciesManager } from "../index.js";
-import { AppliedActiveEffect } from "./ActiveEffects.js";
+import { AbilitiesManager, capitalize, clamp, CONFIG, db, EffectManager, ItemManager, LocationManager, PassivesManager, PerkManager, rotateLine, SchematicsManager, shuffle, SkillManager, SpeciesManager } from "../index.js";
+import { AppliedActiveEffect, EffectStacking } from "./ActiveEffects.js";
 import { CraftingMaterials, Material } from "./Crafting.js";
 import { CreatureAbility } from "./CreatureAbilities.js";
 import { DamageCause, DamageGroup, DamageLog, DamageMethod as DamageMethod, DamageType, DAMAGE_TO_INJURY_RATIO, reductionMultiplier, ShieldReaction } from "./Damage.js";
@@ -62,7 +62,8 @@ export default class Creature {
         initiative: new TrackableStat(10),
         min_comfortable_temperature: new TrackableStat(0),
         heat_capacity: new TrackableStat(100),
-        filtering: new TrackableStat(0)
+        filtering: new TrackableStat(0),
+        stress_resistance: new TrackableStat(0)
       },
       attributes: {
         STR: new TrackableStat(data.attributes?.STR ?? 0),
@@ -71,7 +72,8 @@ export default class Creature {
         PER: new TrackableStat(data.attributes?.PER ?? 0),
         INT: new TrackableStat(data.attributes?.INT ?? 0),
         DEX: new TrackableStat(data.attributes?.DEX ?? 0),
-        CHA: new TrackableStat( data.attributes?.CHA ?? 0)
+        CHA: new TrackableStat(data.attributes?.CHA ?? 0),
+        MND: new TrackableStat(data.attributes?.MND ?? 0)
       },
       experience: {
         level: Math.max(data.experience?.level ?? 1, 1)
@@ -81,7 +83,8 @@ export default class Creature {
         injuries: (data.vitals?.injuries ?? 0),
         mana: (data.vitals?.mana ?? 0),
         shield: (data.vitals?.shield ?? 0),
-        heat: (data.vitals?.heat ?? 1)
+        heat: (data.vitals?.heat ?? 1),
+        stress: (data.vitals?.stress ?? 0)
       },
       items: {
         slotted: {} as Record<ItemSlot, undefined>,
@@ -229,6 +232,7 @@ export default class Creature {
     this.$.vitals.shield *= this.$.stats.shield.value;
     this.$.vitals.mana *= this.$.stats.mana.value;
     this.$.vitals.heat *= this.$.stats.heat_capacity.value;
+    this.$.vitals.stress *= Creature.STRESS_CAPACITY;
 
     this.vitalsIntegrity();
 
@@ -357,11 +361,12 @@ export default class Creature {
   }
 
   vitalsIntegrity() {
-    this.$.vitals.injuries = Math.round(Math.min(Math.max(0, this.$.vitals.injuries), this.$.stats.health.value));
-    this.$.vitals.health = Math.round(Math.min(Math.max(0, this.$.vitals.health), this.$.stats.health.value - this.$.vitals.injuries));
-    this.$.vitals.mana = Math.round(Math.min(Math.max(0, this.$.vitals.mana), this.$.stats.mana.value));
-    this.$.vitals.shield = Math.round(Math.min(Math.max(0, this.$.vitals.shield), this.$.stats.shield.value));
-    this.$.vitals.heat = Math.round(Math.min(Math.max(0, this.$.vitals.heat), this.$.stats.heat_capacity.value));
+    this.$.vitals.injuries = Math.round(clamp(this.$.vitals.injuries, 0, this.$.stats.health.value));
+    this.$.vitals.health = Math.round(clamp(this.$.vitals.health, 0, this.$.stats.health.value - this.$.vitals.injuries));
+    this.$.vitals.mana = Math.round(clamp(this.$.vitals.mana, 0, this.$.stats.mana.value));
+    this.$.vitals.shield = Math.round(clamp(this.$.vitals.shield, 0, this.$.stats.shield.value));
+    this.$.vitals.heat = Math.round(clamp(this.$.vitals.heat, 0, this.$.stats.heat_capacity.value));
+    this.$.vitals.stress = Math.round(clamp(this.$.vitals.stress, 0, Creature.STRESS_CAPACITY));
 
     if (isNaN(this.$.vitals.shield))
       this.$.vitals.shield = 0;
@@ -375,17 +380,8 @@ export default class Creature {
     if (isNaN(this.$.vitals.mana))
       this.$.vitals.mana = 0;
 
-    if (this.alive) {
-      if (this.$.vitals.injuries >= this.$.stats.health.value) {
-        this.applyActiveEffect({
-          id: "death",
-          severity: 1,
-          ticks: -1
-        }, true)
-      }
-    } else {
-      this.$.vitals.health = 0;
-    }
+    if (isNaN(this.$.vitals.stress))
+      this.$.vitals.stress = 0;
   }
 
   checkItemConflicts() {
@@ -598,7 +594,9 @@ export default class Creature {
       total_injuries: 0,
       total_physical_damage: 0,
       total_shield_damage: 0,
-      total_true_damage: 0
+      total_true_damage: 0,
+      total_stress_applied: 0,
+      total_stress_mitigated: 0
     }
 
     group.victim = original.victim;
@@ -620,98 +618,103 @@ export default class Creature {
       group.chance -= group.method === DamageMethod.Direct ? 0 : group.method === DamageMethod.Melee ? this.$.stats.parry.value : this.$.stats.deflect.value;
     }
 
-
     log.successful = (Math.floor(Math.random() * 100) + 1) <= group.chance;
     if (!log.successful) {
       for (const s of group.sources) {
-        log.total_damage_mitigated += s.value;
+        if (s.type !== DamageType.Stress)
+          log.total_damage_mitigated += s.value;
       }
       for (const passive of this.passives)
         passive.$.onDodge?.(this, log);
     } else {
       for (const source of group.sources) {
-        switch (source.type) {
-          case DamageType.Physical: {
-            log.total_damage_mitigated += Math.round(source.value * (1 - reductionMultiplier(this.$.stats.armor.value - (group.penetration?.lethality ?? 0))));
-            source.value *= reductionMultiplier(this.$.stats.armor.value - (group.penetration?.lethality ?? 0));
-          } break;
-          case DamageType.Energy: {
-            log.total_damage_mitigated += Math.round(source.value * (1 - reductionMultiplier(this.$.stats.dissipate.value - (group.penetration?.passthrough ?? 0))));
-            source.value *= reductionMultiplier(this.$.stats.dissipate.value - (group.penetration?.passthrough ?? 0));
-          } break;
-        }
-        source.value = Math.round(source.value);
+        if (source.type === DamageType.Stress) {
+          source.value *= Math.round(reductionMultiplier(this.$.stats.stress_resistance.value));
 
-        switch (source.shieldReaction) {
-          case ShieldReaction.Normal:
-          default: {
-            log.total_shield_damage += source.value;
-            this.$.vitals.shield -= source.value;
+          log.total_stress_applied += source.value;
+          this.$.vitals.stress += source.value;
+        } else {
+          switch (source.type) {
+            case DamageType.Physical: {
+              log.total_damage_mitigated += Math.round(source.value * (1 - reductionMultiplier(this.$.stats.armor.value - (group.penetration?.lethality ?? 0))));
+              source.value *= reductionMultiplier(this.$.stats.armor.value - (group.penetration?.lethality ?? 0));
+            } break;
+            case DamageType.Energy: {
+              log.total_damage_mitigated += Math.round(source.value * (1 - reductionMultiplier(this.$.stats.dissipate.value - (group.penetration?.passthrough ?? 0))));
+              source.value *= reductionMultiplier(this.$.stats.dissipate.value - (group.penetration?.passthrough ?? 0));
+            } break;
+          }
+          source.value = Math.round(source.value);
 
-            log.total_shield_damage += Math.min(0, this.$.vitals.shield);
-            log.total_health_damage -= Math.min(0, this.$.vitals.shield);
-            this.$.vitals.health += Math.min(0, this.$.vitals.shield);
+          switch (source.shieldReaction) {
+            case ShieldReaction.Normal:
+            default: {
+              log.total_shield_damage += source.value;
+              this.$.vitals.shield -= source.value;
 
-            const injuries = Math.round(reductionMultiplier(this.$.stats.tenacity.value - (group.penetration?.cutting ?? 0)) * DAMAGE_TO_INJURY_RATIO * Math.min(0, this.$.vitals.shield));;
-            this.$.vitals.injuries -= injuries;
-            log.total_injuries -= injuries;
+              log.total_shield_damage += Math.min(0, this.$.vitals.shield);
+              log.total_health_damage -= Math.min(0, this.$.vitals.shield);
+              this.$.vitals.health += Math.min(0, this.$.vitals.shield);
 
-            this.$.vitals.injuries -= Math.min(0, this.$.vitals.health);
-            log.total_injuries -= Math.min(0, this.$.vitals.health);
+              const injuries = Math.round(reductionMultiplier(this.$.stats.tenacity.value - (group.penetration?.cutting ?? 0)) * DAMAGE_TO_INJURY_RATIO * Math.min(0, this.$.vitals.shield));;
+              this.$.vitals.injuries -= injuries;
+              log.total_injuries -= injuries;
 
-            this.$.vitals.shield = Math.max(this.$.vitals.shield, 0);
+              this.$.vitals.injuries -= Math.min(0, this.$.vitals.health);
+              log.total_injuries -= Math.min(0, this.$.vitals.health);
 
-            this.$.vitals.health = Math.max(0, this.$.vitals.health);
-          } break;
-          case ShieldReaction.Only: {
-            log.total_shield_damage += source.value;
-            this.$.vitals.shield -= source.value;
+              this.$.vitals.shield = Math.max(this.$.vitals.shield, 0);
 
-            log.total_shield_damage += Math.min(0, this.$.vitals.shield);
+              this.$.vitals.health = Math.max(0, this.$.vitals.health);
+            } break;
+            case ShieldReaction.Only: {
+              log.total_shield_damage += source.value;
+              this.$.vitals.shield -= source.value;
 
-            log.total_damage_mitigated -= Math.min(0, this.$.vitals.shield);
-            switch (source.type) {
-              case DamageType.True:
-              default: {
-                log.total_true_damage += Math.min(0, this.$.vitals.shield);
-              } break;
-              case DamageType.Physical: {
-                log.total_physical_damage += Math.min(0, this.$.vitals.shield);
-              } break;
-              case DamageType.Energy: {
-                log.total_energy_damage += Math.min(0, this.$.vitals.shield);
+              log.total_shield_damage += Math.min(0, this.$.vitals.shield);
+
+              log.total_damage_mitigated -= Math.min(0, this.$.vitals.shield);
+              switch (source.type) {
+                case DamageType.True:
+                default: {
+                  log.total_true_damage += Math.min(0, this.$.vitals.shield);
+                } break;
+                case DamageType.Physical: {
+                  log.total_physical_damage += Math.min(0, this.$.vitals.shield);
+                } break;
+                case DamageType.Energy: {
+                  log.total_energy_damage += Math.min(0, this.$.vitals.shield);
+                }
               }
-            }
 
-            this.$.vitals.shield = Math.max(this.$.vitals.shield, 0);
-          } break;
-          case ShieldReaction.Ignore: {
-            log.total_health_damage += source.value;
-            this.$.vitals.health -= source.value;
+              this.$.vitals.shield = Math.max(this.$.vitals.shield, 0);
+            } break;
+            case ShieldReaction.Ignore: {
+              log.total_health_damage += source.value;
+              this.$.vitals.health -= source.value;
 
-            log.total_injuries += Math.round(source.value * DAMAGE_TO_INJURY_RATIO * reductionMultiplier(this.$.stats.tenacity.value - (group.penetration?.cutting ?? 0)));
-            this.$.vitals.injuries -= Math.round(source.value * DAMAGE_TO_INJURY_RATIO * reductionMultiplier(this.$.stats.tenacity.value - (group.penetration?.cutting ?? 0)));
+              log.total_injuries += Math.round(source.value * DAMAGE_TO_INJURY_RATIO * reductionMultiplier(this.$.stats.tenacity.value - (group.penetration?.cutting ?? 0)));
+              this.$.vitals.injuries -= Math.round(source.value * DAMAGE_TO_INJURY_RATIO * reductionMultiplier(this.$.stats.tenacity.value - (group.penetration?.cutting ?? 0)));
 
-            this.$.vitals.injuries -= Math.min(0, this.$.vitals.health);
-            log.total_injuries -= Math.min(0, this.$.vitals.health);
+              this.$.vitals.injuries -= Math.min(0, this.$.vitals.health);
+              log.total_injuries -= Math.min(0, this.$.vitals.health);
 
-            this.$.vitals.health = Math.max(0, this.$.vitals.health);
-          } break;
-        }
-
-        switch (source.type) {
-          case DamageType.True:
-          default: {
-            log.total_true_damage += source.value;
-          } break;
-          case DamageType.Physical: {
-            log.total_physical_damage += source.value;
-          } break;
-          case DamageType.Energy: {
-            log.total_energy_damage += source.value;
+              this.$.vitals.health = Math.max(0, this.$.vitals.health);
+            } break;
+          }
+          
+          switch (source.type) {
+            case DamageType.True: {
+              log.total_true_damage += source.value;
+            } break;
+            case DamageType.Physical: {
+              log.total_physical_damage += source.value;
+            } break;
+            case DamageType.Energy: {
+              log.total_energy_damage += source.value;
+            } break;
           }
         }
-        log.total_damage_taken += source.value;
       }
 
       for (const passive of this.passives) {
@@ -751,6 +754,9 @@ export default class Creature {
       case HealType.Injuries: {
         this.$.vitals.injuries -= amount;
       } break;
+      case HealType.Stress: {
+        this.$.vitals.stress -= amount;
+      } break;
     }
 
     this.vitalsIntegrity();
@@ -780,22 +786,6 @@ export default class Creature {
 
     const effects = [...global_effects, ...this.$.active_effects, ...location_effects]
 
-    if (this.$.vitals.heat <= 0) {
-      effects.push({
-        id: "hypothermia",
-        ticks: 1,
-        severity: 1
-      })
-    }
-
-    if (this.$.stats.filtering.value < (this.location?.$.rads ?? 0)) {
-      effects.push({
-        id: "filter_fail",
-        ticks: 1,
-        severity: (this.location?.$.rads ?? 0) - this.$.stats.filtering.value
-      })
-    }
-
     return effects;
   }
 
@@ -810,9 +800,29 @@ export default class Creature {
       }
 
     if (effectData.$.consecutive_limit > 0 && count >= effectData.$.consecutive_limit) {
-      if (override_existing) {
-        this.$.active_effects[this.$.active_effects.findIndex((v) => v.id === effect.id)] = effect;
-      } else return false;
+      const index = this.$.active_effects.findIndex((v) => v.id === effect.id);
+      const existing = this.$.active_effects[index];
+
+      if ((effectData.$.stacking ?? EffectStacking.None) !== EffectStacking.None) {
+        switch (effectData.$.stacking) {
+          case EffectStacking.Duration: {
+            existing.ticks += Math.max(0, effect.ticks);
+          } break;
+          case EffectStacking.Severity: {
+            existing.severity += effect.severity;
+            existing.ticks = Math.max(effect.ticks);
+          } break;
+          case EffectStacking.Both: {
+            existing.ticks += Math.max(0, effect.ticks);
+            existing.severity += effect.severity;
+            existing.ticks = Math.max(effect.ticks);
+          } break;
+        }
+      } else {
+        if (override_existing) {
+          this.$.active_effects[index] = effect;
+        } else return false;
+      }
     } else {
       this.$.active_effects.push(effect);
     }
@@ -1032,7 +1042,8 @@ export default class Creature {
         injuries: this.$.vitals.injuries / this.$.stats.health.value,
         mana: this.$.vitals.mana / this.$.stats.mana.value,
         shield: this.$.vitals.shield / this.$.stats.shield.value,
-        heat: this.$.vitals.heat / this.$.stats.heat_capacity.value
+        heat: this.$.vitals.heat / this.$.stats.heat_capacity.value,
+        stress: this.$.vitals.stress / Creature.STRESS_CAPACITY
       },
       attributes: {} as Record<Attributes, undefined>,
       experience: this.$.experience,
@@ -1111,6 +1122,8 @@ export default class Creature {
   get combat_switch_cost() {
     return Math.max(1, Math.round((this.$.stats.attack_cost.value ?? 0) * Creature.COMBAT_WEAPON_SWITCH_MULT))
   }
+
+  static readonly STRESS_CAPACITY = 100;
   
   static readonly PROFICIENCY_ACCURACY_SCALE = 0.5
   static readonly PROFICIENCY_DAMAGE_SCALE = 1;
@@ -1161,6 +1174,11 @@ export default class Creature {
       type: ModifierType.ADD,
       value: 0.5,
       stat: "mana"
+    },
+    {
+      type: ModifierType.ADD,
+      value: 1,
+      stat: "stress_resistance"
     }
   ]
   static readonly ATTRIBUTE_MODS: {[key: string]: NamedModifier[]} = {
@@ -1268,6 +1286,13 @@ export default class Creature {
     ],
     CHA: [
 
+    ],
+    MND: [
+      {
+        type: ModifierType.ADD_PERCENT,
+        value: 0.1,
+        stat: "stress_resistance"
+      }
     ]
   }
   static readonly ATTRIBUTE_DESCRIPTIONS = {
@@ -1277,7 +1302,8 @@ export default class Creature {
     PER: "Perception, all 6 senses. Know your enemy, and their weak points.",
     INT: "Intelligence, crafting, technological swiftness.",
     DEX: "Dexterity, agility, light as a feather.",
-    CHA: "Charisma, looks, and wits. Negotiation skills."
+    CHA: "Charisma, looks, and wits. Negotiation skills.",
+    MND: "Mind, mental conditioning, key to keeping your cool."
   }
   static readonly ATTRIBUTE_MAX = 8;
 
@@ -1368,7 +1394,7 @@ export interface CreatureDump {
 }
 
 export enum HealType {
-  "Health", "Shield", "Overheal", "Mana", "Injuries"
+  "Health", "Shield", "Overheal", "Mana", "Injuries", "Stress"
 }
 
 function globalOrLocalPusherArray<T>(array: T[], input: (T | string)[], manager: any) {
@@ -1398,11 +1424,12 @@ export function diceRoll(size = 6): number {
   return Math.floor(Math.random() * size) + 1;
 }
 
-export type Attributes = "STR" | "FOR" | "REJ" | "PER" | "INT" | "DEX" | "CHA";
+export type Attributes = "STR" | "FOR" | "REJ" | "PER" | "INT" | "DEX" | "CHA" | "MND";
 
-export type Vitals = "health" | "mana" | "shield" | "injuries" | "heat";
+export type Vitals = "health" | "mana" | "shield" | "injuries" | "heat" | "stress";
 
 export type Stats = 
   "accuracy" | "armor" | "dissipate" | "lethality" | "passthrough" | "cutting" | "melee" | "damage" | "ranged" |
   "health" | "mana" | "mana_regen" | "shield" | "shield_regen" | "parry" | "deflect" | "tenacity" | "filtering" |
-  "tech" | "vamp" | "siphon" | "initiative" | "min_comfortable_temperature" | "heat_capacity" | "attack_cost" | "ult_stack_target";
+  "tech" | "vamp" | "siphon" | "initiative" | "min_comfortable_temperature" | "heat_capacity" | "attack_cost" |
+  "ult_stack_target" | "stress_resistance";

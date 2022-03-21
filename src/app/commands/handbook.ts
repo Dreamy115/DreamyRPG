@@ -197,16 +197,16 @@ export default new ApplicationCommandHandler(
     
     await interaction.deferReply({ ephemeral: true });
 
-    if (confidential) {
-      const member = await (await Bot.guilds.fetch(CONFIG.guild?.id ?? ""))?.members.fetch(interaction.user).catch(() => undefined)
-      if (!member?.roles.cache.has(CONFIG.guild?.gm_role ?? "")) {
-        interaction.editReply({
-          content: 
-            "You cannot access details about this.\n" +
-            "If you want to know about the items in this type that your character has, check out `/char info`"
-        })
-        return;
-      }
+    const member = await (await Bot.guilds.fetch(CONFIG.guild?.id ?? ""))?.members.fetch(interaction.user).catch(() => undefined);
+    const IS_GM = !(!member?.roles.cache.has(CONFIG.guild?.gm_role ?? ""));
+
+    if (confidential && !IS_GM) {
+      interaction.editReply({
+        content: 
+          "You cannot access details about this.\n" +
+          "If you want to know about the items in this type that your character has, check out `/char info`"
+      })
+      return;
     }
     
     const embed = new MessageEmbed()
@@ -227,7 +227,10 @@ export default new ApplicationCommandHandler(
 
         for (const _item of array) {
           const item = _item as Item;
-          embed.description += `\`${item.$.id}\` ${item.$?.info.quality !== undefined ? `${ItemQualityEmoji[item.$?.info.quality]} `: ""}**${item.$?.info.name}**${item.$?.type ? ` (${capitalize(item.$?.type)})` : "" }\n`
+
+          // @ts-ignore
+          if (!_item.$.hidden || IS_GM)
+            embed.description += `\`${item.$.id}\` ${item.$?.info.quality !== undefined ? `${ItemQualityEmoji[item.$?.info.quality]} `: ""}**${item.$?.info.name}**${item.$?.type ? ` (${capitalize(item.$?.type)})` : "" }\n`
         }
       } break;
       case "item": {
@@ -240,6 +243,14 @@ export default new ApplicationCommandHandler(
           return;
         }
 
+        // @ts-ignore
+        if (item.$.hidden && !IS_GM) {
+          interaction.editReply({
+            content:
+              "This item is hidden from Players. You cannot access full info."
+          });
+          return;
+        }
         
         if (item instanceof Schematic) {
           const table = LootTables.map.get(item.$.table);
@@ -318,7 +329,7 @@ export default new ApplicationCommandHandler(
             embed.addFields([
               { 
                 name: "Passives",
-                value: passivesDescriptor(Array.from(item.$.passives?.values() ?? [])) || "None"
+                value: passivesDescriptor(Array.from(item.$.passives?.values() ?? []), IS_GM) || "None"
               },
             ]);
   
@@ -399,7 +410,7 @@ export default new ApplicationCommandHandler(
               embed.addFields([
                 { 
                   name: "Passives",
-                  value: passivesDescriptor(Array.from(item.$.passives?.values() ?? [])) || "None"
+                  value: passivesDescriptor(Array.from(item.$.passives?.values() ?? []), IS_GM) || "None"
                 },
                 { 
                   name: "Abilities",
@@ -407,7 +418,7 @@ export default new ApplicationCommandHandler(
                 },
                 {
                   name: "Perks",
-                  value: perksDescriptor(Array.from(item.$.perks?.values() ?? [])) || "None"
+                  value: perksDescriptor(Array.from(item.$.perks?.values() ?? []), IS_GM) || "None"
                 }
               ]);
           } else if (item instanceof CreatureSpecies) {
@@ -415,7 +426,7 @@ export default new ApplicationCommandHandler(
             embed.addFields([
               { 
                 name: "Passives",
-                value: passivesDescriptor(Array.from(item.$.passives?.values() ?? [])) || "None"
+                value: passivesDescriptor(Array.from(item.$.passives?.values() ?? []), IS_GM) || "None"
               },
               { 
                 name: "Abilities",
@@ -423,7 +434,7 @@ export default new ApplicationCommandHandler(
               },
               {
                 name: "Perks",
-                value: perksDescriptor(Array.from(item.$.perks?.values() ?? [])) || "None"
+                value: perksDescriptor(Array.from(item.$.perks?.values() ?? []), IS_GM) || "None"
               }
             ]);
           } else if (item instanceof PassiveEffect) {
@@ -454,7 +465,7 @@ export default new ApplicationCommandHandler(
             embed.addFields([
               { 
                 name: "Passives",
-                value: passivesDescriptor(Array.from(item.$.passives?.values() ?? [])) || "None"
+                value: passivesDescriptor(Array.from(item.$.passives?.values() ?? []), IS_GM) || "None"
               },
               { 
                 name: "Abilities",
@@ -462,7 +473,7 @@ export default new ApplicationCommandHandler(
               },
               {
                 name: "Perks",
-                value: perksDescriptor(Array.from(item.$.perks?.values() ?? [])) || "None"
+                value: perksDescriptor(Array.from(item.$.perks?.values() ?? []), IS_GM) || "None"
               }
             ]);
 
@@ -652,29 +663,27 @@ export function abilitiesDescriptor(abilities: string[]) {
 }
 
 
-export function passivesDescriptor(passives: (string | PassiveEffect)[], creature?: Creature) {
+export function passivesDescriptor(passives: (string | PassiveEffect)[], show_hidden: boolean, creature?: Creature) {
   var str = "";
   if (passives.length > 0) {
-    for (const passive of passives) {
-      if (typeof passive === "string") {
-        str += `[**G**] **${PassivesManager.map.get(passive)?.$.info.name}** \`${passive}\`\n`;
-      } else {
-        str += `[**L**] **${passive.$.info.name}**\n*${replaceLore(passive.$.info.lore, passive.$.info.replacers ?? [], creature)}*\n${(passive.$.unique ?? new Set()).size > 0 ? `Unique flags: ${Array.from(passive.$.unique ?? []).join(", ")}\n` : ""}\n${(passive.$.modifiers ?? []).length > 0 ? `**Modifiers**\n${modifiersDescriptor(passive.$.modifiers ?? [])}` : ""}\n\n`;
-      }
+    for (const p of passives) {
+      const passive = typeof p === "string" ? PassivesManager.map.get(p) : p;
+      if (!passive || (passive.$.hidden && !show_hidden)) continue;
+
+      str += `${typeof p === "string" ? `<\`${passive.$.id}\`>` : "[`local`]"} **${passive.$.info.name}**\n*${replaceLore(passive.$.info.lore, passive.$.info.replacers ?? [], creature)}*\n${(passive.$.unique ?? new Set()).size > 0 ? `Unique flags: ${Array.from(passive.$.unique ?? []).join(", ")}\n` : ""}\n${(passive.$.modifiers ?? []).length > 0 ? `**Modifiers**\n${modifiersDescriptor(passive.$.modifiers ?? [])}` : ""}\n\n`;
     }
-    str += "\n"
+    str += "\n";
   }
   return str;
 }
-export function perksDescriptor(perks: (string | CreaturePerk)[]) {
+export function perksDescriptor(perks: (string | CreaturePerk)[], show_hidden: boolean) {
   var str = "";
   if (perks.length > 0) {
-    for (const perk of perks) {
-      if (typeof perk === "string") {
-        str += `[**G**] ${PerkManager.map.get(perk)?.$.info.name} \`${perk}\`\n`;
-      } else {
-        str += `[**L**] ${perk.$.info.name}\n*${perk.$.info.lore}*\n`;
-      }
+    for (const p of perks) {
+      const perk = typeof p === "string" ? PerkManager.map.get(p) : p;
+      if (!perk || (perk.$.hidden && !show_hidden)) continue;
+
+      str += `${typeof p === "string" ? `<\`${perk.$.id}\`>` : "[`local`]"} **${perk.$.info.name}**\n*${perk.$.info.lore}*`;
     }
     str += "\n"
   }

@@ -838,6 +838,9 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
       for (var i = index * PER_INDEX_PAGE; i < passives.length && i < PER_INDEX_PAGE * (index + 1); i++) {
         const passive = passives[i];
 
+        if (passive.$.hidden)
+          embed.addField(`<${i+1}>`, "🔒");
+
         (passive.$.hidden ? gm_embed : embed).addField(
           `<${i+1}> ${passive.$.info.name}`,
           function() {
@@ -1152,6 +1155,9 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
       for (var i = index * PER_INDEX_PAGE; i < perks.length && i < PER_INDEX_PAGE * (index + 1); i++) {
         const perk = perks[i];
 
+        if (perk.$.hidden)
+          embed.addField(`<${i+1}>`, "🔒");
+
         (perk.$.hidden ? gm_embed : embed).addField(
           `<${i+1}> ${perk.$.id ? `\`${perk.$.id}\`` : ""} **${perk.$.info.name}**`,
           `${perk.$.info.lore}`
@@ -1232,6 +1238,9 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
             return s.substring(0, s.length - 2);
           }()}`
         }
+
+        if (skill.$.hidden)
+          embed.addField(`<${i+1}>`, "🔒");
 
         (skill.$.hidden ? gm_embed : embed).addField(
           `<${i+1}> \`${skill.$.id}\` **${skill.$.info.name}**`,

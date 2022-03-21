@@ -94,17 +94,17 @@ export async function setSim(guild: Guild, db: typeof Mongoose, Bot: Client) {
         }
 
         if (!creature.$.info.npc && sim_channel) {
-          const {embed} = await infoEmbed(creature, Bot, "stats");
+          const {embeds} = await infoEmbed(creature, Bot, "stats");
           const msg = await sim_channel.messages.fetch(creature.$.sim_message ?? "").catch(() => null);
           if (msg) {
             try {
               msg.edit({
-                embeds: [embed]
+                embeds: [embeds[0]]
               }).then(() => creature.put(db))
             } catch {
               msg.delete().catch();
               sim_channel.send({
-                embeds: [embed]
+                embeds: [embeds[0]]
               }).then((m) => {
                 creature.$.sim_message = m.id;
                 creature.put(db)
@@ -112,7 +112,7 @@ export async function setSim(guild: Guild, db: typeof Mongoose, Bot: Client) {
             }
           } else {
             sim_channel.send({
-              embeds: [embed]
+              embeds: [embeds[0]]
             }).then((m) => {
               creature.$.sim_message = m.id;
               creature.put(db)

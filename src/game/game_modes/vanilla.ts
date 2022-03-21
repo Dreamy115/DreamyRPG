@@ -1,3 +1,4 @@
+import Creature from "../Creature";
 import { GameDirective } from "../GameDirectives";
 import { PassiveEffect } from "../PassiveEffects";
 import { ModifierType } from "../Stats";
@@ -44,6 +45,29 @@ export default [
           } else {
             creature.$.vitals.health = 0;
             creature.$.vitals.stress = 0;
+          }
+
+          const stress_diff = creature.$.stats.mental_strength.value - creature.$.vitals.stress;
+
+          if (stress_diff <= 50) {
+            creature.applyActiveEffect({
+              id: "stress",
+              severity: 1,
+              ticks: 1
+            }, true)
+          } else if (stress_diff <= 35) {
+            creature.applyActiveEffect({
+              id: "stress",
+              severity: 2,
+              ticks: 1
+            }, true)
+          } else if (stress_diff <= 0) {
+            // TODO implement mental breaks
+            creature.applyActiveEffect({
+              id: "stress",
+              severity: 3,
+              ticks: 1
+            }, true)
           }
         }
       })

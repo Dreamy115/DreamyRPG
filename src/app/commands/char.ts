@@ -797,7 +797,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
           `**${creature.deltaHeat}**/t${creature.deltaHeat < 0 ? " ⚠️" : ""}\n` +
           `**${creature.$.stats.filtering.value}** Filtering >> **${(creature.location?.$.rads ?? 0)}** Area${(creature.location?.$.rads ?? 0) > creature.$.stats.filtering.value ? " ⚠️" : ""}\n` +
           "\n" +
-          `**Stress** ${textStat(creature.$.vitals.stress, Creature.STRESS_CAPACITY)}`
+          `**Stress** ${textStat(creature.$.vitals.stress, creature.$.stats.mental_strength.value)}`
         },
         {
           name: "Offense",
@@ -1025,7 +1025,10 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
         const effectData = EffectManager.map.get(effect.id);
         if (!effectData) continue;
     
-        embed.addField(
+        if (effectData.$.hidden)
+          embed.addField(`<${i+1}>`, "🔒");
+
+        (effectData.$.hidden ? gm_embed : embed).addField(
           `<${i+1}> ${effectData.$.info.name} ${function() {
             switch (effectData.$.display_severity) {
               default: return "";

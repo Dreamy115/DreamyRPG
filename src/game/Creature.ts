@@ -63,7 +63,8 @@ export default class Creature {
         min_comfortable_temperature: new TrackableStat(0),
         heat_capacity: new TrackableStat(100),
         filtering: new TrackableStat(0),
-        stress_resistance: new TrackableStat(0)
+        stress_resistance: new TrackableStat(0),
+        mental_strength: new TrackableStat(Creature.STRESS_CAPACITY)
       },
       attributes: {
         STR: new TrackableStat(data.attributes?.STR ?? 0),
@@ -232,7 +233,7 @@ export default class Creature {
     this.$.vitals.shield *= this.$.stats.shield.value;
     this.$.vitals.mana *= this.$.stats.mana.value;
     this.$.vitals.heat *= this.$.stats.heat_capacity.value;
-    this.$.vitals.stress *= Creature.STRESS_CAPACITY;
+    this.$.vitals.stress *= this.$.stats.mental_strength.value;
 
     this.vitalsIntegrity();
 
@@ -366,7 +367,7 @@ export default class Creature {
     this.$.vitals.mana = Math.round(clamp(this.$.vitals.mana, 0, this.$.stats.mana.value));
     this.$.vitals.shield = Math.round(clamp(this.$.vitals.shield, 0, this.$.stats.shield.value));
     this.$.vitals.heat = Math.round(clamp(this.$.vitals.heat, 0, this.$.stats.heat_capacity.value));
-    this.$.vitals.stress = Math.round(clamp(this.$.vitals.stress, 0, Creature.STRESS_CAPACITY));
+    this.$.vitals.stress = Math.round(clamp(this.$.vitals.stress, 0, this.$.stats.mental_strength.value));
 
     if (isNaN(this.$.vitals.shield))
       this.$.vitals.shield = 0;
@@ -1043,7 +1044,7 @@ export default class Creature {
         mana: this.$.vitals.mana / this.$.stats.mana.value,
         shield: this.$.vitals.shield / this.$.stats.shield.value,
         heat: this.$.vitals.heat / this.$.stats.heat_capacity.value,
-        stress: this.$.vitals.stress / Creature.STRESS_CAPACITY
+        stress: this.$.vitals.stress / this.$.stats.mental_strength.value
       },
       attributes: {} as Record<Attributes, undefined>,
       experience: this.$.experience,
@@ -1432,4 +1433,4 @@ export type Stats =
   "accuracy" | "armor" | "dissipate" | "lethality" | "passthrough" | "cutting" | "melee" | "damage" | "ranged" |
   "health" | "mana" | "mana_regen" | "shield" | "shield_regen" | "parry" | "deflect" | "tenacity" | "filtering" |
   "tech" | "vamp" | "siphon" | "initiative" | "min_comfortable_temperature" | "heat_capacity" | "attack_cost" |
-  "ult_stack_target" | "stress_resistance";
+  "ult_stack_target" | "stress_resistance" | "mental_strength";

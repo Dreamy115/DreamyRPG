@@ -37,6 +37,7 @@ export class ActiveEffect {
       lore: string
       replacers: EffectLoreReplacer[]
     }
+    hidden?: boolean
     display_severity?: DisplaySeverity
     passives?: Set<PassiveEffect | string>
     consecutive_limit: number

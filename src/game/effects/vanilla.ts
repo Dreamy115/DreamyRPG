@@ -137,5 +137,29 @@ export default [
         attacker: "Chemical Burns",
       })
     }
+  }),
+  new ActiveEffect({
+    id: "stressed",
+    consecutive_limit: 1,
+    display_severity: DisplaySeverity.ROMAN,
+    info: {
+      name: "Stressed",
+      lore: "This Creature is stressed and isn't at their peak performance.",
+      replacers: []
+    },
+    preload: (creature, {severity}) => {
+      creature.$.attributes.INT.modifiers.push({
+        type: ModifierType.ADD,
+        value: -severity
+      });
+      creature.$.attributes.PER.modifiers.push({
+        type: ModifierType.ADD,
+        value: -severity
+      });
+      creature.$.attributes.CHA.modifiers.push({
+        type: ModifierType.ADD,
+        value: -2 * severity
+      });
+    }
   })
 ]

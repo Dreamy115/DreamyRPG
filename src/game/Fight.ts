@@ -235,7 +235,7 @@ export class Fight {
                     const arr: string[] = [];
                     for (const active of char.active_effects) {
                       const effect = EffectManager.map.get(active.id);
-                      if (!effect) continue;
+                      if (!effect || effect.$.hidden) continue;
 
                       arr.push(`${effect.$.info.name} ${
                         effect.$.display_severity === DisplaySeverity.ARABIC

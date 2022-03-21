@@ -49,10 +49,10 @@ export default [
 
           const stress_diff = creature.$.stats.mental_strength.value - creature.$.vitals.stress;
 
-          if (stress_diff <= 50) {
+          if (stress_diff <= 0) {
             creature.applyActiveEffect({
               id: "stress",
-              severity: 1,
+              severity: 3,
               ticks: 1
             }, true)
           } else if (stress_diff <= 35) {
@@ -61,11 +61,11 @@ export default [
               severity: 2,
               ticks: 1
             }, true)
-          } else if (stress_diff <= 0) {
+          } else if (stress_diff <= 50) {
             // TODO implement mental breaks
             creature.applyActiveEffect({
               id: "stress",
-              severity: 3,
+              severity: 1,
               ticks: 1
             }, true)
           }

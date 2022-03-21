@@ -230,7 +230,8 @@ export default new ApplicationCommandHandler(
 
           // @ts-ignore
           if (!_item.$.hidden || IS_GM)
-            embed.description += `\`${item.$.id}\` ${item.$?.info.quality !== undefined ? `${ItemQualityEmoji[item.$?.info.quality]} `: ""}**${item.$?.info.name}**${item.$?.type ? ` (${capitalize(item.$?.type)})` : "" }\n`
+            // @ts-ignore
+            embed.description += `${_item.$.hidden ? "🔒 " : ""}\`${item.$.id}\` ${item.$?.info.quality !== undefined ? `${ItemQualityEmoji[item.$?.info.quality]} `: ""}**${item.$?.info.name}**${item.$?.type ? ` (${capitalize(item.$?.type)})` : "" }\n`
         }
       } break;
       case "item": {
@@ -670,7 +671,7 @@ export function passivesDescriptor(passives: (string | PassiveEffect)[], show_hi
       const passive = typeof p === "string" ? PassivesManager.map.get(p) : p;
       if (!passive || (passive.$.hidden && !show_hidden)) continue;
 
-      str += `${typeof p === "string" ? `<\`${passive.$.id}\`>` : "[`local`]"} **${passive.$.info.name}**\n*${replaceLore(passive.$.info.lore, passive.$.info.replacers ?? [], creature)}*\n${(passive.$.unique ?? new Set()).size > 0 ? `Unique flags: ${Array.from(passive.$.unique ?? []).join(", ")}\n` : ""}\n${(passive.$.modifiers ?? []).length > 0 ? `**Modifiers**\n${modifiersDescriptor(passive.$.modifiers ?? [])}` : ""}\n\n`;
+      str += `${typeof p === "string" ? `<\`${passive.$.id}\`>` : "[`local`]"}${passive.$.hidden ? " 🔒" : ""} **${passive.$.info.name}**\n*${replaceLore(passive.$.info.lore, passive.$.info.replacers ?? [], creature)}*\n${(passive.$.unique ?? new Set()).size > 0 ? `Unique flags: ${Array.from(passive.$.unique ?? []).join(", ")}\n` : ""}\n${(passive.$.modifiers ?? []).length > 0 ? `**Modifiers**\n${modifiersDescriptor(passive.$.modifiers ?? [])}` : ""}\n\n`;
     }
     str += "\n";
   }
@@ -683,7 +684,7 @@ export function perksDescriptor(perks: (string | CreaturePerk)[], show_hidden: b
       const perk = typeof p === "string" ? PerkManager.map.get(p) : p;
       if (!perk || (perk.$.hidden && !show_hidden)) continue;
 
-      str += `${typeof p === "string" ? `<\`${perk.$.id}\`>` : "[`local`]"} **${perk.$.info.name}**\n*${perk.$.info.lore}*`;
+      str += `${typeof p === "string" ? `<\`${perk.$.id}\`>` : "[`local`]"}${perk.$.hidden ? " 🔒" : ""} **${perk.$.info.name}**\n*${perk.$.info.lore}*`;
     }
     str += "\n"
   }

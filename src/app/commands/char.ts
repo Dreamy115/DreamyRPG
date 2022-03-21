@@ -1108,8 +1108,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
             var str = "";
   
             for (const s in creature.$.stats) {
-              // @ts-ignore
-              const stat = creature.$.stats[s];
+              const stat = creature.$.stats[s as Stats];
   
               str += `**${Math.round(stat.value)}** ${capitalize(s.replaceAll(/_/g, " "))}\n`;
             }
@@ -1121,9 +1120,10 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
     } break;
     case "attributes": {
       embed
-      .setDescription(`Points used: **${creature.totalAttributePointsUsed}**/${creature.$.experience.level}`)
       .addField(
-        "Attributes",
+        "Points used",
+        `**${creature.totalAttributePointsUsed}**/${creature.$.experience.level}`
+      ).setDescription(
         function () {
           var str = "";
 
@@ -1132,7 +1132,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
             const attr = creature.$.attributes[a];
             const attr_bonus = attr.value - attr.base;
             
-            str += `**${attr.value} ${a}**${attr_bonus !== 0 ? ` [Modifiers] *(**${attr.base}**/${Creature.ATTRIBUTE_MAX} ${`${(attr_bonus < 0 ? "-" : "+")} ${Math.abs(attr_bonus)}`})*` : ""}\n${Creature.ATTRIBUTE_DESCRIPTIONS[a]}  ${modifiersDescriptor(Creature.ATTRIBUTE_MODS[a], ", ").trim() || ""}\n`
+            str += `**${attr.value} ${a}** *(**${attr.base}**/${Creature.ATTRIBUTE_MAX}${attr_bonus !== 0 ? ` ${(attr_bonus < 0 ? "-" : "+")} ${Math.abs(attr_bonus)} 🛠️` : ""})*\n${Creature.ATTRIBUTE_DESCRIPTIONS[a]}  ${modifiersDescriptor(Creature.ATTRIBUTE_MODS[a], ", ").trim() || ""}\n`
           }
 
           return str;

@@ -42,6 +42,7 @@ export class ActiveEffect {
     passives?: Set<PassiveEffect | string>
     consecutive_limit: number
     stacking?: EffectStacking
+    conflicts_with?: Set<string>
     onApply?: (creature: Creature, {ticks, severity}: AppliedActiveEffect) => void
     onTick?: (creature: Creature, {ticks, severity}: AppliedActiveEffect) => void
     onDelete?: (creature: Creature, {ticks, severity}: AppliedActiveEffect) => void

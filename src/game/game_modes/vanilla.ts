@@ -17,7 +17,7 @@ export default [
           lore: "Bundled DreamyRPG vanilla logic is acting upon this Creature"
         },
         hidden: true,
-        beforeTick: (creature) => {
+        afterTick: (creature) => {
           if (creature.$.vitals.heat <= 0) {
             creature.applyActiveEffect({
               id: "hypothermia",
@@ -44,30 +44,19 @@ export default [
             }
           } else {
             creature.$.vitals.health = 0;
-            creature.$.vitals.stress = 0;
+            creature.$.vitals.intensity = 0;
           }
 
-          const stress_diff = creature.$.stats.mental_strength.value - creature.$.vitals.stress;
+          const intensity_percent = Math.round(100 * creature.$.vitals.intensity / creature.$.stats.mental_strength.value);
 
-          if (stress_diff <= 0) {
+          /*if (intensity_percent >= 100) {
+
+          } else */if (intensity_percent >= 75) {
             creature.applyActiveEffect({
-              id: "stress",
-              severity: 3,
+              id: "stressed",
+              severity: intensity_percent,
               ticks: 1
-            }, true)
-          } else if (stress_diff <= 35) {
-            creature.applyActiveEffect({
-              id: "stress",
-              severity: 2,
-              ticks: 1
-            }, true)
-          } else if (stress_diff <= 50) {
-            // TODO implement mental breaks
-            creature.applyActiveEffect({
-              id: "stress",
-              severity: 1,
-              ticks: 1
-            }, true)
+            }, true);
           }
         }
       })

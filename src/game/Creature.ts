@@ -64,7 +64,7 @@ export default class Creature {
         heat_capacity: new TrackableStat(100),
         filtering: new TrackableStat(0),
         stress_resistance: new TrackableStat(0),
-        mental_strength: new TrackableStat(Creature.STRESS_CAPACITY)
+        mental_strength: new TrackableStat(Creature.INTENSITY_CAPACITY)
       },
       attributes: {
         STR: new TrackableStat(data.attributes?.STR ?? 0),
@@ -85,7 +85,7 @@ export default class Creature {
         mana: (data.vitals?.mana ?? 0),
         shield: (data.vitals?.shield ?? 0),
         heat: (data.vitals?.heat ?? 1),
-        stress: (data.vitals?.stress ?? 0)
+        intensity: (data.vitals?.intensity ?? 0)
       },
       items: {
         slotted: {} as Record<ItemSlot, undefined>,
@@ -227,13 +227,16 @@ export default class Creature {
     if (isNaN(this.$.vitals.shield)) {
       this.$.vitals.shield = 0;
     }
+    if (isNaN(this.$.vitals.intensity)) {
+      this.$.vitals.intensity = 0;
+    }
     
     this.$.vitals.health *= this.$.stats.health.value;
     this.$.vitals.injuries *= this.$.stats.health.value;
     this.$.vitals.shield *= this.$.stats.shield.value;
     this.$.vitals.mana *= this.$.stats.mana.value;
     this.$.vitals.heat *= this.$.stats.heat_capacity.value;
-    this.$.vitals.stress *= this.$.stats.mental_strength.value;
+    this.$.vitals.intensity *= this.$.stats.mental_strength.value;
 
     this.vitalsIntegrity();
 
@@ -367,7 +370,7 @@ export default class Creature {
     this.$.vitals.mana = Math.round(clamp(this.$.vitals.mana, 0, this.$.stats.mana.value));
     this.$.vitals.shield = Math.round(clamp(this.$.vitals.shield, 0, this.$.stats.shield.value));
     this.$.vitals.heat = Math.round(clamp(this.$.vitals.heat, 0, this.$.stats.heat_capacity.value));
-    this.$.vitals.stress = Math.round(clamp(this.$.vitals.stress, 0, this.$.stats.mental_strength.value));
+    this.$.vitals.intensity = Math.round(clamp(this.$.vitals.intensity, 0, this.$.stats.mental_strength.value));
 
     if (isNaN(this.$.vitals.shield))
       this.$.vitals.shield = 0;
@@ -381,8 +384,8 @@ export default class Creature {
     if (isNaN(this.$.vitals.mana))
       this.$.vitals.mana = 0;
 
-    if (isNaN(this.$.vitals.stress))
-      this.$.vitals.stress = 0;
+    if (isNaN(this.$.vitals.intensity))
+      this.$.vitals.intensity = 0;
   }
 
   checkItemConflicts() {
@@ -633,7 +636,7 @@ export default class Creature {
           source.value *= Math.round(reductionMultiplier(this.$.stats.stress_resistance.value));
 
           log.total_stress_applied += source.value;
-          this.$.vitals.stress += source.value;
+          this.$.vitals.intensity += source.value;
         } else {
           switch (source.type) {
             case DamageType.Physical: {
@@ -756,7 +759,7 @@ export default class Creature {
         this.$.vitals.injuries -= amount;
       } break;
       case HealType.Stress: {
-        this.$.vitals.stress -= amount;
+        this.$.vitals.intensity -= amount;
       } break;
     }
 
@@ -784,7 +787,6 @@ export default class Creature {
       }
     }
 
-
     const effects = [...global_effects, ...this.$.active_effects, ...location_effects]
 
     return effects;
@@ -800,11 +802,22 @@ export default class Creature {
         if (e.id === effect.id) count++;
       }
 
-    if (effectData.$.consecutive_limit > 0 && count >= effectData.$.consecutive_limit) {
+    let conflicting: number = -1;
+    for (const e of this.active_effects) {
+      const e_data = EffectManager.map.get(e.id);
+      if (!e_data) continue;
+
+      if (effectData.$.id !== e_data.$.id && (effectData.$.conflicts_with?.has(e_data.$.id) || e_data.$.conflicts_with?.has(effectData.$.id))) {
+        conflicting = this.$.active_effects.findIndex(a => e.id === a.id);
+      }
+      if (conflicting !== -1) break;
+    }
+
+    if (conflicting !== -1 || (effectData.$.consecutive_limit > 0 && count >= effectData.$.consecutive_limit)) {
       const index = this.$.active_effects.findIndex((v) => v.id === effect.id);
       const existing = this.$.active_effects[index];
 
-      if ((effectData.$.stacking ?? EffectStacking.None) !== EffectStacking.None) {
+      if (conflicting === -1 && (effectData.$.stacking ?? EffectStacking.None) !== EffectStacking.None) {
         switch (effectData.$.stacking) {
           case EffectStacking.Duration: {
             existing.ticks += Math.max(0, effect.ticks);
@@ -821,7 +834,10 @@ export default class Creature {
         }
       } else {
         if (override_existing) {
-          this.$.active_effects[index] = effect;
+          if (index !== -1)
+            this.$.active_effects[index] = effect;
+          if (conflicting !== -1)
+            this.$.active_effects[conflicting] = effect;
         } else return false;
       }
     } else {
@@ -830,7 +846,7 @@ export default class Creature {
 
     effectData.$.onApply?.(this, effect);
     
-    if (effectData.$.preload || effectData.$.postload ||effectData.$.passives)
+    if (effectData.$.preload || effectData.$.postload || effectData.$.passives)
       this.reload();
       
     return true;
@@ -909,9 +925,10 @@ export default class Creature {
   }
 
   tick() {
-    for (const passive of this.passives)
+    for (const passive of this.passives) {
       passive.$.beforeTick?.(this);
-      
+    }
+    
     this.tickEffects();
     this.tickVitals();
       
@@ -1044,7 +1061,7 @@ export default class Creature {
         mana: this.$.vitals.mana / this.$.stats.mana.value,
         shield: this.$.vitals.shield / this.$.stats.shield.value,
         heat: this.$.vitals.heat / this.$.stats.heat_capacity.value,
-        stress: this.$.vitals.stress / this.$.stats.mental_strength.value
+        intensity: this.$.vitals.intensity / this.$.stats.mental_strength.value
       },
       attributes: {} as Record<Attributes, undefined>,
       experience: this.$.experience,
@@ -1124,7 +1141,7 @@ export default class Creature {
     return Math.max(1, Math.round((this.$.stats.attack_cost.value ?? 0) * Creature.COMBAT_WEAPON_SWITCH_MULT))
   }
 
-  static readonly STRESS_CAPACITY = 100;
+  static readonly INTENSITY_CAPACITY = 100;
   
   static readonly PROFICIENCY_ACCURACY_SCALE = 0.5
   static readonly PROFICIENCY_DAMAGE_SCALE = 1;
@@ -1427,7 +1444,7 @@ export function diceRoll(size = 6): number {
 
 export type Attributes = "STR" | "FOR" | "REJ" | "PER" | "INT" | "DEX" | "CHA" | "MND";
 
-export type Vitals = "health" | "mana" | "shield" | "injuries" | "heat" | "stress";
+export type Vitals = "health" | "mana" | "shield" | "injuries" | "heat" | "intensity";
 
 export type Stats = 
   "accuracy" | "armor" | "dissipate" | "lethality" | "passthrough" | "cutting" | "melee" | "damage" | "ranged" |

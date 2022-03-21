@@ -1,3 +1,4 @@
+import { invLerp, lerp } from "../..";
 import { ActiveEffect, DisplaySeverity } from "../ActiveEffects";
 import Creature from "../Creature";
 import { DamageCause, DamageMethod, DamageType, ShieldReaction } from "../Damage";
@@ -119,10 +120,10 @@ export default [
     display_severity: DisplaySeverity.ROMAN,
     info: {
       name: "Failing Filters",
-      lore: "Your air filter is not enough. Chemical Burns: {0} Health True Damage every tick.",
+      lore: "Your air filter is not enough. Chemical Burns: **{0}%** Health True Damage every tick.",
       replacers: [
         {
-          multiply: 0.03,
+          multiply: 3,
           type: "severity"
         }
       ]
@@ -132,6 +133,7 @@ export default [
         cause: DamageCause.DoT,
         chance: 100,
         method: DamageMethod.Direct,
+        penetration: {cutting: 999},
         sources: [{type: DamageType.True, value: Math.max(1, severity * 0.03 * creature.$.stats.health.value), shieldReaction: ShieldReaction.Ignore}],
         useDodge: false,
         attacker: "Chemical Burns",
@@ -141,24 +143,26 @@ export default [
   new ActiveEffect({
     id: "stressed",
     consecutive_limit: 1,
-    display_severity: DisplaySeverity.ROMAN,
+    display_severity: DisplaySeverity.ARABIC,
     info: {
       name: "Stressed",
       lore: "This Creature is stressed and isn't at their peak performance.",
       replacers: []
     },
     preload: (creature, {severity}) => {
+      let lerped = invLerp(severity, 75, 100);
+
       creature.$.attributes.INT.modifiers.push({
         type: ModifierType.ADD,
-        value: -severity
+        value: -lerp(lerped, 3, 1)
       });
       creature.$.attributes.PER.modifiers.push({
-        type: ModifierType.ADD,
-        value: -severity
+        type: ModifierType.MULTIPLY,
+        value: -lerp(lerped, 4, 1)
       });
       creature.$.attributes.CHA.modifiers.push({
         type: ModifierType.ADD,
-        value: -2 * severity
+        value: -lerp(lerped, 6, 1)
       });
     }
   })

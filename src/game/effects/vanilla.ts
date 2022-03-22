@@ -1,4 +1,4 @@
-import { invLerp, lerp } from "../..";
+import { clamp, invLerp, lerp } from "../..";
 import { ActiveEffect, DisplaySeverity } from "../ActiveEffects";
 import Creature from "../Creature";
 import { DamageCause, DamageMethod, DamageType, ShieldReaction } from "../Damage";
@@ -141,7 +141,7 @@ export default [
     }
   }),
   new ActiveEffect({
-    id: "stressed",
+    id: "intensity-stressed",
     consecutive_limit: 1,
     display_severity: DisplaySeverity.ARABIC,
     info: {
@@ -149,6 +149,7 @@ export default [
       lore: "This Creature is stressed and isn't at their peak performance.",
       replacers: []
     },
+    conflicts_with: new Set(["intensity-optimal", "intensity-bored"]),
     preload: (creature, {severity}) => {
       let lerped = invLerp(severity, 75, 100);
 
@@ -163,6 +164,58 @@ export default [
       creature.$.attributes.CHA.modifiers.push({
         type: ModifierType.ADD,
         value: -lerp(lerped, 6, 1)
+      });
+    }
+  }),
+  new ActiveEffect({
+    id: "intensity-optimal",
+    consecutive_limit: 1,
+    display_severity: DisplaySeverity.ARABIC,
+    info: {
+      name: "Adrenaline",
+      lore: "This Creature is experiencing optimal intensity.",
+      replacers: []
+    },
+    conflicts_with: new Set(["intensity-bored", "intensity-stressed"]),
+    preload: (creature, {severity}) => {
+      creature.$.attributes.DEX.modifiers.push({
+        type: ModifierType.ADD,
+        value: 1
+      });
+      creature.$.attributes.PER.modifiers.push({
+        type: ModifierType.MULTIPLY,
+        value: 1
+      });
+    }
+  }),
+  new ActiveEffect({
+    id: "intensity-bored",
+    consecutive_limit: 1,
+    display_severity: DisplaySeverity.ARABIC,
+    info: {
+      name: "Not Warmed Up",
+      lore: "This Creature is not warmed up for a fight.",
+      replacers: []
+    },
+    conflicts_with: new Set(["intensity-optimal", "intensity-stressed"]),
+    preload: (creature, {severity}) => {
+      let lerped = invLerp(severity, 0, 15);
+
+      creature.$.stats.accuracy.modifiers.push({
+        type: ModifierType.MULTIPLY,
+        value: lerp(lerped, 0.75, 1)
+      });
+      creature.$.stats.parry.modifiers.push({
+        type: ModifierType.MULTIPLY,
+        value: lerp(lerped, 0.75, 1)
+      });
+      creature.$.stats.deflect.modifiers.push({
+        type: ModifierType.MULTIPLY,
+        value: lerp(lerped, 0.75, 1)
+      });
+      creature.$.stats.initiative.modifiers.push({
+        type: ModifierType.ADD,
+        value: lerp(lerped, -3, -1)
       });
     }
   })

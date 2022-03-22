@@ -17,6 +17,9 @@ export default [
           lore: "Bundled DreamyRPG vanilla logic is acting upon this Creature"
         },
         hidden: true,
+        beforeTick: (creature) => {
+          creature.$.vitals.intensity--;
+        },
         afterTick: (creature) => {
           if (creature.$.vitals.heat <= 0) {
             creature.applyActiveEffect({
@@ -46,14 +49,26 @@ export default [
             creature.$.vitals.health = 0;
             creature.$.vitals.intensity = 0;
           }
-
+          
           const intensity_percent = Math.round(100 * creature.$.vitals.intensity / creature.$.stats.mental_strength.value);
 
           /*if (intensity_percent >= 100) {
 
           } else */if (intensity_percent >= 75) {
             creature.applyActiveEffect({
-              id: "stressed",
+              id: "intensity-stressed",
+              severity: intensity_percent,
+              ticks: 1
+            }, true);
+          } else if (intensity_percent <= 60 && intensity_percent >= 40) {
+            creature.applyActiveEffect({
+              id: "intensity-optimal",
+              severity: intensity_percent,
+              ticks: 1
+            }, true);
+          } else if (intensity_percent <= 15) {
+            creature.applyActiveEffect({
+              id: "intensity-bored",
               severity: intensity_percent,
               ticks: 1
             }, true);

@@ -853,7 +853,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
                   case ModifierType.MULTIPLY: str += `${mod.value}x`; break;
                   case ModifierType.ADD_PERCENT: str += `${mod.value >= 0 ? "+" : "-"}${(Math.abs(mod.value) * 100).toFixed(1)}%`; break;
                   case ModifierType.CAP_MAX: str += `${mod.value}^`; break;
-                  case ModifierType.ADD: str += `${mod.value >= 0 ? "+" : "-"}${Math.abs(mod.value)}`; break;
+                  case ModifierType.ADD: str += `${mod.value >= 0 ? "+" : "-"}${Math.abs(Math.round(100 * mod.value) / 100)}`; break;
                 }
                 str += `** ${capitalize(mod.stat.replaceAll(/_/g, " "))}\n`;
               }
@@ -1098,7 +1098,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
               case ModifierType.MULTIPLY: str += `${mod.value}x`; break;
               case ModifierType.ADD_PERCENT: str += `${mod.value >= 0 ? "+" : "-"}${(Math.abs(mod.value) * 100).toFixed(1)}%`; break;
               case ModifierType.CAP_MAX: str += `${mod.value}^`; break;
-              case ModifierType.ADD: str += `${mod.value >= 0 ? "+" : "-"}${Math.abs(mod.value)}`; break;
+              case ModifierType.ADD: str += `${mod.value >= 0 ? "+" : "-"}${Math.abs(Math.round(100 * mod.value) / 100)}`; break;
             }
             str += `** ${capitalize(mod.stat.replaceAll(/_/g, " "))}\n`;
           }

@@ -941,7 +941,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
           `${replaceLore(ability.$.info.lore, ability.$.info.lore_replacers, creature)}\n\n` +
           `**${ability.$.min_targets}**${ability.$.max_targets ? `to **${ability.$.max_targets}**` : ""} Targets\n` +
           `**${ability.$.cost}** Ult Stacks\n` +
-          `${ability.$.attackLike ? "**Treated like Attack**" : ""}`
+          `${ability.$.attackLike ? "**⚔️ Attack-ish**" : ""}`
         )
     } break;
     case "abilities": {
@@ -961,7 +961,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
             `**${ability.$.haste ?? 1}** Haste\n` +
             `**${ability.$.min_targets}**${ability.$.max_targets ? `to **${ability.$.max_targets}**` : ""} Targets\n` +
             `**${ability.$.cost}** Mana\n` +
-            `${ability.$.attackLike ? "**Treated like Attack**" : ""}`
+            `${ability.$.attackLike ? "**⚔️ Attack-ish**" : ""}`
           })
         }
 
@@ -1351,7 +1351,7 @@ export function tableDescriptor(table: LootTable, perks?: Set<string>) {
 }
 
 export function schematicDescriptor(item: Schematic, perks?: Set<string>) {
-  var str = `*${item.$.info.lore}*\n`;
+  var str = `${item.$.upgrade ? "🔼 " : ""}*${item.$.info.lore}*\n`;
 
   const table = LootTables.map.get(item.$.table);
   if (!table) return str;

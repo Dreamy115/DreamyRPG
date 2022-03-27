@@ -48,37 +48,20 @@ export default new AutocompleteHandler(
               search.test(schem) || search.test(recipe.$.info.name)
             ) {
 
-              let info = "";
+              let info: null | string = null;
 
               try {
-                if (recipe.$.requirements.enhancedCrafting && !creature.location?.$.hasEnhancedCrafting) throw new Error("Missing Enhanced Crafting");
-      
-                var perks = creature.perks;
-                for (const p of recipe.$.requirements.perks ?? []) {
-                  const perk = PerkManager.map.get(p);
-                  if (!perk) continue;
-      
-                  if (!perks.find((v) => v.$.id === perk.$.id)) throw new Error(`Missing Perk`)
-                }
-                for (const mat in recipe.$.requirements.materials) {
-                  const material: number = recipe.$.requirements.materials[mat as Material];
-
-                  if (creature.$.items.crafting_materials[mat as Material] < material) throw new Error(`Need more ${capitalize(mat)}`)
-                }
-                for (const i of recipe.$.requirements.items ?? []) {
-                  const item = ItemManager.map.get(i);
-                  if (!item) continue;
-      
-                  if (!creature.$.items.backpack.find(v => v.id === item.$.id)) throw new Error(`Missing ${item.$.info.name} (${item.$.id})`)
-                }
+                var e = recipe.check(creature);
+                if (!e[0]) throw e[1];
               } catch (e: any) {
                 info = `⚠️ [${e.message}] `;
               }
 
-              array.push({
-                name: `${info}${recipe.$.info.name} (${recipe.$.id})`,
-                value: recipe.$.id
-              })
+              if (!(info && recipe.$.upgrade))
+                array.push({
+                  name: `${info}${recipe.$.info.name} (${recipe.$.id})`,
+                  value: recipe.$.id
+                });
             }
           }
 

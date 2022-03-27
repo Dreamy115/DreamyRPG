@@ -166,7 +166,7 @@ export class Fight {
   }
 
   async announceTurn(db: typeof Mongoose, Bot: Client): Promise<InteractionReplyOptions> {
-    const embed = new MessageEmbed();
+    const embeds = [new MessageEmbed()];
 
     const creature = await Creature.fetch(this.$.queue[0], db).catch(() => null);
     if (!creature) return { content: "Invalid turn" }
@@ -175,106 +175,125 @@ export class Fight {
 
     const combatants = await this.getCombatantInfo(db);
 
-    embed
+    const fields: EmbedFieldData[] = [];
+    for (const p in this.$.parties) {
+      for (const c of this.$.parties[p]) {
+        var str = "";
+
+        const char = await Creature.fetch(c, db).catch(() => null);
+        if (!char) continue;
+
+        const health_injury_proportions = (char.$.stats.health.value - char.$.vitals.injuries) / char.$.stats.health.value;
+
+        let health_length_mod, shield_length_mod;
+        if (char.$.stats.health.value >= char.$.stats.shield.value) {
+          health_length_mod = (char.$.stats.health.value - char.$.stats.shield.value) / char.$.stats.health.value;
+        } else {
+          health_length_mod = (char.$.stats.shield.value - char.$.stats.health.value) / char.$.stats.shield.value;
+        }
+        shield_length_mod = 1 - health_length_mod;
+
+        const weapon = ItemManager.map.get(char.$.items.primary_weapon?.id ?? "");
+
+        str += 
+          `*(**${char.$.stats.health.value}** Health - **${char.$.vitals.injuries}** Injuries)*\n` +
+          (
+            char.$.stats.shield.value > 0
+            ? (make_bar(100 * char.$.vitals.shield / char.$.stats.shield.value, Creature.BAR_STYLES.Shield, shield_length_mod * BAR_LENGTH).str || "") +
+            ` **Shield** ${textStat(char.$.vitals.shield, char.$.stats.shield.value)} `
+            : "No **Shield** "
+          ) + `**${char.$.stats.shield_regen.value}**/t\n` +
+          (make_bar(100 * char.$.vitals.health / (char.$.stats.health.value - char.$.vitals.injuries), Creature.BAR_STYLES.Health, Math.max(1, health_length_mod * Math.floor(BAR_LENGTH * health_injury_proportions))).str || "") +
+          (
+            char.$.vitals.injuries > 0
+            ? make_bar(100, Creature.BAR_STYLES.Injuries, Math.max(1, health_length_mod * Math.ceil(BAR_LENGTH - (BAR_LENGTH * health_injury_proportions)))).str
+            : ""
+          ) +
+          ` **Health** **${char.$.vitals.health}**/**${char.$.stats.health.value - char.$.vitals.injuries}** ` + 
+          `(**${Math.round(100 * char.$.vitals.health / char.$.stats.health.value)}%**)\n` +
+          make_bar(100 *char.$.vitals.mana / char.$.stats.mana.value, Creature.BAR_STYLES.Mana, BAR_LENGTH / 3).str +
+          ` **Mana** ${textStat(char.$.vitals.mana, char.$.stats.mana.value)} `+
+          `**${char.$.stats.mana_regen.value}**/t\n` +
+          (
+            weapon
+            ? `${weapon.displayName} -> **${char.getFinalDamage((weapon.$ as WeaponItemData).attack.type).toFixed(1)}**`
+            : `Unarmed -> **${char.getFinalDamage(DamageMethod.Melee).toFixed(1)}**`
+          ) + "\n" +
+          (function() {
+            const arr: string[] = [];
+            for (const active of char.active_effects) {
+              const effect = EffectManager.map.get(active.id);
+              if (!effect || effect.$.hidden) continue;
+
+              arr.push(`${effect.$.info.name} ${
+                effect.$.display_severity === DisplaySeverity.ARABIC
+                ? active.severity
+                : effect.$.display_severity === DisplaySeverity.ROMAN
+                  ? romanNumeral(active.severity)
+                  : ""
+              }**${active.ticks !== -1 ? ` *(${active.ticks}t)*` : ""}`.trim())
+            }
+            if (arr.length > 0)
+              return `**${arr.join(", **")}`
+          }() || "") + "\n"
+
+        fields.push({
+          name: `<${p}> **${char.displayName}** (${CombatPosition[combatants.get(char.$._id)?.position ?? 0]})`,
+          inline: true,
+          value: str
+        });
+
+      }
+    }        
+
+    embeds[0]
       .setAuthor(`${!creature.$.info.npc ? owner?.username ?? "Unknown" : "NPC"}`)
       .setTitle(`${creature.displayName}'s turn! (Round ${this.$.round})`)
       .setColor("AQUA")
       .setFooter(`Fight ID: ${this.$._id} | Creature ID: ${creature.$._id}`)
-      .addFields(await async function(fight: Fight){
-        var fields: EmbedFieldData[] = [];
+    
+    var j = 0;
+    while (fields.length > 0) {
+      if (!embeds[j])
+        embeds[j] = new MessageEmbed().setColor("AQUA");
 
-        for (const p in fight.$.parties) {
-          fields.push({
-            name: `Party ${p}`,
-            inline: true,
-            value: await async function (){
-              var str = "";
+      for (var i = 0; i < 9; i++) {
+        const data = fields.shift();
+        if (!data) break;
 
-              for (const c of fight.$.parties[p]) {
-                const char = await Creature.fetch(c, db).catch(() => null);
-                if (!char) continue;
+        embeds[j].addFields(data);
+      }
 
-                const health_injury_proportions = (char.$.stats.health.value - char.$.vitals.injuries) / char.$.stats.health.value;
+      var _ = 0;
+      for (const field of embeds[j].fields)
+        _ += field.value.length + field.name.length
 
-                let health_length_mod, shield_length_mod;
-                if (char.$.stats.health.value >= char.$.stats.shield.value) {
-                  health_length_mod = (char.$.stats.health.value - char.$.stats.shield.value) / char.$.stats.health.value;
-                } else {
-                  health_length_mod = (char.$.stats.shield.value - char.$.stats.health.value) / char.$.stats.shield.value;
-                }
-                shield_length_mod = 1 - health_length_mod;
+      console.log(_)
+      j++
+    }
 
-                const weapon = ItemManager.map.get(char.$.items.primary_weapon?.id ?? "");
-
-                str += 
-                  `- **${char.displayName}** (${CombatPosition[combatants.get(char.$._id)?.position ?? 0]})\n` +
-                  `*(**${char.$.stats.health.value}** Health - **${char.$.vitals.injuries}** Injuries)*\n` +
-                  (
-                    char.$.stats.shield.value > 0
-                    ? (make_bar(100 * char.$.vitals.shield / char.$.stats.shield.value, Creature.BAR_STYLES.Shield, shield_length_mod * BAR_LENGTH).str || "") +
-                    ` **Shield** ${textStat(char.$.vitals.shield, char.$.stats.shield.value)} `
-                    : "No **Shield** "
-                  ) + `**${char.$.stats.shield_regen.value}**/t\n` +
-                  (make_bar(100 * char.$.vitals.health / (char.$.stats.health.value - char.$.vitals.injuries), Creature.BAR_STYLES.Health, Math.max(1, health_length_mod * Math.floor(BAR_LENGTH * health_injury_proportions))).str || "") +
-                  (
-                    char.$.vitals.injuries > 0
-                    ? make_bar(100, Creature.BAR_STYLES.Injuries, Math.max(1, health_length_mod * Math.ceil(BAR_LENGTH - (BAR_LENGTH * health_injury_proportions)))).str
-                    : ""
-                  ) +
-                  ` **Health** **${char.$.vitals.health}**/**${char.$.stats.health.value - char.$.vitals.injuries}** ` + 
-                  `(**${Math.round(100 * char.$.vitals.health / char.$.stats.health.value)}%**)\n` +
-                  make_bar(100 *char.$.vitals.mana / char.$.stats.mana.value, Creature.BAR_STYLES.Mana, BAR_LENGTH / 3).str +
-                  ` **Mana** ${textStat(char.$.vitals.mana, char.$.stats.mana.value)} `+
-                  `**${char.$.stats.mana_regen.value}**/t\n` +
-                  (
-                    weapon
-                    ? `${weapon.displayName} -> **${char.getFinalDamage((weapon.$ as WeaponItemData).attack.type).toFixed(1)}**`
-                    : `Unarmed -> **${char.getFinalDamage(DamageMethod.Melee).toFixed(1)}**`
-                  ) + "\n" +
-                  (function() {
-                    const arr: string[] = [];
-                    for (const active of char.active_effects) {
-                      const effect = EffectManager.map.get(active.id);
-                      if (!effect || effect.$.hidden) continue;
-
-                      arr.push(`${effect.$.info.name} ${
-                        effect.$.display_severity === DisplaySeverity.ARABIC
-                        ? active.severity
-                        : effect.$.display_severity === DisplaySeverity.ROMAN
-                          ? romanNumeral(active.severity)
-                          : ""
-                      }**${active.ticks !== -1 ? ` *(${active.ticks}t)*` : ""}`.trim())
-                    }
-                    if (arr.length > 0)
-                      return `**${arr.join(", **")}`
-                  }() || "") + "\n"
-              }
-
-              return str;
-            }()
-          })
-        }        
-
-        return fields;
-      }(this))
-      .addField(
-        "Up Next this Round",
+    embeds.push(
+      new MessageEmbed()
+      .setColor("AQUA")
+      .setDescription(
+        "Up Next this Round\n" +
         await async function (fight: Fight){
           var str = "";
-
+  
           for (var i = 1; i < fight.$.queue.length; i++) {
             const char = await Creature.fetch(fight.$.queue[i], db).catch(() => null);
             if (!char) continue;
-
+  
             str += `\`${char.$._id}\` ${char.displayName}${char.$.info.npc ? " (NPC)" : ""}\n`;
           }
-
+  
           return str;
         }(this) || "---"
       )
+    );
 
     return {
-      embeds: [embed],
+      embeds,
       content: `${owner ?? `<@&${CONFIG.guild?.gm_role}>`}${creature.isAbleToFight ? "" : "(Down!)"}`,
       components: await this.getComponents(db)
     }

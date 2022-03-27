@@ -539,28 +539,8 @@ export default new ComponentCommandHandler(
                   const results = LootTable.generate(pools);
           
                   try {
-                    if (!creature.schematics.has(recipe.$.id)) throw new Error("Doesn't have the schematic");
-                    if (recipe.$.requirements.enhancedCrafting && !creature.location?.$.hasEnhancedCrafting) throw new Error("You cannot craft this item in this location. Go to an area with Enhanced Crafting");
-          
-                    var perks = creature.perks;
-                    for (const p of recipe.$.requirements.perks ?? []) {
-                      const perk = PerkManager.map.get(p);
-                      if (!perk) continue;
-          
-                      if (!perks.find((v) => v.$.id === perk.$.id)) throw new Error(`Must have ${perk.$.info.name} \`${perk.$.id}\` perk`)
-                    }
-                    for (const _mat in recipe.$.requirements.materials) {
-                      const mat = _mat as Material;
-                      const material: number = recipe.$.requirements.materials[mat];
-          
-                      if (creature.$.items.crafting_materials[mat] < material) throw new Error(`Not enough materials; need more ${capitalize(mat)}`)
-                    }
-                    for (const i of recipe.$.requirements.items ?? []) {
-                      const item = ItemManager.map.get(i);
-                      if (!item) continue;
-          
-                      if (!creature.$.items.backpack.find(v => v.id === item.$.id)) throw new Error(`Item ${item.$.info.name} \`${item.$.id}\` is missing (must be unequipped to count)`)
-                    }
+                    var e = recipe.check(creature);
+                    if (!e[0]) throw e[1];
                   } catch (e: any) {
                     interaction.editReply({
                       content: `Your character doesn't meet the requirements:\n*${e?.message}*`

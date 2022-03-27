@@ -19,6 +19,30 @@ export default [
         hidden: true,
         beforeTick: (creature) => {
           creature.$.vitals.intensity--;
+
+          const intensity_percent = Math.round(100 * Math.max(creature.$.vitals.intensity, 0) / creature.$.stats.mental_strength.value);
+
+          /*if (intensity_percent >= 100) {
+
+          } else */if (intensity_percent >= 75) {
+            creature.applyActiveEffect({
+              id: "intensity-stressed",
+              severity: intensity_percent,
+              ticks: -1
+            }, true);
+          } else if (intensity_percent <= 60 && intensity_percent >= 40) {
+            creature.applyActiveEffect({
+              id: "intensity-optimal",
+              severity: intensity_percent,
+              ticks: -1
+            }, true);
+          } else if (intensity_percent <= 15) {
+            creature.applyActiveEffect({
+              id: "intensity-bored",
+              severity: intensity_percent,
+              ticks: -1
+            }, true);
+          }
         },
         afterTick: (creature) => {
           if (creature.$.vitals.heat <= 0) {
@@ -48,30 +72,6 @@ export default [
           } else {
             creature.$.vitals.health = 0;
             creature.$.vitals.intensity = 0;
-          }
-          
-          const intensity_percent = Math.round(100 * creature.$.vitals.intensity / creature.$.stats.mental_strength.value);
-
-          /*if (intensity_percent >= 100) {
-
-          } else */if (intensity_percent >= 75) {
-            creature.applyActiveEffect({
-              id: "intensity-stressed",
-              severity: intensity_percent,
-              ticks: 1
-            }, true);
-          } else if (intensity_percent <= 60 && intensity_percent >= 40) {
-            creature.applyActiveEffect({
-              id: "intensity-optimal",
-              severity: intensity_percent,
-              ticks: 1
-            }, true);
-          } else if (intensity_percent <= 15) {
-            creature.applyActiveEffect({
-              id: "intensity-bored",
-              severity: intensity_percent,
-              ticks: 1
-            }, true);
           }
         }
       })

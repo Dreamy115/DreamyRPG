@@ -744,7 +744,7 @@ export default new ComponentCommandHandler(
           });
           await interaction.followUp({
             ephemeral: false,
-            content: `**${ability.$.info.name}** discarded${new_ability ? ` and replaced by **${new_ability.$.info.name}**.` : ""}.`
+            content: `**${ability.$.info.name}** discarded${new_ability ? ` and replaced by **${new_ability.$.info.name}**` : ""}.`
           });
           interaction.followUp(await fight.announceTurn(db, Bot));
         }

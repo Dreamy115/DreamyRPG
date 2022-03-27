@@ -1,5 +1,7 @@
 import fs from "fs";
 import path from "path";
+import { PerkManager, capitalize, ItemManager } from "..";
+import Creature from "./Creature";
 import { ItemQuality, ItemQualityEmoji } from "./Items";
 
 export default class CraftingManager {
@@ -54,6 +56,34 @@ export class Schematic {
       items?: string[]
       materials?: CraftingMaterials
     }
+    // hides when "items" missing
+    upgrade?: boolean
+  }
+  check(creature: Creature): [true] | [false, string] {
+    if (!creature.schematics.has(this.$.id)) throw new Error("Not learned");
+    if (this.$.requirements.enhancedCrafting && !creature.location?.$.hasEnhancedCrafting) return [false, "Need Enhanced Crafting"];
+      
+    var perks = creature.perks;
+    for (const p of this.$.requirements.perks ?? []) {
+      const perk = PerkManager.map.get(p);
+      if (!perk) continue;
+
+      if (!perks.find((v) => v.$.id === perk.$.id)) return [false, `Need ${perk.$.info.name} \`${perk.$.id}\` perk`];
+    }
+    for (const mat in this.$.requirements.materials) {
+      const material: number = this.$.requirements.materials[mat as Material];
+
+      const diff = creature.$.items.crafting_materials[mat as Material] - material;
+
+      if (diff < 0) return [false, `Need ${-diff} ${capitalize(mat)}`];
+    }
+    for (const i of this.$.requirements.items ?? []) {
+      const item = ItemManager.map.get(i);
+      if (!item) continue;
+
+      if (!creature.$.items.backpack.find(v => v.id === item.$.id)) return [false, `Need ${item.$.info.name} (${item.$.id})`];
+    }
+    return [true];
   }
 
   constructor(data: Schematic["$"]) {

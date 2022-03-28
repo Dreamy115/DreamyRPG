@@ -263,12 +263,6 @@ export class Fight {
 
         embeds[j].addFields(data);
       }
-
-      var _ = 0;
-      for (const field of embeds[j].fields)
-        _ += field.value.length + field.name.length
-
-      console.log(_)
       j++
     }
 

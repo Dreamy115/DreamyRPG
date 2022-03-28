@@ -116,9 +116,9 @@ export class Fight {
 
     creature.tick();
 
-    creature.drawAbilityCard();
-    if (creature.$.abilities.hand.length < Creature.MIN_HAND_AMOUNT) {
-      creature.drawAbilityCard();
+    let ab = creature.drawAbilityCard();
+    while (ab !== null && creature.$.abilities.hand.length < Creature.MIN_HAND_AMOUNT) {
+      ab = creature.drawAbilityCard();
     }
 
     await creature.put(db);

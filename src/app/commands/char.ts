@@ -1039,6 +1039,24 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
           `*${replaceEffectLore(effectData.$.info.lore, effectData.$.info.replacers, effect)}*\n\n${effect.ticks === -1 ? "**Cannot Expire**" : `for **${effect.ticks}** Ticks`} (\`${effect.id}\`)\n` +
           `\n${passivesDescriptor(Array.from(effectData.$.passives ?? []), false, creature)}`
         )
+
+        const _hidden: (string | PassiveEffect)[] = [];
+        for (let _p of effectData.$.passives ?? []) {
+          if (typeof _p === "string") {
+            // @ts-expect-error
+            _p = PassivesManager.map.get(p);
+          }
+          const p = _p as PassiveEffect;
+
+          if (p.$.hidden)
+            _hidden.push(p);
+        }
+
+        if (_hidden.length > 0)
+          gm_embed.addField(
+            `<${i+1}> Hidden Passives`,
+            passivesDescriptor(_hidden, true, creature)
+          );
       }
 
       if (embed.fields.length == 0) {

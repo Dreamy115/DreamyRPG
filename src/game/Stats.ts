@@ -12,6 +12,7 @@ export class TrackableStat {
     for (const mod of modifierCopy) {
       switch (mod.type) {
         case ModifierType.ADD:
+        case ModifierType.ADD_AFTER:
           value += mod.value;
           break;
         case ModifierType.ADD_PERCENT:
@@ -41,7 +42,7 @@ export interface Modifier {
 }
 
 export enum ModifierType {
-  "ADD", "ADD_PERCENT", "MULTIPLY", "CAP_MAX"
+  "ADD", "ADD_PERCENT", "MULTIPLY", "ADD_AFTER", "CAP_MAX"
 }
 
 

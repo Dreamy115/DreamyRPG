@@ -259,6 +259,7 @@ export default class Creature {
       const stat: TrackableStat = this.$.stats[mod.stat as Stats];
       switch (mod.type) {
         case ModifierType.ADD:
+        case ModifierType.ADD_AFTER:
         default:
           stat.base += mod.value * amount;
           break;

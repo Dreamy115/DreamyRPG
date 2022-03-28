@@ -19,7 +19,7 @@ export function replaceLore(input: string, replacers: LoreReplacer[], creature?:
       `**${replacer.multiplier !== 1 ? `${(100 * replacer.multiplier).toFixed(1)}% ` : ""}${replacer.bonus ? ((replacer.bonus > 0 ? "+" : "-") + Math.abs(replacer.bonus)) : ""} ${capitalize(replacer.stat.replaceAll(/_/g, " "))}**` +
       (
         creature
-          ? ` (**${(creature.$.stats[replacer.stat as Stats]?.value * replacer.multiplier) + (replacer.bonus ?? 0)}**)`
+          ? ` (**${((creature.$.stats[replacer.stat as Stats]?.value * replacer.multiplier) + (replacer.bonus ?? 0)).toFixed(1)}**)`
           : ""
       )
     );

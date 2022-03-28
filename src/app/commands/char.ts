@@ -850,10 +850,11 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
               for (const mod of passive.$.modifiers ?? []) {
                 str += `**`;
                 switch (mod.type) {
-                  case ModifierType.MULTIPLY: str += `${mod.value}x`; break;
+                  case ModifierType.MULTIPLY: str += `${mod.value.toFixed(2)}x`; break;
                   case ModifierType.ADD_PERCENT: str += `${mod.value >= 0 ? "+" : "-"}${(Math.abs(mod.value) * 100).toFixed(1)}%`; break;
-                  case ModifierType.CAP_MAX: str += `${mod.value}^`; break;
+                  case ModifierType.CAP_MAX: str += `${mod.value.toFixed(0)}^`; break;
                   case ModifierType.ADD: str += `${mod.value >= 0 ? "+" : "-"}${Math.abs(Math.round(100 * mod.value) / 100)}`; break;
+                  case ModifierType.ADD_AFTER: str += `${Math.abs(Math.round(100 * mod.value) / 100)}${mod.value >= 0 ? "+" : "-"}`; break;
                 }
                 str += `** ${capitalize(mod.stat.replaceAll(/_/g, " "))}\n`;
               }
@@ -1113,10 +1114,11 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
           for (const mod of array) {
             str += `**`;
             switch (mod.type) {
-              case ModifierType.MULTIPLY: str += `${mod.value}x`; break;
+              case ModifierType.MULTIPLY: str += `${mod.value.toFixed(2)}x`; break;
               case ModifierType.ADD_PERCENT: str += `${mod.value >= 0 ? "+" : "-"}${(Math.abs(mod.value) * 100).toFixed(1)}%`; break;
-              case ModifierType.CAP_MAX: str += `${mod.value}^`; break;
+              case ModifierType.CAP_MAX: str += `${mod.value.toFixed(0)}^`; break;
               case ModifierType.ADD: str += `${mod.value >= 0 ? "+" : "-"}${Math.abs(Math.round(100 * mod.value) / 100)}`; break;
+              case ModifierType.ADD_AFTER: str += `${Math.abs(Math.round(100 * mod.value) / 100)}${mod.value >= 0 ? "+" : "-"}`; break;
             }
             str += `** ${capitalize(mod.stat.replaceAll(/_/g, " "))}\n`;
           }

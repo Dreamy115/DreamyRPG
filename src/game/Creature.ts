@@ -1150,11 +1150,11 @@ export default class Creature {
   static readonly ATTACK_MAX_STACKS = 12;
   static readonly ATTACK_STACK_DIE_SIZE = 6;
 
-  static readonly MIN_HAND_AMOUNT = 4;
+  static readonly MIN_HAND_AMOUNT = 3;
   static readonly MAX_HAND_AMOUNT = 6;
 
   static readonly ATTACK_VALUES = [
-    undefined, null, null, null, null, null, DamageCause.Weak_Attack,
+    undefined, null, null, null, null, null, DamageCause.Normal_Attack,
     DamageCause.Weak_Attack, DamageCause.Weak_Attack, DamageCause.Weak_Attack, DamageCause.Normal_Attack, DamageCause.Normal_Attack, DamageCause.Critical_Attack
   ]
 

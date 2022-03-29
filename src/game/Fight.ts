@@ -47,6 +47,7 @@ export class Fight {
   }
 
   async prepare(db: typeof Mongoose) {
+    const saving: Promise<any>[] = [];
     for (var p = 0; p < this.$.parties.length; p++) {
       const party = this.$.parties[p];
       
@@ -65,10 +66,12 @@ export class Fight {
         creature.$.vitals.mana = 0;
         creature.$.abilities.hand = [];
         creature.$.abilities.stacks = 0;
+        creature.reshuffleAbilityDeck();
 
-        creature.put(db);
+        saving.push(creature.put(db));
       }
     }
+    return Promise.all(saving);
   }
 
   async constructQueue(db: typeof Mongoose) {

@@ -390,7 +390,11 @@ export default new ComponentCommandHandler(
             const targets: Creature[] = []
             for (const tid of target_ids) {
               if (target_choices.findIndex((v) => v.value === tid) !== -1) {
-                targets.push(await Creature.fetch(tid, db))
+                if (tid === creature.id) {
+                  targets.push(creature);
+                } else {
+                  targets.push(await Creature.fetch(tid, db))
+                }
               } else {
                 interaction.followUp({
                   ephemeral: true,
@@ -551,7 +555,11 @@ export default new ComponentCommandHandler(
             const targets: Creature[] = []
             for (const tid of target_ids) {
               if (target_choices.findIndex((v) => v.value === tid) !== -1) {
-                targets.push(await Creature.fetch(tid, db))
+                if (tid === creature.id) {
+                  targets.push(creature);
+                } else {
+                  targets.push(await Creature.fetch(tid, db))
+                }
               } else {
                 interaction.followUp({
                   ephemeral: true,

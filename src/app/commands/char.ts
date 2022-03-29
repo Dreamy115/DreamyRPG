@@ -1037,7 +1037,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
               case DisplaySeverity.ROMAN: return romanNumeral(effect.severity);
             }
           }()}`,
-          `*${replaceEffectLore(effectData.$.info.lore, effectData.$.info.replacers, effect)}*\n\n${effect.ticks === -1 ? "**Cannot Expire**" : `for **${effect.ticks}** Ticks`} (\`${effect.id}\`)\n` +
+          `*${replaceEffectLore(effectData.$.info.lore, effectData.$.info.replacers, effect, true)}*\n\n${effect.ticks === -1 ? "**Cannot Expire**" : `for **${effect.ticks}** Ticks`} (\`${effect.id}\`)\n` +
           `\n${passivesDescriptor(Array.from(effectData.$.passives ?? []), false, creature)}`
         )
 

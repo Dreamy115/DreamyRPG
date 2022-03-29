@@ -73,18 +73,18 @@ export interface EffectLoreReplacer {
   multiply: number
 }
 
-export function replaceEffectLore(input: string, replacers: EffectLoreReplacer[], {ticks, severity}: {ticks: number, severity: number}) {
+export function replaceEffectLore(input: string, replacers: EffectLoreReplacer[], {ticks, severity}: {ticks: number, severity: number}, format = false) {
   var str = input;
 
   for (const r in replacers) {
     const rep = replacers[r];
-    str = str.replaceAll(`{${r}}`, String(Number(function() {
+    str = str.replaceAll(`{${r}}`, `${format ? "**": ""}${Number(function() {
       switch (rep.type) {
         default: return 0;
         case "ticks": return ticks;
         case "severity": return severity;
       }
-    }()) * rep.multiply));
+    }() * rep.multiply)}${format ? "**": ""}`);
   }
 
   return str;

@@ -862,15 +862,26 @@ function getAccuracyMod(self: Combatant, combatant: Combatant) {
     case CombatPosition["No Position"]:
     default: return 1;
     case CombatPosition.Frontline: {
-      return 1;
+      switch (self.position) {
+        case CombatPosition.Frontline: return FRONTLINE_TO_FRONTLINE_MOD;
+        case CombatPosition["No Position"]: return ELSE_TO_FRONTLINE_MOD;
+        case CombatPosition.Support: return SUPPORT_TO_FRONTLINE_MOD;
+      }
     }
     case CombatPosition.Support: {
-      return self?.position === CombatPosition.Frontline
-      ? FRONTLINE_TO_SUPPORT_MOD
-      : ELSE_TO_SUPPORT_MOD
+      switch (self.position) {
+        case CombatPosition.Frontline: return FRONTLINE_TO_SUPPORT_MOD;
+        case CombatPosition["No Position"]: return ELSE_TO_SUPPORT_MOD;
+        case CombatPosition.Support: return SUPPORT_TO_SUPPORT_MOD;
+      }
     }
   }
 }
 
-export const FRONTLINE_TO_SUPPORT_MOD = 0.125;
+export const FRONTLINE_TO_SUPPORT_MOD = 0.15;
+export const SUPPORT_TO_SUPPORT_MOD = 0.65;
+export const SUPPORT_TO_FRONTLINE_MOD = 0.9;
+export const FRONTLINE_TO_FRONTLINE_MOD = 1.1;
+
 export const ELSE_TO_SUPPORT_MOD = 0.5;
+export const ELSE_TO_FRONTLINE_MOD = 1;

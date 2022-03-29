@@ -166,7 +166,6 @@ export default new ComponentCommandHandler(
               return;
             }
 
-            creature.wipeItems();
             let dump = creature.dump();
             (dump.info as Exclude<CreatureDump["info"], undefined>).species = interaction.values[0];
 

@@ -420,6 +420,7 @@ export default new ComponentCommandHandler(
             }
 
             try {
+              await ability.$.test(creature);
               const uselog = await ability.$.use(creature, targets, accuracy_mods);
               creature.$.vitals.mana -= ability.$.cost;
               creature.$.abilities.hand.splice(creature.$.abilities.hand.findIndex((v) => v === ability.$.id), 1);
@@ -593,6 +594,7 @@ export default new ComponentCommandHandler(
             }
 
             try {
+              await ability.$.test(creature);
               const uselog = await ability.$.use(creature, targets, accuracy_mods);
               creature.$.vitals.mana -= ability.$.cost;
               creature.$.abilities.hand.splice(creature.$.abilities.hand.findIndex((v) => v === ability.$.id), 1);

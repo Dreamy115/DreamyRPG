@@ -334,7 +334,11 @@ export class Fight {
                   label: `${ability.$.info.name} (${ability.$.cost} MP) []`,
                   emoji: (test instanceof Error ? "⚠️" : undefined),
                   value: ability.$.id,
-                  description: limitString(removeMarkdown(replaceLore(ability.$.info.lore, ability.$.info.lore_replacers)), 100)
+                  description: limitString(
+                    test instanceof Error
+                    ? test.message
+                    : removeMarkdown(replaceLore(ability.$.info.lore, ability.$.info.lore_replacers)),
+                  100)
                 })
                 continue;
               } else {
@@ -369,7 +373,11 @@ export class Fight {
                   label: `${ability.$.info.name} (${ability.$.cost} MP) []`,
                   emoji: (test instanceof Error ? "⚠️" : undefined),
                   value: ability.$.id,
-                  description: limitString(removeMarkdown(replaceLore(ability.$.info.lore, ability.$.info.lore_replacers)), 100)
+                  description: limitString(
+                    test instanceof Error
+                    ? test.message
+                    : removeMarkdown(replaceLore(ability.$.info.lore, ability.$.info.lore_replacers)),
+                  100)
                 })
                 continue;
 

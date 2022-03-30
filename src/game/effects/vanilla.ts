@@ -146,10 +146,10 @@ export default [
     display_severity: DisplaySeverity.ARABIC,
     info: {
       name: "Stressed",
-      lore: "This Creature is stressed and isn't at their peak performance.",
+      lore: "This Creature is stressed and isn't at their peak performance. Decreased **INT**, **PER**, and **CHA**",
       replacers: []
     },
-    conflicts_with: new Set(["intensity-optimal", "intensity-bored"]),
+    conflicts_with: new Set(["intensity-optimal", "intensity-bored", "intensity-nothing"]),
     preload: (creature, {severity}) => {
       let lerped = invLerp(severity, 75, 100);
 
@@ -173,10 +173,10 @@ export default [
     display_severity: DisplaySeverity.ARABIC,
     info: {
       name: "Adrenaline",
-      lore: "This Creature is experiencing optimal intensity.",
+      lore: "This Creature is experiencing optimal intensity. Increased **DEX**, **PER**, and **Initiative**",
       replacers: []
     },
-    conflicts_with: new Set(["intensity-bored", "intensity-stressed"]),
+    conflicts_with: new Set(["intensity-bored", "intensity-stressed", "intensity-nothing"]),
     preload: (creature, {severity}) => {
       creature.$.attributes.DEX.modifiers.push({
         type: ModifierType.ADD,
@@ -186,6 +186,10 @@ export default [
         type: ModifierType.MULTIPLY,
         value: 1
       });
+      creature.$.stats.initiative.modifiers.push({
+        type: ModifierType.MULTIPLY,
+        value: 1.2
+      });
     }
   }),
   new ActiveEffect({
@@ -194,10 +198,10 @@ export default [
     display_severity: DisplaySeverity.ARABIC,
     info: {
       name: "Not Warmed Up",
-      lore: "This Creature is not warmed up for a fight.",
+      lore: "This Creature is not warmed up for a fight. Reduced **Accuracy**, **Dodge**, and **Initiative**.",
       replacers: []
     },
-    conflicts_with: new Set(["intensity-optimal", "intensity-stressed"]),
+    conflicts_with: new Set(["intensity-optimal", "intensity-stressed", "intensity-nothing"]),
     preload: (creature, {severity}) => {
       let lerped = invLerp(severity, 0, 15);
 
@@ -218,5 +222,16 @@ export default [
         value: lerp(lerped, -3, -1)
       });
     }
+  }),
+  new ActiveEffect({
+    id: "intensity-nothing",
+    consecutive_limit: 1,
+    display_severity: DisplaySeverity.ARABIC,
+    info: {
+      name: "Intensity",
+      lore: "The intensity isn't currently affecting anything.",
+      replacers: []
+    },
+    conflicts_with: new Set(["intensity-bored", "intensity-stressed", "intensity-optimal"]),
   })
 ]

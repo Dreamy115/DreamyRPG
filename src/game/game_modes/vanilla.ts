@@ -68,9 +68,21 @@ export default [
               severity: intensity_percent,
               ticks: -1
             }, true);
-          } else if (intensity_percent <= 60 && intensity_percent >= 40) {
+          } else if (intensity_percent < 75 && intensity_percent > 65) {
+            creature.applyActiveEffect({
+              id: "intensity-nothing",
+              severity: intensity_percent,
+              ticks: -1
+            }, true);
+          } else if (intensity_percent <= 65 && intensity_percent >= 35) {
             creature.applyActiveEffect({
               id: "intensity-optimal",
+              severity: intensity_percent,
+              ticks: -1
+            }, true);
+          } else if (intensity_percent < 35 && intensity_percent > 15) {
+            creature.applyActiveEffect({
+              id: "intensity-nothing",
               severity: intensity_percent,
               ticks: -1
             }, true);

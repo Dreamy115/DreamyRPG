@@ -19,6 +19,15 @@ export default [
           lore: "Bundled DreamyRPG vanilla logic is acting upon this Creature"
         },
         hidden: true,
+        preload: (creature) => {
+          if (creature.active_effects.findIndex((v) => v.id === "death") !== -1) creature.$.status.alive = false;
+          
+          if (creature.$.vitals.health <= 0) creature.$.status.up = false;
+          if (!creature.alive) creature.$.status.up = false;
+
+          if (creature.active_effects.findIndex((v) => v.id === "suppressed") !== -1) creature.$.status.abilities = false;
+          if (creature.active_effects.findIndex((v) => v.id === "dazed") !== -1) creature.$.status.attacks = false;
+        },
         afterDamageTaken: (creature, log) => {
           if (log.final.attacker === "Low-Health Stress") return;
 
@@ -110,6 +119,19 @@ export default [
               severity: (creature.location?.$.rads ?? 0) - creature.$.stats.filtering.value
             }, true)
           }
+
+          if (creature.alive) {
+            creature.$.vitals.shield += creature.$.stats.shield_regen.value;
+            creature.$.vitals.mana += creature.$.stats.mana_regen.value;
+          }
+      
+          if (creature.deltaHeat >= 0) {
+            creature.$.vitals.heat += Math.round(Math.log2(creature.deltaHeat + 1));
+          } else{
+            creature.$.vitals.heat += Math.round(-Math.log2(-creature.deltaHeat + 1));
+          }
+      
+          creature.vitalsIntegrity();
         }
       })
     ])

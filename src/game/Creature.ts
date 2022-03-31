@@ -104,6 +104,12 @@ export default class Creature {
         hand: data.abilities?.hand ?? [],
         stacks: data.abilities?.stacks ?? 0
       },
+      status: {
+        abilities: true,
+        attacks: true,
+        up: true,
+        alive: true
+      },
       sim_message: data.sim_message ?? null,
       active_effects: data.active_effects ?? [],
       vars: data.vars ?? {}
@@ -503,14 +509,14 @@ export default class Creature {
   get passives(): PassiveEffect[] {
     const passives = new Set<PassiveEffect>();
 
-    const species = SpeciesManager.map.get(this.$.info.species);
-    if (species) {
-      globalOrLocalPusherSet(passives, species.$.passives ?? new Set(), PassivesManager);
-    }
-
     // GLOBAL from Directives
     for (const directive of GameDirective.enabled) {
       globalOrLocalPusherSet(passives, directive.$.passives ?? new Set(), PassivesManager);
+    }
+
+    const species = SpeciesManager.map.get(this.$.info.species);
+    if (species) {
+      globalOrLocalPusherSet(passives, species.$.passives ?? new Set(), PassivesManager);
     }
 
     for (const item of this.itemsData) {
@@ -910,28 +916,12 @@ export default class Creature {
     }
   }
 
-  tickVitals() {
-    if (this.alive) {
-      this.$.vitals.shield += this.$.stats.shield_regen.value;
-      this.$.vitals.mana += this.$.stats.mana_regen.value;
-    }
-
-    if (this.deltaHeat >= 0) {
-      this.$.vitals.heat += Math.round(Math.log2(this.deltaHeat + 1));
-    } else{
-      this.$.vitals.heat += Math.round(-Math.log2(-this.deltaHeat + 1));
-    }
-
-    this.vitalsIntegrity();
-  }
-
   tick() {
     for (const passive of this.passives) {
       passive.$.beforeTick?.(this);
     }
     
     this.tickEffects();
-    this.tickVitals();
       
     for (const passive of this.passives)
       passive.$.afterTick?.(this);
@@ -940,21 +930,20 @@ export default class Creature {
   get canUseAttacks(): boolean {
     if (!this.isAbleToFight) return false;
 
-    return (this.active_effects.findIndex((v) => v.id === "dazed") === -1);
+    return this.$.status.attacks;
   }
   get canUseAbilities(): boolean {
     if (!this.isAbleToFight) return false;
-
-    return (this.active_effects.findIndex((v) => v.id === "suppressed") === -1);
+    
+    return this.$.status.abilities;
   }
   get isAbleToFight(): boolean {
-    if (this.$.vitals.health <= 0) return false;
     if (!this.alive) return false;
 
-    return true;
+    return this.$.status.up;
   }
   get alive(): boolean {
-    return (this.active_effects.findIndex((v) => v.id === "death") === -1);
+    return this.$.status.alive;
   }
   async getFightID(db: typeof mongoose): Promise<string | null> {
     for await (const document of db.connection.collection(Fight.COLLECTION_NAME).find()) {
@@ -986,13 +975,13 @@ export default class Creature {
   get perks(): CreaturePerk[] {
     const perks = new Set<CreaturePerk>();
 
-    const race = SpeciesManager.map.get(this.$.info.species);
-    globalOrLocalPusherSet(perks, race?.$.perks ?? new Set(), PerkManager);
-
     // GLOBAL from Directives
     for (const directive of GameDirective.enabled) {
       globalOrLocalPusherSet(perks, directive.$.perks ?? new Set(), PerkManager);
     }
+
+    const race = SpeciesManager.map.get(this.$.info.species);
+    globalOrLocalPusherSet(perks, race?.$.perks ?? new Set(), PerkManager);
 
     for (const skill of this.skills) {
       globalOrLocalPusherSet(perks, skill.$.perks ?? new Set(), PerkManager);
@@ -1367,6 +1356,12 @@ export interface CreatureData {
     deck: string[]
     hand: string[]
     stacks: number
+  }
+  status: {
+    abilities: boolean
+    attacks: boolean
+    up: boolean
+    alive: boolean
   }
   sim_message: string | null
   active_effects: AppliedActiveEffect[]

@@ -72,6 +72,9 @@ export class PassiveEffect {
     onBust?: (creature: Creature) => void
     onAttack?: (creature: Creature, log: DamageLog) => void
     onAbility?: (creature: Creature, ability: CreatureAbility, ult: boolean) => void
+
+    beforeHeal?: (creature: Creature) => void
+    afterHeal?: (creature: Creature) => void
   }
 
   constructor(data: PassiveEffect["$"]) {

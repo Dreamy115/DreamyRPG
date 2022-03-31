@@ -748,6 +748,10 @@ export default class Creature {
   }
 
   heal(amount: number, type: HealType) {
+    for (const passive of this.passives) {
+      passive.$.beforeHeal?.(this);
+    }
+
     switch (type) {
       case HealType.Health: {
         this.$.vitals.health += amount;
@@ -771,6 +775,10 @@ export default class Creature {
     }
 
     this.vitalsIntegrity();
+
+    for (const passive of this.passives) {
+      passive.$.afterHeal?.(this);
+    }
   }
 
   get active_effects() {

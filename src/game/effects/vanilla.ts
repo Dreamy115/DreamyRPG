@@ -58,6 +58,9 @@ export default [
       name: "Suppressed",
       lore: "This Creature will not be able to use abilities until this expires",
       replacers: []
+    },
+    preload: (creature) => {
+      creature.$.status.abilities = false;
     }
   }),
   new ActiveEffect({
@@ -68,6 +71,9 @@ export default [
       name: "Dazed",
       lore: "This Creature will not be able to use attacks until this expires",
       replacers: []
+    },
+    preload: (creature) => {
+      creature.$.status.attacks = false;
     }
   }),
   new ActiveEffect({
@@ -78,6 +84,9 @@ export default [
       name: "Death",
       lore: "This Creature's story is over...",
       replacers: []
+    },
+    preload: (creature) => {
+      creature.$.status.alive = false;
     }
   }),
   new ActiveEffect({

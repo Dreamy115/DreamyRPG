@@ -131,7 +131,16 @@ export default new ComponentCommandHandler(
           else
             interaction.followUp({
               content: `**Party ${winning_party}** is victorious`
-            })
+            });
+
+          for (const cid of fight.creatures) {
+            const char = await Creature.fetch(cid, db).catch(() => null);
+            if (!char) continue;
+
+            for (const passive of char.passives)
+              await passive.$.onFightExit?.(char, fight);
+          }
+
           fight.delete(db);
           return;
         }
@@ -333,10 +342,11 @@ export default new ComponentCommandHandler(
           const embeds: MessageEmbed[] = []; 
           for (const log of logs) {
             embeds.push(damageLogEmbed(log));
-            for (const passive of creature.passives)
-              passive.$.onAttack?.(creature, log);
+            // @ts-expect-error WTF
+            for (const passive of creature.passives) {
+              await passive.$.onAttack?.(creature, log);
+            }
           }
-
 
           creature.$.abilities.stacks = 0;
 
@@ -356,6 +366,14 @@ export default new ComponentCommandHandler(
         }
       } break;
       case "ult": {
+        if (creature.$.abilities.stacks > 0) {
+          interaction.followUp({
+            ephemeral: true,
+            content: "Finish attacking first!"
+          });
+          return;
+        }
+
         if (interaction.isSelectMenu()) {
           const arg = args.shift();
           if (arg) {
@@ -431,7 +449,7 @@ export default new ComponentCommandHandler(
               }
 
               for (const passive of creature.passives)
-                passive.$.onAbility?.(creature, ability, true);
+                await passive.$.onAbility?.(creature, ability, true);
 
               await creature.put(db);
               for (const target of targets) {
@@ -524,6 +542,14 @@ export default new ComponentCommandHandler(
         }
       } break;
       case "ability": {
+        if (creature.$.abilities.stacks > 0) {
+          interaction.followUp({
+            ephemeral: true,
+            content: "Finish attacking first!"
+          });
+          return;
+        }
+
         if (!creature.canUseAbilities) {
           interaction.editReply({
             content: "You cannot use Abilities right now."
@@ -605,7 +631,7 @@ export default new ComponentCommandHandler(
               }
 
               for (const passive of creature.passives)
-                passive.$.onAbility?.(creature, ability, false);
+                await passive.$.onAbility?.(creature, ability, false);
 
               await creature.put(db);
               for (const target of targets) {
@@ -760,6 +786,14 @@ export default new ComponentCommandHandler(
         }
       } break;
       case "weapon_switch": {
+        if (creature.$.abilities.stacks > 0) {
+          interaction.followUp({
+            ephemeral: true,
+            content: "Finish attacking first!"
+          });
+          return;
+        }
+
         if (creature.$.vitals.mana < creature.combat_switch_cost) {
           interaction.followUp({
             ephemeral: true,
@@ -815,7 +849,7 @@ export default new ComponentCommandHandler(
             content: `**${creature.displayName}** switched weapons ${old ? `**${old.displayName}** -> ` : ""}**${item.displayName}**`
           })
           interaction.followUp(await fight.announceTurn(db, Bot));
-        } else if(interaction.isButton()) {
+        } else if (interaction.isButton()) {
           interaction.followUp({
             ephemeral: true,
             content: "Choose a weapon from your equipped slots!",

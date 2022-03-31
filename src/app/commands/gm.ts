@@ -488,6 +488,14 @@ export default new ApplicationCommandHandler(
               return;
             }
 
+            for (const cid of fight.creatures) {
+              const char = await Creature.fetch(cid, db).catch(() => null);
+              if (!char) continue;
+  
+              for (const passive of char.passives)
+                await passive.$.onFightExit?.(char, fight);
+            }
+
             await fight.delete(db);
             await interaction.editReply({
               content: "Deleted!"

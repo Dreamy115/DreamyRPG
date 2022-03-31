@@ -6,6 +6,7 @@ import { LoreReplacer } from "./LoreReplacer";
 import { DamageCause, DamageGroup, DamageLog, DamageMethod } from "./Damage";
 import { Modifier } from "./Stats";
 import { CreatureAbility } from "./CreatureAbilities";
+import { Fight } from "./Fight";
 
 export default class PassiveEffectManager {
   map = new Map<string, PassiveEffect>();
@@ -69,12 +70,14 @@ export class PassiveEffect {
     beforeTick?: (creature: Creature) => void
     afterTick?: (creature: Creature) => void
 
-    onBust?: (creature: Creature) => void
-    onAttack?: (creature: Creature, log: DamageLog) => void
-    onAbility?: (creature: Creature, ability: CreatureAbility, ult: boolean) => void
+    onBust?: (creature: Creature) => Promise<void> | void
+    onAttack?: (creature: Creature, log: DamageLog) => Promise<void> | void
+    onAbility?: (creature: Creature, ability: CreatureAbility, ult: boolean) => Promise<void> | void
 
     beforeHeal?: (creature: Creature) => void
     afterHeal?: (creature: Creature) => void
+
+    onFightExit?: (creature: Creature, fight: Fight) => Promise<void> | void
   }
 
   constructor(data: PassiveEffect["$"]) {

@@ -19,7 +19,7 @@ export default [
       }
   
       const member = await guild.members.fetch(interaction.user.id).catch(() => null);
-      console.log()
+
       if (!member || !member.roles.cache.has(CONFIG.guild?.gm_role ?? "")) {
         interaction.reply({
           ephemeral: true,

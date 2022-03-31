@@ -1260,7 +1260,7 @@ export default new ComponentCommandHandler(
                 if (!isNaN(Number(want)) && location.shop.$.content.length > Number(want))
                   cart.push(Math.abs(Number(want)))
               }
-              console.log(cart)
+
               for (const id of cart) {
                 const thing = location.shop.$.content[id];
                 if (!thing) {

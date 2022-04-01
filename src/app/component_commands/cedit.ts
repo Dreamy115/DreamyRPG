@@ -1,15 +1,17 @@
-import { ButtonInteraction, CommandInteraction, Message, MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu, MessageSelectOptionData } from "discord.js";
+import { ButtonInteraction, ColorResolvable, CommandInteraction, Message, MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu, MessageSelectOptionData } from "discord.js";
 import Mongoose from "mongoose";
 import { capitalize, clamp, CONFIG, invLerp, ItemManager, lerp, limitString, LootTables, messageInput, PerkManager, removeMarkdown, removeVowels, SchematicsManager, SkillManager, SpeciesManager } from "../..";
 import { CraftingMaterials, Material } from "../../game/Crafting";
 import Creature, { Attributes, CreatureDump, HealType } from "../../game/Creature";
 import { AbilityUseLog } from "../../game/CreatureAbilities";
 import { DamageCause, DamageGroup, damageLogEmbed, DamageMethod, DamageType, ShieldReaction } from "../../game/Damage";
-import { ConsumableItemData, createItem, DEFAULT_ITEM_OPT_STEP, EquippableInventoryItem, InventoryItem, Item, ItemQualityEmoji, SpecializedWearableData, WeaponItemData, WearableInventoryItem, WearableItemData } from "../../game/Items";
+import { ConsumableItemData, createItem, DEFAULT_ITEM_OPT_STEP, EquippableInventoryItem, InventoryItem, Item, ItemQualityColor, ItemQualityEmoji, SpecializedWearableData, WeaponItemData, WearableInventoryItem, WearableItemData } from "../../game/Items";
+import itemsWs from "../../game/items/items.ws";
 import { LootTable } from "../../game/LootTables";
+import { replaceLore } from "../../game/LoreReplacer";
 import { ItemStatModule, ModuleType } from "../../game/Modules";
 import { ModifierType, TrackableStat } from "../../game/Stats";
-import { infoEmbed } from "../commands/char";
+import { infoEmbed, tableDescriptor } from "../commands/char";
 import { namedModifierDescriptor, modifierDescirptor } from "../commands/handbook";
 import { ComponentCommandHandler } from "../component_commands";
 
@@ -586,7 +588,94 @@ export default new ComponentCommandHandler(
                   return;
                 } break;
                 case "use": {
-                  await consumeMenu(interaction, creature);
+                  const items = args.shift();
+                  if (items) {
+                    const logs: AbilityUseLog[] = [];
+                    const errors: [string, string][] = [];
+
+                    for (const i of items.split(";")) {
+                      const item = ItemManager.map.get(i);
+                      
+                      try {
+                        if (item?.$.type !== "consumable") throw new Error(`Item ${i} isn't consumable or doesn't exist`);
+
+                        const index = creature.$.items.backpack.findIndex((v) => v.id === item.$.id);
+                        if (index === -1) throw new Error("Creature doesn't have item " + item.$.id);
+                      
+                        const log = await item.$.onUse(creature);
+
+                        const table = LootTables.map.get(item.$.returnTable ?? "");
+
+                        if (table) {
+                          const returns = LootTable.generate(table.getHighestFromPerks(creature.perkIDs));
+                          creature.$.items.backpack.splice(index, 1, ...function() {
+                            const arr = [];
+
+                            for (const r of returns) {
+                              arr.push(createItem(r))
+                            }
+
+                            return arr;
+                          }());
+
+                          log.returns = [];
+                          for (const i of returns) {
+                            const item = ItemManager.map.get(i);
+                            if (item)
+                              returns.push(item.displayName);
+                          }
+                        } else {
+                          creature.$.items.backpack.splice(index, 1);
+                        }
+
+                        logs.push(log);
+                      } catch (e) {
+                        console.error(e);
+                        errors.push([item?.$.id ?? "unknown", (e as Error)?.message ?? e]);
+                      }
+                    }
+
+                    await interaction.editReply({
+                      content: "OK"
+                    });
+
+                    for (const log of logs) {
+                      await interaction.followUp({
+                        ephemeral: false,
+                        content: `${log.text}` + (
+                          log.returns
+                          ? `\n\nItem Returns: **${log.returns.join("**, **")}**`
+                          : ""
+                        ),
+                        embeds: (log.damageLogs?.length ?? 0 > 0) ? function () {
+                          const array: MessageEmbed[] = [];
+
+                          for (const dmglog of log.damageLogs ?? [])
+                            array.push(damageLogEmbed(dmglog));
+
+                          return array;
+                        }() : undefined
+                      })
+                    }
+
+                    if (errors.length > 0) 
+                      await interaction.followUp({
+                        ephemeral: true,
+                        content: `**${errors.length}** item(s) errored and have not been used:\n` + function () {
+                          var str = "";
+
+                          for (const e of errors) {
+                            str += `\`${e[0]}\` - ${e[1]}\n`
+                          }
+
+                          return str;
+                        }()
+                      })
+
+                    creature.put(db);
+                  } else {
+                    await consumeMenu(interaction, creature);
+                  }
                   return;
                 } break;
                 case "equip": {
@@ -733,9 +822,8 @@ export default new ComponentCommandHandler(
             } else if (interaction.isSelectMenu()) {
               switch (args.shift()) {
                 case "use": {
-                  const logs: AbilityUseLog[] = [];
-                  const errors: string[] = [];
-
+                  const embeds: MessageEmbed[] = [];
+                  const items: string[] = [];
                   for (const i of interaction.values) {
                     const item = ItemManager.map.get(i);
                     
@@ -745,69 +833,43 @@ export default new ComponentCommandHandler(
                       const index = creature.$.items.backpack.findIndex((v) => v.id === item.$.id);
                       if (index === -1) throw new Error("Creature doesn't have item " + item.$.id);
                     
-                      const log = await item.$.onUse(creature);
+                      items.push(item.$.id);
 
-                      const table = LootTables.map.get(item.$.returnTable ?? "");
-
-                      if (table) {
-                        const returns = LootTable.generate(table.getHighestFromPerks(creature.perkIDs));
-                        creature.$.items.backpack.splice(index, 1, ...function() {
-                          const arr = [];
-
-                          for (const r of returns) {
-                            arr.push(createItem(r))
-                          }
-
-                          return arr;
-                        }());
-
-                        log.returns = [];
-                        for (const i of returns) {
-                          const item = ItemManager.map.get(i);
-                          if (item)
-                            returns.push(item.displayName);
-                        }
-                      } else {
-                        creature.$.items.backpack.splice(index, 1);
+                      const embed = new MessageEmbed()
+                        .setColor(ItemQualityColor[item.$.info.quality] as ColorResolvable)
+                        .setTitle(item.$.info.name)
+                        .setDescription(replaceLore(item.$.info.lore, item.$.info.replacers, creature))
+                      
+                      if (item.$.returnTable) {
+                        const table = LootTables.map.get(item.$.returnTable);
+                        if (table) 
+                          embed.addField(
+                            "Returns",
+                            tableDescriptor(table, creature.perkIDs)
+                          );
                       }
 
-                      logs.push(log);
+                      embeds.push(embed);
                     } catch (e) {
                       console.error(e);
-                      errors.push(item?.$.id ?? "unknown");
+                      continue;
                     }
                   }
 
-                  await interaction.editReply({
-                    content: "OK"
-                  });
+                  interaction.followUp({
+                    ephemeral: true,
+                    content: "Use Items",
+                    embeds,
+                    components: [
+                      new MessageActionRow().setComponents([
+                        new MessageButton()
+                          .setCustomId(`cedit/${creature?.$._id}/edit/item/use/${items.join(";")}`)
+                          .setLabel("Confirm")
+                          .setStyle("SUCCESS")
+                      ])
+                    ]
+                  })
 
-                  for (const log of logs) {
-                    await interaction.followUp({
-                      ephemeral: false,
-                      content: `${log.text}` + (
-                        log.returns
-                        ? `\n\nItem Returns: **${log.returns.join("**, **")}**`
-                        : ""
-                      ),
-                      embeds: (log.damageLogs?.length ?? 0 > 0) ? function () {
-                        const array: MessageEmbed[] = [];
-
-                        for (const dmglog of log.damageLogs ?? [])
-                          array.push(damageLogEmbed(dmglog));
-
-                        return array;
-                      }() : undefined
-                    })
-                  }
-
-                  if (errors.length > 0) 
-                    await interaction.followUp({
-                      ephemeral: true,
-                      content: `**${errors.length}** item(s) errored and have not been used: **${errors.join("**, **")}**`
-                    })
-
-                  creature.put(db);
                   return;
                 } break;
                 case "scrap": {
@@ -1553,7 +1615,7 @@ export function backpackItemComponents(items: MessageSelectOptionData[], goto: s
           .setCustomId(goto)
           .setOptions(subitems)
           .setMinValues(1)
-          .setMaxValues(subitems.length)
+          .setMaxValues(Math.min(5, subitems.length))
       ])
     )
     if (array.length >= 5) break;

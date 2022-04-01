@@ -456,7 +456,7 @@ export default new ApplicationCommandHandler(
 
               for (const r in item.$.info.replacers) {
                 const rep = item.$.info.replacers[r];
-                str = str.replaceAll(`{${r}}`, `**${rep.multiply}** x **${capitalize(rep.type)}**`);
+                str = str.replaceAll(`{${r}}`, `**${rep.multiplier}** x **${capitalize(rep.stat)}**`);
               }
 
               return str;

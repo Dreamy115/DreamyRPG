@@ -15,8 +15,8 @@ export default [
       lore: "Receive {0} **Direct True Damage** on **Health**",
       replacers: [
         {
-          type: "severity",
-          multiply: 1
+          stat: "severity",
+          multiplier: 1
         }
       ]
     },
@@ -132,8 +132,8 @@ export default [
       lore: "Your air filter is not enough. Chemical Burns: **{0}%** Health True Damage every tick.",
       replacers: [
         {
-          multiply: 3,
-          type: "severity"
+          multiplier: 3,
+          stat: "severity"
         }
       ]
     },

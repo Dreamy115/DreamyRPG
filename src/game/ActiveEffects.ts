@@ -1,7 +1,9 @@
 import fs from "fs";
 import path from "path";
+import { capitalize } from "..";
 
-import Creature, { CreatureData } from "./Creature";
+import Creature, { Attributes, CreatureData, Stats } from "./Creature";
+import { replaceLore } from "./LoreReplacer";
 import { PassiveEffect } from "./PassiveEffects";
 
 export default class ActiveEffectManager {
@@ -91,22 +93,35 @@ export enum EffectTypeEmoji {
 }
 
 export interface EffectLoreReplacer {
-  type: "severity" | "ticks"
-  multiply: number
+  stat: "severity" | "ticks" | Stats | Attributes
+  multiplier: number
+  bonus?: number
 }
 
-export function replaceEffectLore(input: string, replacers: EffectLoreReplacer[], {ticks, severity}: {ticks: number, severity: number}, format = false) {
+export function replaceEffectLore(input: string, replacers: EffectLoreReplacer[], {ticks, severity}: {ticks: number, severity: number}, creature?: Creature, format = false) {
   var str = input;
 
   for (const r in replacers) {
-    const rep = replacers[r];
-    str = str.replaceAll(`{${r}}`, `${format ? "**": ""}${Number(function() {
-      switch (rep.type) {
-        default: return 0;
-        case "ticks": return ticks;
-        case "severity": return severity;
-      }
-    }() * rep.multiply)}${format ? "**": ""}`);
+    const replacer = replacers[r];
+    if (replacer.stat === "severity" || replacer.stat === "ticks") {
+      str = str.replaceAll(`{${r}}`, `${format ? "**": ""}${(replacer.bonus ?? 0) + Number(function() {
+        switch (replacer.stat) {
+          default: return 0;
+          case "ticks": return ticks;
+          case "severity": return severity;
+        }
+      }() * replacer.multiplier)}${format ? "**": ""}`)
+    } else {
+      str = str.replaceAll(
+        `{${r}}`,
+        `**${replacer.multiplier !== 1 ? `${(100 * replacer.multiplier).toFixed(1)}% ` : ""}${replacer.bonus ? ((replacer.bonus > 0 ? "+" : "-") + Math.abs(replacer.bonus)) : ""} ${capitalize(replacer.stat.replaceAll(/_/g, " "))}**` +
+        (
+          creature
+            ? ` (**${(((creature.$.stats[replacer.stat as Stats] ?? creature.$.attributes[replacer.stat as Attributes])?.value * replacer.multiplier) + (replacer.bonus ?? 0)).toFixed(1)}**)`
+            : ""
+        )
+      );
+    }
   }
 
   return str;

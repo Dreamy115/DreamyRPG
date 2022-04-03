@@ -1031,7 +1031,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
 
         (effectData.$.hide?.(creature, effect) ? gm_embed : embed).addField(
           `<${i+1}> ${effectData.getDisplayName(effect)}`,
-          `*${replaceEffectLore(effectData.$.info.lore, effectData.$.info.replacers, effect, true)}*\n\n${effect.ticks === -1 ? "**Cannot Expire**" : `for **${effect.ticks}** Ticks`} (\`${effect.id}\`)\n` +
+          `*${replaceEffectLore(effectData.$.info.lore, effectData.$.info.replacers, effect, creature, true)}*\n\n${effect.ticks === -1 ? "**Cannot Expire**" : `for **${effect.ticks}** Ticks`} (\`${effect.id}\`)\n` +
           `\n${passivesDescriptor(Array.from(effectData.$.passives ?? []), false, creature)}`
         )
 

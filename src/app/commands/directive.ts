@@ -84,14 +84,7 @@ export default new ApplicationCommandHandler({
               const effect_data = EffectManager.map.get(active_effect.id);
               if (!effect_data) continue;
 
-              str += `\`${effect_data.$.id}\` **${effect_data.$.info.name}${function(){
-                switch (effect_data.$.display_severity) {
-                  case DisplaySeverity.NONE:
-                  default: return "";
-                  case DisplaySeverity.ARABIC: return " " + active_effect.severity;
-                  case DisplaySeverity.ROMAN: return " " + romanNumeral(active_effect.severity);
-                }
-              }()}**\n`;
+              str += `\`${effect_data.$.id}\` **${effect_data.getDisplayName()}**\n`;
             }
 
             return str;

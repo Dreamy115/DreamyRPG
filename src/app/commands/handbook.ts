@@ -229,9 +229,9 @@ export default new ApplicationCommandHandler(
           const item = _item as Item;
 
           // @ts-ignore
-          if (!_item.$.hidden || IS_GM)
+          if (!_item.$.hide?.() || IS_GM)
             // @ts-ignore
-            embed.description += `${_item.$.hidden ? "🔒 " : ""}\`${item.$.id}\` ${item.$?.info.quality !== undefined ? `${ItemQualityEmoji[item.$?.info.quality]} `: ""}**${item.$?.info.name}**${item.$?.type ? ` (${capitalize(item.$?.type)})` : "" }\n`
+            embed.description += `${_item.$.hide?.() ? "🔒 " : ""}\`${item.$.id}\` ${item.$?.info.quality !== undefined ? `${ItemQualityEmoji[item.$?.info.quality]} `: ""}**${item.$?.info.name}**${item.$?.type ? ` (${capitalize(item.$?.type)})` : "" }\n`
         }
       } break;
       case "item": {
@@ -245,7 +245,7 @@ export default new ApplicationCommandHandler(
         }
 
         // @ts-ignore
-        if (item.$.hidden && !IS_GM) {
+        if (item.$.hide?.() && !IS_GM) {
           interaction.editReply({
             content:
               "This item is hidden from Players. You cannot access full info."
@@ -344,14 +344,7 @@ export default new ApplicationCommandHandler(
                     const effect_data = EffectManager.map.get(active_effect.id);
                     if (!effect_data) continue;
     
-                    str += `\`${effect_data.$.id}\` **${effect_data.$.info.name}${function(){
-                      switch (effect_data.$.display_severity) {
-                        case DisplaySeverity.NONE:
-                        default: return "";
-                        case DisplaySeverity.ARABIC: return " " + active_effect.severity;
-                        case DisplaySeverity.ROMAN: return " " + romanNumeral(active_effect.severity);
-                      }
-                    }()}**\n`;
+                    str += `\`${effect_data.$.id}\` **${effect_data.getDisplayName(active_effect)}**\n`;
                   }
     
                   return str;
@@ -576,14 +569,7 @@ export default new ApplicationCommandHandler(
                     const effect_data = EffectManager.map.get(active_effect.id);
                     if (!effect_data) continue;
     
-                    str += `\`${effect_data.$.id}\` **${effect_data.$.info.name}${function(){
-                      switch (effect_data.$.display_severity) {
-                        case DisplaySeverity.NONE:
-                        default: return "";
-                        case DisplaySeverity.ARABIC: return " " + active_effect.severity;
-                        case DisplaySeverity.ROMAN: return " " + romanNumeral(active_effect.severity);
-                      }
-                    }()}**\n`;
+                    str += `\`${effect_data.$.id}\` **${effect_data.getDisplayName(active_effect)}**\n`;
                   }
     
                   return str;
@@ -669,22 +655,22 @@ export function passivesDescriptor(passives: (string | PassiveEffect)[], show_hi
   if (passives.length > 0) {
     for (const p of passives) {
       const passive = typeof p === "string" ? PassivesManager.map.get(p) : p;
-      if (!passive || (passive.$.hidden && !show_hidden)) continue;
+      if (!passive || (passive.$.hide?.(creature) && !show_hidden)) continue;
 
-      str += `${typeof p === "string" ? `<\`${passive.$.id}\`>` : "[`local`]"}${passive.$.hidden ? " 🔒" : ""} **${passive.$.info.name}**\n*${replaceLore(passive.$.info.lore, passive.$.info.replacers ?? [], creature)}*\n${(passive.$.unique ?? new Set()).size > 0 ? `Unique flags: ${Array.from(passive.$.unique ?? []).join(", ")}\n` : ""}\n${(passive.$.modifiers ?? []).length > 0 ? `**Modifiers**\n${modifiersDescriptor(passive.$.modifiers ?? [])}` : ""}\n\n`;
+      str += `${typeof p === "string" ? `<\`${passive.$.id}\`>` : "[`local`]"}${passive.$.hide?.(creature) ? " 🔒" : ""} **${passive.$.info.name}**\n*${replaceLore(passive.$.info.lore, passive.$.info.replacers ?? [], creature)}*\n${(passive.$.unique ?? new Set()).size > 0 ? `Unique flags: ${Array.from(passive.$.unique ?? []).join(", ")}\n` : ""}\n${(passive.$.modifiers ?? []).length > 0 ? `**Modifiers**\n${modifiersDescriptor(passive.$.modifiers ?? [])}` : ""}\n\n`;
     }
     str += "\n";
   }
   return str;
 }
-export function perksDescriptor(perks: (string | CreaturePerk)[], show_hidden: boolean) {
+export function perksDescriptor(perks: (string | CreaturePerk)[], show_hidden: boolean, creature?: Creature) {
   var str = "";
   if (perks.length > 0) {
     for (const p of perks) {
       const perk = typeof p === "string" ? PerkManager.map.get(p) : p;
-      if (!perk || (perk.$.hidden && !show_hidden)) continue;
+      if (!perk || (perk.$.hide?.(creature) && !show_hidden)) continue;
 
-      str += `${typeof p === "string" ? `<\`${perk.$.id}\`>` : "[`local`]"}${perk.$.hidden ? " 🔒" : ""} **${perk.$.info.name}**\n*${perk.$.info.lore}*`;
+      str += `${typeof p === "string" ? `<\`${perk.$.id}\`>` : "[`local`]"}${perk.$.hide?.(creature) ? " 🔒" : ""} **${perk.$.info.name}**\n*${perk.$.info.lore}*`;
     }
     str += "\n"
   }

@@ -1,5 +1,5 @@
 import { clamp, invLerp, lerp } from "../..";
-import { ActiveEffect, DisplaySeverity } from "../ActiveEffects";
+import { ActiveEffect, DisplaySeverity, EffectType } from "../ActiveEffects";
 import Creature from "../Creature";
 import { DamageCause, DamageMethod, DamageType, ShieldReaction } from "../Damage";
 import { PassiveEffect } from "../PassiveEffects";
@@ -20,6 +20,7 @@ export default [
         }
       ]
     },
+    type: EffectType.Wound,
     onTick: (creature, {ticks, severity}) => {
       creature.applyDamage({
         cause: DamageCause.DoT,
@@ -48,7 +49,8 @@ export default [
         type: ModifierType.CAP_MAX,
         value: 0
       })
-    }
+    },
+    type: EffectType.Debuff
   }),
   new ActiveEffect({
     id: "suppressed",
@@ -61,7 +63,8 @@ export default [
     },
     preload: (creature) => {
       creature.$.status.abilities = false;
-    }
+    },
+    type: EffectType.Debuff
   }),
   new ActiveEffect({
     id: "dazed",
@@ -74,7 +77,8 @@ export default [
     },
     preload: (creature) => {
       creature.$.status.attacks = false;
-    }
+    },
+    type: EffectType.Debuff
   }),
   new ActiveEffect({
     id: "death",
@@ -87,7 +91,8 @@ export default [
     },
     preload: (creature) => {
       creature.$.status.alive = false;
-    }
+    },
+    type: EffectType.Other
   }),
   new ActiveEffect({
     id: "hypothermia",
@@ -121,7 +126,8 @@ export default [
         useDodge: false,
         attacker: "Hypothermia",
       })
-    }
+    },
+    type: EffectType.Wound
   }),
   new ActiveEffect({
     id: "filter_fail",
@@ -129,7 +135,7 @@ export default [
     display_severity: DisplaySeverity.ROMAN,
     info: {
       name: "Failing Filters",
-      lore: "Your air filter is not enough. Chemical Burns: **{0}%** Health True Damage every tick.",
+      lore: "Your air filter is not enough. Chemical Burns: {0}% Health True Damage every tick.",
       replacers: [
         {
           multiply: 3,
@@ -147,7 +153,8 @@ export default [
         useDodge: false,
         attacker: "Chemical Burns",
       })
-    }
+    },
+    type: EffectType.Wound
   }),
   new ActiveEffect({
     id: "intensity-stressed",
@@ -174,7 +181,8 @@ export default [
         type: ModifierType.ADD,
         value: -lerp(lerped, 6, 1)
       });
-    }
+    },
+    type: EffectType.Debuff
   }),
   new ActiveEffect({
     id: "intensity-optimal",
@@ -199,7 +207,8 @@ export default [
         type: ModifierType.MULTIPLY,
         value: 1.2
       });
-    }
+    },
+    type: EffectType.Buff
   }),
   new ActiveEffect({
     id: "intensity-bored",
@@ -230,7 +239,8 @@ export default [
         type: ModifierType.ADD,
         value: lerp(lerped, -3, -1)
       });
-    }
+    },
+    type: EffectType.Debuff
   }),
   new ActiveEffect({
     id: "intensity-nothing",
@@ -242,5 +252,6 @@ export default [
       replacers: []
     },
     conflicts_with: new Set(["intensity-bored", "intensity-stressed", "intensity-optimal"]),
+    type: EffectType.Other
   })
 ]

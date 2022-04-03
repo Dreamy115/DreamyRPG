@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import Creature from "./Creature";
 import { PassiveEffect } from "./PassiveEffects";
 import { CreaturePerk } from "./Perks";
 
@@ -35,7 +36,7 @@ export class CreatureSkill {
       name: string
       lore: string
     }
-    hidden?: boolean
+    hide?: (creature?: Creature) => boolean
     compatibleSpecies?: Set<string>
     passives?: Set<(string | PassiveEffect)>
     abilities?: Set<string>

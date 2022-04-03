@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import Creature from "./Creature";
 
 export default class CreaturePerkManager {
   map = new Map<string, CreaturePerk>();
@@ -33,7 +34,7 @@ export class CreaturePerk {
       name: string
       lore: string
     }
-    hidden?: boolean
+    hide?: (creature?: Creature) => boolean
     compatibleSpecies?: Set<string>
   }
 

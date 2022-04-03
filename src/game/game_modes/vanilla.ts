@@ -18,7 +18,7 @@ export default [
           name: "Vanilla Logic",
           lore: "Bundled DreamyRPG vanilla logic is acting upon this Creature"
         },
-        hidden: true,
+        hide: () => true,
         preload: (creature) => {
           if (creature.active_effects.findIndex((v) => v.id === "death") !== -1) creature.$.status.alive = false;
 

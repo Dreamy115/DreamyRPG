@@ -54,7 +54,7 @@ export class PassiveEffect {
       lore: string
       replacers?: LoreReplacer[]
     }
-    hidden?: boolean
+    hide?: (creature?: Creature) => boolean
     unique?: Set<string>
     // preload is called while parsing, BEFORE vitals are loaded.
     preload?: (creature: Creature) => void

@@ -226,15 +226,9 @@ export class Fight {
             const arr: string[] = [];
             for (const active of char.active_effects) {
               const effect = EffectManager.map.get(active.id);
-              if (!effect || effect.$.hidden) continue;
+              if (!effect || effect.$.hide?.(char)) continue;
 
-              arr.push(`${effect.$.info.name} ${
-                effect.$.display_severity === DisplaySeverity.ARABIC
-                ? active.severity
-                : effect.$.display_severity === DisplaySeverity.ROMAN
-                  ? romanNumeral(active.severity)
-                  : ""
-              }**${active.ticks !== -1 ? ` *(${active.ticks}t)*` : ""}`.trim())
+              arr.push(`${effect.getDisplayName(active)} **${active.ticks !== -1 ? ` *(${active.ticks}t)*` : ""}`.trim())
             }
             if (arr.length > 0)
               return `**${arr.join(", **")}`

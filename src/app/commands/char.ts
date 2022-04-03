@@ -838,10 +838,10 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
       for (var i = index * PER_INDEX_PAGE; i < passives.length && i < PER_INDEX_PAGE * (index + 1); i++) {
         const passive = passives[i];
 
-        if (passive.$.hidden)
+        if (passive.$.hide?.(creature))
           embed.addField(`<${i+1}>`, "🔒");
 
-        (passive.$.hidden ? gm_embed : embed).addField(
+        (passive.$.hide?.(creature) ? gm_embed : embed).addField(
           `<${i+1}> ${passive.$.info.name}`,
           function() {
             var str = `*${replaceLore(passive.$.info.lore, passive.$.info.replacers ?? [], creature)}*`;
@@ -1026,17 +1026,11 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
         const effectData = EffectManager.map.get(effect.id);
         if (!effectData) continue;
     
-        if (effectData.$.hidden)
+        if (effectData.$.hide?.(creature))
           embed.addField(`<${i+1}>`, "🔒");
 
-        (effectData.$.hidden ? gm_embed : embed).addField(
-          `<${i+1}> ${effectData.$.info.name} ${function() {
-            switch (effectData.$.display_severity) {
-              default: return "";
-              case DisplaySeverity.ARABIC: return String(effect.severity);
-              case DisplaySeverity.ROMAN: return romanNumeral(effect.severity);
-            }
-          }()}`,
+        (effectData.$.hide?.(creature, effect) ? gm_embed : embed).addField(
+          `<${i+1}> ${effectData.getDisplayName(effect)}`,
           `*${replaceEffectLore(effectData.$.info.lore, effectData.$.info.replacers, effect, true)}*\n\n${effect.ticks === -1 ? "**Cannot Expire**" : `for **${effect.ticks}** Ticks`} (\`${effect.id}\`)\n` +
           `\n${passivesDescriptor(Array.from(effectData.$.passives ?? []), false, creature)}`
         )
@@ -1049,7 +1043,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
           }
           const p = _p as PassiveEffect;
 
-          if (p.$.hidden)
+          if (p.$.hide?.(creature))
             _hidden.push(p);
         }
 
@@ -1179,10 +1173,10 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
       for (var i = index * PER_INDEX_PAGE; i < perks.length && i < PER_INDEX_PAGE * (index + 1); i++) {
         const perk = perks[i];
 
-        if (perk.$.hidden)
+        if (perk.$.hide?.(creature))
           embed.addField(`<${i+1}>`, "🔒");
 
-        (perk.$.hidden ? gm_embed : embed).addField(
+        (perk.$.hide?.(creature) ? gm_embed : embed).addField(
           `<${i+1}> ${perk.$.id ? `\`${perk.$.id}\`` : ""} **${perk.$.info.name}**`,
           `${perk.$.info.lore}`
         )
@@ -1263,10 +1257,10 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
           }()}`
         }
 
-        if (skill.$.hidden)
+        if (skill.$.hide?.(creature))
           embed.addField(`<${i+1}>`, "🔒");
 
-        (skill.$.hidden ? gm_embed : embed).addField(
+        (skill.$.hide?.(creature) ? gm_embed : embed).addField(
           `<${i+1}> \`${skill.$.id}\` **${skill.$.info.name}**`,
           `*${skill.$.info.lore}*\n\n${str}` 
         )
@@ -1320,14 +1314,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
                 const effect_data = EffectManager.map.get(active_effect.id);
                 if (!effect_data) continue;
 
-                str += `<**${a}**> \`${effect_data.$.id}\` **${effect_data.$.info.name}${function(){
-                  switch (effect_data.$.display_severity) {
-                    case DisplaySeverity.NONE:
-                    default: return "";
-                    case DisplaySeverity.ARABIC: return " " + active_effect.severity;
-                    case DisplaySeverity.ROMAN: return " " + romanNumeral(active_effect.severity);
-                  }
-                }()}**\n`;
+                str += `<**${a}**> \`${effect_data.$.id}\` **${effect_data.getDisplayName(active_effect)}**\n`;
               }
 
               return str;

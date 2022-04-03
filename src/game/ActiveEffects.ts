@@ -37,7 +37,8 @@ export class ActiveEffect {
       lore: string
       replacers: EffectLoreReplacer[]
     }
-    hidden?: boolean
+    type: EffectType
+    hide?: (creature?: Creature, active?: AppliedActiveEffect) => boolean
     display_severity?: DisplaySeverity
     passives?: Set<PassiveEffect | string>
     consecutive_limit: number
@@ -48,6 +49,18 @@ export class ActiveEffect {
     onDelete?: (creature: Creature, {ticks, severity}: AppliedActiveEffect) => void
     preload?: (creature: Creature, {ticks, severity}: AppliedActiveEffect) => void
     postload?: (creature: Creature, {ticks, severity}: AppliedActiveEffect) => void
+  }
+
+  getDisplayName(active?: Omit<Omit<AppliedActiveEffect, "ticks">, "id">) {
+    return `${EffectTypeEmoji[this.$.type]}${this.$.info.name}${
+      active && this.$.display_severity !== DisplaySeverity.NONE
+      ? " " + (
+        this.$.display_severity === DisplaySeverity.ROMAN
+        ? romanNumeral(active.severity)
+        : active.severity.toFixed(0)
+      )
+      : ""
+    }`
   }
 
   constructor(data: ActiveEffect["$"]) {
@@ -66,6 +79,15 @@ export enum DisplaySeverity {
 }
 export enum EffectStacking {
   "None", "Duration", "Severity", "Both"
+}
+
+export enum EffectType {
+  "Other" = -1,
+  "Buff", "Debuff", "Ability", "Wound"
+}
+export enum EffectTypeEmoji {
+  "" = -1,
+  "⏫", "🔽", "🔷", "🩸"
 }
 
 export interface EffectLoreReplacer {

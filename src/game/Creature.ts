@@ -489,6 +489,13 @@ export default class Creature {
       globalOrLocalPusherArray(abilities, Array.from((item.$ as Exclude<typeof item.$, GenericItemData | ConsumableItemData>).abilities?.values() ?? []), AbilitiesManager);
     }
 
+    for (const stored of this.$.items.backpack) {
+      const item = ItemManager.map.get(stored.id);
+      if (!item || item.$.type !== "consumable") continue;
+
+      globalOrLocalPusherArray(abilities, Array.from(item.$.abilities?.values() ?? []), AbilitiesManager);
+    }
+
     const uniques: string[] = [];
     for (var i = 0; i < abilities.length; i++) {
       const passive = abilities[i];

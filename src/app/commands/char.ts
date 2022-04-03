@@ -1406,7 +1406,7 @@ export function schematicDescriptor(item: Schematic, perks?: Set<string>) {
           const thing = ItemManager.map.get(i);
           if (!thing) continue;
 
-          str += `\`${thing.$.id}\` **${thing.$.info.name}**`;
+          str += `\`${thing.$.id}\` **${thing.displayName}**`;
         }
 
         return str;

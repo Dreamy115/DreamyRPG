@@ -137,7 +137,8 @@ export interface ConsumableItemData extends BaseItemData {
     replacers: LoreReplacer[],
     quality: ItemQuality
   }
-  onUse: (creature: Creature) => Promise<AbilityUseLog>
+  abilities?: Set<string>
+  onUse?: (creature: Creature) => Promise<AbilityUseLog>
   returnTable?: string
 }
 

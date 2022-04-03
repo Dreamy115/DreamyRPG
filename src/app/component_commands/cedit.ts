@@ -541,7 +541,7 @@ export default new ComponentCommandHandler(
           
                   try {
                     var e = recipe.check(creature);
-                    if (!e[0]) throw e[1];
+                    if (!e[0]) throw new Error(e[1]);
                   } catch (e: any) {
                     interaction.editReply({
                       content: `Your character doesn't meet the requirements:\n*${e?.message}*`
@@ -602,7 +602,8 @@ export default new ComponentCommandHandler(
                         const index = creature.$.items.backpack.findIndex((v) => v.id === item.$.id);
                         if (index === -1) throw new Error("Creature doesn't have item " + item.$.id);
                       
-                        const log = await item.$.onUse(creature);
+                        const log = await item.$.onUse?.(creature);
+                        if (log === undefined) throw new Error("This item cannot be used directly. It must be consumed via an Ability or other means.");
 
                         const table = LootTables.map.get(item.$.returnTable ?? "");
 
@@ -833,6 +834,9 @@ export default new ComponentCommandHandler(
                       const index = creature.$.items.backpack.findIndex((v) => v.id === item.$.id);
                       if (index === -1) throw new Error("Creature doesn't have item " + item.$.id);
                     
+                      if (!item.$.onUse)
+                        throw new Error("This item cannot be used directly. It must be consumed via an Ability or other means.");
+
                       items.push(item.$.id);
 
                       const embed = new MessageEmbed()
@@ -851,6 +855,12 @@ export default new ComponentCommandHandler(
 
                       embeds.push(embed);
                     } catch (e) {
+                      embeds.push(
+                        new MessageEmbed()
+                          .setColor("DARK_ORANGE")
+                          .setTitle(`⚠️ ${item?.$.info.name}`)
+                          .setDescription((e as Error)?.message)
+                      );
                       console.error(e);
                       continue;
                     }
@@ -1723,7 +1733,7 @@ export async function consumeMenu(interaction: ButtonInteraction | CommandIntera
 
     items.push({
       label: item.$.info.name,
-      emoji: ItemQualityEmoji[item.$.info.quality],
+      emoji: item.$.onUse ? ItemQualityEmoji[item.$.info.quality] : "⚠️",
       value: item.$.id ?? ""
     })
   }

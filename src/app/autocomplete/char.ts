@@ -1,7 +1,7 @@
 import { ApplicationCommandOptionChoice } from "discord.js";
 import Mongoose from "mongoose";
 import { capitalize, ItemManager, PerkManager, SchematicsManager } from "../..";
-import { CraftingMaterials, Material } from "../../game/Crafting";
+import { CraftingCheckError, CraftingMaterials, Material } from "../../game/Crafting";
 import Creature from "../../game/Creature";
 import { Item } from "../../game/Items";
 import { AutocompleteHandler } from "../autocomplete";
@@ -50,16 +50,20 @@ export default new AutocompleteHandler(
 
               let info: null | string = null;
 
+              let error: CraftingCheckError | -1 = -1;
               try {
                 var e = recipe.check(creature);
-                if (!e[0]) throw e[1];
+                if (!e[0]) {
+                  error = e[2];
+                  throw new Error(e[1]);
+                }
               } catch (e: any) {
                 info = `⚠️ [${e.message}] `;
               }
 
-              if (!(info && recipe.$.upgrade))
+              if (!(error === CraftingCheckError.Item && recipe.$.upgrade))
                 array.push({
-                  name: `${info}${recipe.$.info.name} (${recipe.$.id})`,
+                  name: `${info ?? ""}${recipe.$.info.name} (${recipe.$.id})`,
                   value: recipe.$.id
                 });
             }

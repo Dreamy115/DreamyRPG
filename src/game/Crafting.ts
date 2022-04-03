@@ -59,29 +59,29 @@ export class Schematic {
     // hides when "items" missing
     upgrade?: boolean
   }
-  check(creature: Creature): [true] | [false, string] {
+  check(creature: Creature): [true] | [false, string, CraftingCheckError] {
     if (!creature.schematics.has(this.$.id)) throw new Error("Not learned");
-    if (this.$.requirements.enhancedCrafting && !creature.location?.$.hasEnhancedCrafting) return [false, "Need Enhanced Crafting"];
+    if (this.$.requirements.enhancedCrafting && !creature.location?.$.hasEnhancedCrafting) return [false, "Need Enhanced Crafting", CraftingCheckError.Crafting];
       
     var perks = creature.perks;
     for (const p of this.$.requirements.perks ?? []) {
       const perk = PerkManager.map.get(p);
       if (!perk) continue;
 
-      if (!perks.find((v) => v.$.id === perk.$.id)) return [false, `Need ${perk.$.info.name} \`${perk.$.id}\` perk`];
+      if (!perks.find((v) => v.$.id === perk.$.id)) return [false, `Need ${perk.$.info.name} \`${perk.$.id}\` perk`, CraftingCheckError.Perk];
     }
     for (const mat in this.$.requirements.materials) {
       const material: number = this.$.requirements.materials[mat as Material];
 
       const diff = creature.$.items.crafting_materials[mat as Material] - material;
 
-      if (diff < 0) return [false, `Need ${-diff} ${capitalize(mat)}`];
+      if (diff < 0) return [false, `Need ${-diff} ${capitalize(mat)}`, CraftingCheckError.Material];
     }
     for (const i of this.$.requirements.items ?? []) {
       const item = ItemManager.map.get(i);
       if (!item) continue;
 
-      if (!creature.$.items.backpack.find(v => v.id === item.$.id)) return [false, `Need ${item.$.info.name} (${item.$.id})`];
+      if (!creature.$.items.backpack.find(v => v.id === item.$.id)) return [false, `Need ${item.$.info.name} (${item.$.id})`, CraftingCheckError.Item];
     }
     return [true];
   }
@@ -93,6 +93,10 @@ export class Schematic {
   get displayName() {
     return `${ItemQualityEmoji[this.$.info.quality]} ${this.$.info.name}`;
   }
+}
+
+export enum CraftingCheckError {
+  "Crafting", "Material", "Item", "Perk"
 }
 
 export class CraftingMaterials {

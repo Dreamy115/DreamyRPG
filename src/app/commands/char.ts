@@ -2,7 +2,7 @@ import { ApplicationCommandOptionChoice, Client, EmbedFieldData, Invite, Message
 import { DisplaySeverity, replaceEffectLore, romanNumeral } from "../../game/ActiveEffects.js";
 import { Material, Schematic } from "../../game/Crafting.js";
 import Creature, { Attributes, diceRoll, Stats } from "../../game/Creature.js";
-import { CreatureAbility } from "../../game/CreatureAbilities.js";
+import { AbilityType, CreatureAbility } from "../../game/CreatureAbilities.js";
 import { replaceLore } from "../../game/LoreReplacer";
 import { reductionMultiplier, DAMAGE_TO_INJURY_RATIO, DamageMethod, DamageType } from "../../game/Damage.js";
 import { CombatPosition } from "../../game/Fight.js";
@@ -682,15 +682,15 @@ export default new ApplicationCommandHandler(
 
         await interaction.followUp({
           ephemeral: false,
-          embeds: [info.embeds[0]],
+          embeds: info.embeds,
           components,
           files: info.attachments
         });
-        if (IS_GM && info.embeds[1].fields.length > 0 || info.embeds[1].description) 
+        if (IS_GM && info.gm_embeds[0].fields.length > 0 || info.gm_embeds[0].description) 
           interaction.followUp({
             ephemeral: true,
             content: "PSST! Gm Only info found!",
-            embeds: [info.embeds[1]]
+            embeds: info.gm_embeds
           })
       } break;
       case "editmenu": {
@@ -714,9 +714,14 @@ export default new ApplicationCommandHandler(
 )
 
 const PER_INDEX_PAGE = 6;
-export async function infoEmbed(creature: Creature, Bot: Client, page: string, index = 0): Promise<{embeds: MessageEmbed[], attachments?: MessageAttachment[], scrollable: boolean}> {
-  const embed = new MessageEmbed();
-  const gm_embed = new MessageEmbed();
+export async function infoEmbed(creature: Creature, Bot: Client, page: string, index = 0): Promise<{gm_embeds: MessageEmbed[], embeds: MessageEmbed[], attachments?: MessageAttachment[], scrollable: boolean}> {
+  const embeds = [new MessageEmbed()];
+  // ALIAS
+  const embed = embeds[0];
+
+  const gm_embeds = [new MessageEmbed()];
+  // ALIAS
+  const gm_embed = gm_embeds[0]
 
   const owner = await Bot.users.fetch(creature.$._id).catch(() => null);
 
@@ -724,10 +729,12 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
   let attachments: MessageAttachment[] = [];
   let total = 0;
 
+  const color = (creature.$.info.locked || creature.$.info.npc) ? "AQUA" : "GREY";
+
   embed
     .setTitle(creature.displayName)
     .setAuthor(creature.$.info.npc ? "NPC" : (owner?.tag ?? "Unknown"))
-    .setColor((creature.$.info.locked || creature.$.info.npc) ? "AQUA" : "GREY")
+    .setColor(color)
     .setThumbnail(creature.$.info.display.avatar ?? "")
 
   switch (page) {
@@ -866,18 +873,20 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
     } break;
     case "items": {   
       const weapons = new Array<InventoryItem | null>().concat(creature.$.items.primary_weapon, ...creature.$.items.weapons); 
+      const weapon_embed = new MessageEmbed().setColor(color);
       for (var w = 0; w < (Creature.MAX_EQUIPPED_WEAPONS + 1); w++) {
         const weapon = weapons[w];
         const itemdata = ItemManager.map.get(weapon?.id ?? "");
 
-        embed.addField(
+        weapon_embed.addField(
           w === 0
           ? "Primary Weapon"
           : `Backup Weapon ${w}`,
-          `${itemdata ? `**${itemdata.displayName}**` : ""}\n${describeItem(weapon ?? undefined, creature) ?? ""}`.trim() || "Not Equipped",
-          true
+          `${itemdata ? `**${itemdata.displayName}**` : ""}\n${describeItem(weapon ?? undefined, creature) ?? ""}`.trim() || "Not Equipped"
         )
+
       }
+      embeds.unshift(weapon_embed);
 
       for (const slot in SlotDescriptions) {
         const item = creature.$.items.slotted[slot as ItemSlot];
@@ -942,7 +951,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
           `${replaceLore(ability.$.info.lore, ability.$.info.lore_replacers, creature)}\n\n` +
           `**${ability.$.min_targets}**${ability.$.max_targets ? `to **${ability.$.max_targets}**` : ""} Targets\n` +
           `**${ability.$.cost}** Ult Stacks\n` +
-          `${ability.$.attackLike ? "**⚔️ Attack-ish**" : ""}`
+          `Type **${AbilityType[ability.$.type]}**`
         )
     } break;
     case "abilities": {
@@ -962,7 +971,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
             `**${ability.$.haste ?? 1}** Haste\n` +
             `**${ability.$.min_targets}**${ability.$.max_targets ? `to **${ability.$.max_targets}**` : ""} Targets\n` +
             `**${ability.$.cost}** Mana\n` +
-            `${ability.$.attackLike ? "**⚔️ Attack-ish**" : ""}`
+            `Type **${AbilityType[ability.$.type]}**`
           })
         }
 
@@ -1065,11 +1074,14 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
         function() {
           var str = "";
 
-          for (const s in creature.$.stats) {
-            // @ts-ignore
-            const stat = creature.$.stats[s];
+          const stats: Map<string, TrackableStat> = new Map();
+          for (const s in creature.$.attributes)
+            stats.set(s, creature.$.attributes[s as Attributes]);
+          for (const s in creature.$.stats)
+            stats.set(s, creature.$.stats[s as Stats]);
+
+          for (const [s, stat] of stats)
             str += `**${Math.round(stat.base)}** ${capitalize(s.replaceAll(/_/g, " "))}\n`;
-          }
 
           return str;
         }(),
@@ -1125,11 +1137,14 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
           function() {
             var str = "";
   
-            for (const s in creature.$.stats) {
-              const stat = creature.$.stats[s as Stats];
+            const stats: Map<string, TrackableStat> = new Map();
+            for (const s in creature.$.attributes)
+              stats.set(s, creature.$.attributes[s as Attributes]);
+            for (const s in creature.$.stats)
+              stats.set(s, creature.$.stats[s as Stats]);
   
+            for (const [s, stat] of stats)
               str += `**${Math.round(stat.value)}** ${capitalize(s.replaceAll(/_/g, " "))}\n`;
-            }
   
             return str;
           }(),
@@ -1332,7 +1347,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
     : "")
   )
 
-  return {embeds: [embed, gm_embed], scrollable, attachments};
+  return {gm_embeds, embeds, scrollable, attachments};
 }
 
 const BAR_LENGTH = 20;

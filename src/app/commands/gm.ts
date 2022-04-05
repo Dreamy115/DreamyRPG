@@ -493,7 +493,7 @@ export default new ApplicationCommandHandler(
               if (!char) continue;
   
               for (const passive of char.passives)
-                await passive.$.onFightExit?.(char, fight);
+                await passive.$.onFightExit?.(char, fight, db);
             }
 
             await fight.delete(db);

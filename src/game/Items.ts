@@ -169,13 +169,15 @@ export interface AttackData {
 
 export enum ItemQuality {
   "Poor",
-  "Standard",
+  "Common",
+  "Uncommon",
   "Rare",
   "Enhanced",
   "Legendary",
   "Prototype"
 }
 export const ItemQualityEmoji = [
+  "🟤",
   "⚪",
   "🟢",
   "🔵",
@@ -184,6 +186,7 @@ export const ItemQualityEmoji = [
   "🔴",
 ]
 export const ItemQualityColor = [
+  "#754423",
   "#EEEEEE",
   "#4AE052",
   "#4AB1E0",

@@ -7,6 +7,7 @@ import { DamageCause, DamageGroup, DamageLog, DamageMethod } from "./Damage";
 import { Modifier } from "./Stats";
 import { CreatureAbility } from "./CreatureAbilities";
 import { Fight } from "./Fight";
+import Mongoose from "mongoose";
 
 export default class PassiveEffectManager {
   map = new Map<string, PassiveEffect>();
@@ -70,14 +71,14 @@ export class PassiveEffect {
     beforeTick?: (creature: Creature) => void
     afterTick?: (creature: Creature) => void
 
-    onBust?: (creature: Creature) => Promise<void> | void
-    onAttack?: (creature: Creature, log: DamageLog) => Promise<void> | void
-    onAbility?: (creature: Creature, ability: CreatureAbility, ult: boolean) => Promise<void> | void
+    onBust?: (creature: Creature, db: typeof Mongoose) => Promise<void> | void
+    onAttack?: (creature: Creature, log: DamageLog, db: typeof Mongoose) => Promise<void> | void
+    onAbility?: (creature: Creature, ability: CreatureAbility, ult: boolean, db: typeof Mongoose) => Promise<void> | void
 
     beforeHeal?: (creature: Creature) => void
     afterHeal?: (creature: Creature) => void
 
-    onFightExit?: (creature: Creature, fight: Fight) => Promise<void> | void
+    onFightExit?: (creature: Creature, fight: Fight, db: typeof Mongoose) => Promise<void> | void
   }
 
   constructor(data: PassiveEffect["$"]) {

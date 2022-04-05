@@ -7,6 +7,7 @@ import { Combatant, CombatPosition, Fight } from "../../game/Fight";
 import { Item, ItemQualityEmoji } from "../../game/Items";
 import { abilitiesDescriptor } from "../commands/handbook";
 import { ComponentCommandHandler } from "../component_commands";
+import { AbilityType } from "../../game/CreatureAbilities";
 
 export default new ComponentCommandHandler(
   "fight",
@@ -138,7 +139,7 @@ export default new ComponentCommandHandler(
             if (!char) continue;
 
             for (const passive of char.passives)
-              await passive.$.onFightExit?.(char, fight);
+              await passive.$.onFightExit?.(char, fight, db);
           }
 
           fight.delete(db);
@@ -235,7 +236,7 @@ export default new ComponentCommandHandler(
             })
             
             for (const passive of creature.passives)
-              passive.$.onBust?.(creature);
+              await passive.$.onBust?.(creature, db);
 
             creature.$.abilities.stacks = 0;
             const msg = await fight.announceTurn(db, Bot);
@@ -426,15 +427,11 @@ export default new ComponentCommandHandler(
             for (const target of targets) {
               const combatant = combatants.get(target.$._id);
 
-              if (ability.$.attackLike) {
-                accuracy_mods.push(
-                  combatant
-                  ? getAccuracyMod(self_combatant, combatant)
-                  : 1
-                )
-              } else {
-                accuracy_mods.push(1);
-              }
+              accuracy_mods.push(
+                combatant
+                ? getAccuracyMod(self_combatant, combatant)
+                : 1
+              );
             }
 
             try {
@@ -449,7 +446,7 @@ export default new ComponentCommandHandler(
               }
 
               for (const passive of creature.passives)
-                await passive.$.onAbility?.(creature, ability, true);
+                await passive.$.onAbility?.(creature, ability, true, db);
 
               await creature.put(db);
               for (const target of targets) {
@@ -520,7 +517,7 @@ export default new ComponentCommandHandler(
                     `\n\n` +
                     `Cost **${ability.$.cost}**\n` +
                     `Haste **${ability.$.haste ?? 1}**\n` +
-                    `${ability.$.attackLike ? `**Attack-Like** *(Affected by Positioning)*\n` : ""}`
+                    `Type **${AbilityType[ability.$.type]}**`
                   )
               ],
               components: [new MessageActionRow().setComponents([new MessageSelectMenu()
@@ -608,15 +605,11 @@ export default new ComponentCommandHandler(
             for (const target of targets) {
               const combatant = combatants.get(target.$._id);
 
-              if (ability.$.attackLike) {
-                accuracy_mods.push(
-                  combatant
-                  ? getAccuracyMod(self_combatant, combatant)
-                  : 1
-                )
-              } else {
-                accuracy_mods.push(1);
-              }
+              accuracy_mods.push(
+                combatant
+                ? getAccuracyMod(self_combatant, combatant)
+                : 1
+              );
             }
 
             try {
@@ -631,7 +624,7 @@ export default new ComponentCommandHandler(
               }
 
               for (const passive of creature.passives)
-                await passive.$.onAbility?.(creature, ability, false);
+                await passive.$.onAbility?.(creature, ability, false, db);
 
               await creature.put(db);
               for (const target of targets) {
@@ -712,7 +705,7 @@ export default new ComponentCommandHandler(
                     `\n\n` +
                     `Cost **${ability.$.cost}**\n` +
                     `Haste **${ability.$.haste ?? 1}**\n` +
-                    `${ability.$.attackLike ? `**Attack-Like** *(Affected by Positioning)*\n` : ""}`
+                    `Type **${AbilityType[ability.$.type]}**`
                   )
               ],
               components: [new MessageActionRow().setComponents([new MessageSelectMenu()

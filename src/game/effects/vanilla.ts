@@ -200,7 +200,7 @@ export default [
         value: 1
       });
       creature.$.attributes.PER.modifiers.push({
-        type: ModifierType.MULTIPLY,
+        type: ModifierType.ADD,
         value: 1
       });
       creature.$.stats.initiative.modifiers.push({
@@ -211,21 +211,21 @@ export default [
     type: EffectType.Buff
   }),
   new ActiveEffect({
-    id: "intensity-bored",
+    id: "intensity-calm",
     consecutive_limit: 1,
     display_severity: DisplaySeverity.ARABIC,
     info: {
-      name: "Not Warmed Up",
-      lore: "This Creature is not warmed up for a fight. Reduced **Accuracy**, **Dodge**, and **Initiative**.",
+      name: "Calm",
+      lore: "This Creature is calm. Reduced **Dodge**, and **Initiative**. **+1 MND**",
       replacers: []
     },
     conflicts_with: new Set(["intensity-optimal", "intensity-stressed", "intensity-nothing"]),
     preload: (creature, {severity}) => {
       let lerped = invLerp(severity, 0, 15);
 
-      creature.$.stats.accuracy.modifiers.push({
-        type: ModifierType.MULTIPLY,
-        value: lerp(lerped, 0.75, 1)
+      creature.$.attributes.MND.modifiers.push({
+        type: ModifierType.ADD,
+        value: -1
       });
       creature.$.stats.parry.modifiers.push({
         type: ModifierType.MULTIPLY,

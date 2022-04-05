@@ -3,6 +3,7 @@ import path from "path";
 import Creature from "./Creature";
 import { DamageLog } from "./Damage";
 import { LoreReplacer } from "./LoreReplacer";
+import Mongoose from "mongoose";
 
 export default class CreatureAbilitiesManager {
   map = new Map<string, CreatureAbility>();
@@ -39,7 +40,7 @@ export class CreatureAbility {
       lore: string
       lore_replacers: LoreReplacer[]
     }
-    attackLike: boolean // Should this ability have Positioned Accuracy Modifiers like attacks?
+    type: AbilityType
     min_targets: number // If this is 0, only caster is provided and targets is empty
     max_targets?: number // Min targets must be at least 1 to take effect, and must be more than min targets.
     unique?: Set<string>
@@ -52,6 +53,11 @@ export class CreatureAbility {
   constructor(data: CreatureAbility["$"]) {
     this.$ = data;
   }
+}
+
+export enum AbilityType {
+  "Other" = -1,
+  "Attack", "Heal", "Buff", "Debuff"
 }
 
 export interface AbilityUseLog {

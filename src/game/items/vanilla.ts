@@ -244,7 +244,7 @@ export default [
     info: {
       name: "Makeshift Bandage",
       lore: "A bandage to stop **Bleeding** and heal {0} Injuries",
-      quality: ItemQuality.Standard,
+      quality: ItemQuality.Common,
       replacers: [
         {
           stat: "tech",

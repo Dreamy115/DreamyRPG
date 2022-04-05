@@ -3,7 +3,7 @@ import { AbilitiesManager, capitalize, CONFIG, Directives, EffectManager, ItemMa
 import { ActiveEffect, DisplaySeverity, romanNumeral } from "../../game/ActiveEffects";
 import { Material, Schematic } from "../../game/Crafting";
 import Creature from "../../game/Creature";
-import { CreatureAbility } from "../../game/CreatureAbilities";
+import { AbilityType, CreatureAbility } from "../../game/CreatureAbilities";
 import { replaceLore } from "../../game/LoreReplacer";
 import { DamageMethod, DamageType, ShieldReaction, shieldReactionInfo } from "../../game/Damage";
 import { GameDirective } from "../../game/GameDirectives";
@@ -442,7 +442,7 @@ export default new ApplicationCommandHandler(
               `\n\n` +
               `Cost **${item.$.cost}**\n` +
               `Haste **${item.$.haste ?? 1}**\n` +
-              `${item.$.attackLike ? `**Attack-Like** *(Affected by Positioning)*\n` : ""}`
+              `Type **${AbilityType[item.$.type]}**`
           } else if (item instanceof ActiveEffect) {
             embed.setDescription(function () {
               var str = item.$.info.lore;

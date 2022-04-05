@@ -83,22 +83,23 @@ export default new ComponentCommandHandler(
           .setLabel("-")
       )
     }
-
+ 
     const payload = {
-      embeds: [info.embeds[0]],
-      components
+      ephemeral: false,
+      embeds: info.embeds,
+      components,
+      files: info.attachments
     }
 
     msg.edit(payload).catch(() => {
       msg.delete();
       channel.send(payload);
     });
-
-    if (IS_GM && info.embeds[1].fields.length > 0 || info.embeds[1].description) 
+    if (IS_GM && info.gm_embeds[0].fields.length > 0 || info.gm_embeds[0].description) 
       interaction.followUp({
         ephemeral: true,
         content: "PSST! Gm Only info found!",
-        embeds: [info.embeds[1]]
+        embeds: info.gm_embeds
       })
   }
 )

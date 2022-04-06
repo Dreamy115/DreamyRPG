@@ -22,7 +22,7 @@ function repeat(s: string, i: number) {
     r += s;
   return r;
 }
-export function make_bar(percent: number, bar_style: string, max_size: number) {
+export function make_bar(percent: number, bar_style: string | string[], max_size: number) {
   var d, full, m, middle, r = "", rest, x,
     min_delta = Number.POSITIVE_INFINITY,
     full_symbol = bar_style[bar_style.length - 1],

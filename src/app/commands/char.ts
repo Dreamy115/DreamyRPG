@@ -1350,14 +1350,15 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
   return {gm_embeds, embeds, scrollable, attachments};
 }
 
-const BAR_LENGTH = 20;
+const BAR_LENGTH = 16;
 
 export function tableDescriptor(table: LootTable, perks?: Set<string>) {
   const pools = table.getHighestFromPerks(perks ?? new Set());
+  const probs = LootTable.getProbabilities(pools);
 
   var str = "";
-  for (const p in LootTable.getProbabilities(pools)) {
-    const pool = LootTable.getProbabilities(pools)[p];
+  for (const p in probs) {
+    const pool = probs[p];
     str += `- Rolls **${pools[p].min_rolls}**${pools[p].max_rolls > pools[p].min_rolls ? `-**${pools[p].max_rolls}**` : ""} times\n`
 
     for (const i of pool) {

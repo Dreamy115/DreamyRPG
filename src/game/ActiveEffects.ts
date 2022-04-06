@@ -51,6 +51,7 @@ export class ActiveEffect {
     onDelete?: (creature: Creature, {ticks, severity}: AppliedActiveEffect) => void
     preload?: (creature: Creature, {ticks, severity}: AppliedActiveEffect) => void
     postload?: (creature: Creature, {ticks, severity}: AppliedActiveEffect) => void
+    vars?: Record<string, number>
   }
 
   getDisplayName(active?: Omit<Omit<AppliedActiveEffect, "ticks">, "id">) {
@@ -74,6 +75,7 @@ export interface AppliedActiveEffect {
   id: string
   ticks: number
   severity: number
+  vars?: Record<string, number>
 }
 
 export enum DisplaySeverity {

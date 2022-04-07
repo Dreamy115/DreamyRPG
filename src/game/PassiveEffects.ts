@@ -3,7 +3,7 @@ import path from "path";
 
 import Creature, { Attributes, Stats } from "./Creature";
 import { LoreReplacer } from "./LoreReplacer";
-import { DamageCause, DamageGroup, DamageLog, DamageMethod } from "./Damage";
+import { DamageCause, DamageGroup, DamageLog, DamageMethod, HealGroup, HealLog } from "./Damage";
 import { Modifier } from "./Stats";
 import { CreatureAbility } from "./CreatureAbilities";
 import { Fight } from "./Fight";
@@ -75,8 +75,10 @@ export class PassiveEffect {
     onAttack?: (creature: Creature, log: DamageLog, db: typeof Mongoose) => Promise<void> | void
     onAbility?: (creature: Creature, ability: CreatureAbility, ult: boolean, db: typeof Mongoose) => Promise<void> | void
 
-    beforeHeal?: (creature: Creature) => void
-    afterHeal?: (creature: Creature) => void
+    beforeGotHealed?: (creature: Creature, damage: HealGroup) => void
+    afterGotHealed?: (creature: Creature, damage: HealLog) => void
+    beforeGiveHealing?: (creature: Creature, damage: HealGroup) => void
+    afterGiveHealing?: (creature: Creature, damage: HealLog) => void
 
     onFightExit?: (creature: Creature, fight: Fight, db: typeof Mongoose) => Promise<void> | void
   }

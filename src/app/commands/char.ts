@@ -150,6 +150,10 @@ export default new ApplicationCommandHandler(
                 value: "modifiers"
               },
               {
+                name: "Health History",
+                value: "vitalsHistory"
+              },
+              {
                 name: "Perks",
                 value: "perks"
               },
@@ -713,7 +717,7 @@ export default new ApplicationCommandHandler(
   }
 )
 
-const PER_INDEX_PAGE = 6;
+const PER_INDEX_PAGE = 5;
 export async function infoEmbed(creature: Creature, Bot: Client, page: string, index = 0): Promise<{gm_embeds: MessageEmbed[], embeds: MessageEmbed[], attachments?: MessageAttachment[], scrollable: boolean}> {
   const embeds = [new MessageEmbed()];
   // ALIAS
@@ -1336,6 +1340,15 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
             }() || "None"
           )
         }
+      }
+    } break;
+    case "vitalsHistory": {
+      scrollable = true;
+
+      var i = 0;
+      for (var a = index * PER_INDEX_PAGE; a < (index + 1) * PER_INDEX_PAGE && a < creature.$.vitalsHistory.length; a++) {
+        embeds[i] = 
+        i++;
       }
     } break;
   }

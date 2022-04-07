@@ -6,7 +6,7 @@ import { AbilitiesManager, capitalize, clamp, CONFIG, db, EffectManager, ItemMan
 import { AppliedActiveEffect, EffectStacking } from "./ActiveEffects.js";
 import { CraftingMaterials, Material } from "./Crafting.js";
 import { CreatureAbility } from "./CreatureAbilities.js";
-import { DamageCause, DamageGroup, DamageLog, DamageMethod as DamageMethod, DamageType, DAMAGE_TO_INJURY_RATIO, reductionMultiplier, ShieldReaction } from "./Damage.js";
+import { DamageCause, DamageGroup, DamageLog, DamageMethod as DamageMethod, DamageType, DAMAGE_TO_INJURY_RATIO, HealGroup, HealLog, reductionMultiplier, ShieldReaction, VitalsLog } from "./Damage.js";
 import { Fight } from "./Fight.js";
 import { GameDirective } from "./GameDirectives.js";
 import { AttackData, AttackSet, Item, ItemSlot, InventoryItem, EquippableInventoryItem, WeaponInventoryItem, WearableInventoryItem, NormalWearableItemData, SlotDescriptions, MaskWearableItemData, WeaponItemData, ShieldWearableItemData, VestWearableItemData, JacketWearableItemData, BackpackWearableItemData, GlovesWearableItemData, ConsumableItemData, GenericItemData } from "./Items.js";
@@ -110,6 +110,7 @@ export default class Creature {
         up: true,
         alive: true
       },
+      vitalsHistory: data.vitalsHistory ?? [],
       sim_message: data.sim_message ?? null,
       active_effects: data.active_effects ?? [],
       vars: data.vars ?? {}
@@ -617,18 +618,18 @@ export default class Creature {
       total_stress_mitigated: 0
     }
 
-    group.victim = original.victim;
-    group.attacker = original.attacker;
+    group.to = original.to;
+    group.from = original.from;
 
-    log.final.victim = this;
-    log.original.victim = this;
+    log.final.to = this;
+    log.original.to = this;
 
     for (const passive of this.passives) {
       passive.$.beforeDamageTaken?.(this, group);
     }
-    if (group.attacker instanceof Creature) {
-      for (const passive of group.attacker.passives) {
-        passive.$.beforeDamageGiven?.(group.attacker, group);
+    if (group.from instanceof Creature) {
+      for (const passive of group.from.passives) {
+        passive.$.beforeDamageGiven?.(group.from, group);
       }
     }
 
@@ -739,53 +740,112 @@ export default class Creature {
         passive.$.afterDamageTaken?.(this, log);
       }
 
-      if (group.attacker instanceof Creature) {
-        group.attacker.heal(Math.round(log.total_physical_damage * group.attacker.$.stats.vamp.value / 100), HealType.Health);
-        group.attacker.heal(Math.round(log.total_energy_damage * group.attacker.$.stats.siphon.value / 100), HealType.Shield);
+      if (group.from instanceof Creature) {
+        group.from.heal({
+          from: group.to,
+          sources: [{
+            type: HealType.Health,
+            value: Math.round(log.total_physical_damage * group.from.$.stats.vamp.value / 100)
+          }]
+        });
+        group.from.heal({
+          from: group.to,
+          sources: [{
+            type: HealType.Shield,
+            value: Math.round(log.total_energy_damage * group.from.$.stats.siphon.value / 100)
+          }]
+        });
   
-        for (const passive of group.attacker.passives) {
-          passive.$.afterDamageGiven?.(group.attacker, log);
+        for (const passive of group.from.passives) {
+          passive.$.afterDamageGiven?.(group.from, log);
         }
       }
     }
     
     this.vitalsIntegrity();
 
+    this.$.vitalsHistory.unshift(log);
+    this.$.vitalsHistory.length = Math.min(this.$.vitalsHistory.length, Creature.VITALS_HISTORY_LENGTH);
+
     return log;
   }
 
-  heal(amount: number, type: HealType) {
-    for (const passive of this.passives) {
-      passive.$.beforeHeal?.(this);
-    }
+  heal(original: HealGroup) {
+    const group: HealGroup = JSON.parse(JSON.stringify(original));
 
-    switch (type) {
-      case HealType.Health: {
-        this.$.vitals.health += amount;
-      } break;
-      case HealType.Shield: {
-        this.$.vitals.shield += amount;
-      } break;
-      case HealType.Overheal: {
-        this.$.vitals.health += amount;
-        this.$.vitals.shield += Math.max(this.$.vitals.health - this.$.stats.health.value, 0);
-      } break;
-      case HealType.Mana: {
-        this.$.vitals.mana += amount;
-      } break;
-      case HealType.Injuries: {
-        this.$.vitals.injuries -= amount;
-      } break;
-      case HealType.Stress: {
-        this.$.vitals.intensity -= amount;
-      } break;
+    const log: HealLog = {
+      original,
+      final: group,
+      health_restored: 0,
+      injuries_restored: 0,
+      mana_restored: 0,
+      shields_restored: 0,
+      stress_restored: 0,
+      wasted: 0
     }
-
-    this.vitalsIntegrity();
 
     for (const passive of this.passives) {
-      passive.$.afterHeal?.(this);
+      passive.$.beforeGotHealed?.(this, group);
     }
+
+    for (const src of group.sources) {
+      switch (src.type) {
+        case HealType.Health: {
+          const _health = this.$.vitals.health;
+
+          this.$.vitals.health += src.value;
+          log.health_restored += Math.min(this.$.vitals.health, this.$.stats.health.value) - _health;
+        } break;
+        case HealType.Shield: {
+          const _shield = this.$.vitals.shield;
+
+          this.$.vitals.shield += src.value;
+          log.shields_restored += Math.min(this.$.vitals.shield, this.$.stats.shield.value) - _shield;
+        } break;
+        case HealType.Overheal: {
+          const _health = this.$.vitals.health;
+          const _shield = this.$.vitals.shield;
+
+          this.$.vitals.health += src.value;
+          this.$.vitals.shield += Math.max(this.$.vitals.health - this.$.stats.health.value, 0);
+          
+          log.health_restored += Math.min(this.$.vitals.health, this.$.stats.health.value) - _health;
+          log.shields_restored += Math.min(this.$.vitals.shield, this.$.stats.shield.value) - _shield;
+        } break;
+        case HealType.Mana: {
+          const _mana = this.$.vitals.mana;
+
+          this.$.vitals.mana += src.value;
+          log.mana_restored += Math.min(this.$.vitals.mana, this.$.stats.mana.value) - _mana;
+        } break;
+        case HealType.Injuries: {
+          const _injuries = this.$.vitals.injuries;
+
+          this.$.vitals.injuries -= src.value;
+          log.injuries_restored += Math.min(this.$.vitals.injuries, this.$.stats.health.value) - _injuries;
+        } break;
+        case HealType.Stress: {
+          const _intensity = this.$.vitals.intensity;
+
+          this.$.vitals.intensity -= src.value;
+          log.stress_restored += Math.min(this.$.vitals.intensity, this.$.stats.health.value) - _intensity;
+        } break;
+      }
+      this.vitalsIntegrity();
+    }
+
+    for (const [o_src, f_src] of [log.original.sources, log.final.sources]) {
+      log.wasted += Math.max(o_src.value - f_src.value, 0);
+    }
+
+    for (const passive of this.passives) {
+      passive.$.afterGotHealed?.(this, log);
+    }
+
+    this.$.vitalsHistory.unshift(log);
+    this.$.vitalsHistory.length = Math.min(this.$.vitalsHistory.length, Creature.VITALS_HISTORY_LENGTH);
+
+    return log;
   }
 
   get active_effects() {
@@ -1146,6 +1206,8 @@ export default class Creature {
     return Math.max(1, Math.round((this.$.stats.attack_cost.value ?? 0) * Creature.COMBAT_WEAPON_SWITCH_MULT))
   }
 
+  static readonly VITALS_HISTORY_LENGTH = 50;
+
   static readonly INTENSITY_CAPACITY = 100;
   
   static readonly PROFICIENCY_ACCURACY_SCALE = 0.5
@@ -1378,6 +1440,7 @@ export interface CreatureData {
     up: boolean
     alive: boolean
   }
+  vitalsHistory: (DamageLog | HealLog)[]
   sim_message: string | null
   active_effects: AppliedActiveEffect[]
   vars: Record<string, number | undefined>
@@ -1417,6 +1480,7 @@ export interface CreatureDump {
     hand?: string[]
     stacks?: number
   }
+  vitalsHistory?: VitalsLog[]
   sim_message?: string | null
   active_effects?: AppliedActiveEffect[]
   vars?: Record<string, number | undefined>

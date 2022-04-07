@@ -390,8 +390,20 @@ export default new ApplicationCommandHandler(
                 const data = document as CreatureDump;
                 const creature: Creature = Creature.cache.get(data._id) ?? new Creature(data);
 
-                creature.heal(creature.$.stats.health.value + creature.$.stats.shield.value, HealType.Overheal);
-                creature.heal(creature.$.stats.mana.value, HealType.Mana);
+                creature.heal({
+                  from: "Long-Rest Regen",
+                  sources: [{
+                    type: HealType.Overheal,
+                    value: creature.$.stats.health.value + creature.$.stats.shield.value
+                  }]
+                });
+                creature.heal({
+                  from: "Long-Rest Regen",
+                  sources: [{
+                    value: creature.$.stats.mana.value,
+                    type: HealType.Mana
+                  }]
+                });
 
                 creature.put(db);
               }

@@ -322,8 +322,8 @@ export default new ComponentCommandHandler(
                 cutting: (set.modifiers?.cutting ?? 0) + creature.$.stats.cutting.value
               },
               useDodge: true,
-              attacker: creature,
-              victim: target,
+              from: creature,
+              to: target,
               sources: function () {
                 const array: DamageSource[] = [];
 

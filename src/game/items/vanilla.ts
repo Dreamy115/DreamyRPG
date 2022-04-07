@@ -221,8 +221,14 @@ export default [
 
       const amount = 10 + (creature.$.stats.tech.value * 0.05);
 
-      creature.heal(amount, HealType.Injuries);
-      creature.heal(amount, HealType.Health);
+      creature.heal({
+        from: "Rough Bandage",
+        sources: [{value: amount, type: HealType.Injuries}]
+      });
+      creature.heal({
+        from: "Rough Bandage",
+        sources: [{value: amount, type: HealType.Health}]
+      });
 
       return {
         text: `**${creature.displayName}** used a Bandage; healed **${amount}** Injuries and stopped bleeding, if any.`
@@ -258,8 +264,14 @@ export default [
 
       const amount = 15 + (creature.$.stats.tech.value * 0.075);
 
-      creature.heal(amount, HealType.Injuries);
-      creature.heal(amount, HealType.Health);
+      creature.heal({
+        from: "Mediocre Bandage",
+        sources: [{value: amount, type: HealType.Injuries}]
+      });
+      creature.heal({
+        from: "Mediocre Bandage",
+        sources: [{value: amount, type: HealType.Health}]
+      });
 
       return {
         text: `**${creature.displayName}** used a Bandage; healed **${amount}** Injuries and stopped bleeding, if any.`

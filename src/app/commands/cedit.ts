@@ -852,7 +852,7 @@ export default new ApplicationCommandHandler({
           value: interaction.options.getNumber("amount", true),
           shieldReaction: interaction.options.getInteger("shield_reaction", false) ?? ShieldReaction.Normal
         }],
-        attacker: interaction.options.getString("attacker", false) ?? undefined
+        from: interaction.options.getString("attacker", false) ?? undefined
       }
 
       const log = creature.applyDamage(damage);
@@ -865,10 +865,13 @@ export default new ApplicationCommandHandler({
       return;
     } break;
     case "heal": {
-      creature.heal(
-        interaction.options.getNumber("amount", true),
-        interaction.options.getInteger("type", true)
-      )
+      creature.heal({
+        from: "Healing GM-Commmand",
+        sources: [{
+          type: interaction.options.getInteger("type", true),
+          value: interaction.options.getNumber("amount", true),
+        }]
+      });
     } break;
     case "crafting_materials": {
       const mat = interaction.options.getString("material", true) as Material;

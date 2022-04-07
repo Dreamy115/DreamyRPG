@@ -19,9 +19,14 @@ export default [
         },
         type: "service",
         onBuy: async (creature) => {
-          creature.heal(60, HealType.Injuries);
-          creature.heal(60, HealType.Health);
-
+          creature.heal({
+            from: "Service",
+            sources: [{value: 60, type: HealType.Injuries}]
+          });
+          creature.heal({
+            from: "Service",
+            sources: [{value: 60, type: HealType.Health}]
+          });
           return {
             text: "Healed for **60** Injuries and Health"
           }

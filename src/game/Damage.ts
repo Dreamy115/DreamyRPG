@@ -1,5 +1,5 @@
 import { MessageEmbed } from "discord.js";
-import Creature from "./Creature";
+import Creature, { HealType } from "./Creature";
 
 export enum DamageType {
   "Stress" = -1,
@@ -17,8 +17,8 @@ export interface DamageSource {
 
 export interface DamageGroup {
   sources: DamageSource[]
-  attacker?: Creature | string
-  victim?: Creature
+  from?: Creature | string
+  to?: Creature
   method: DamageMethod
   penetration?: {
     lethality?: number
@@ -31,6 +31,8 @@ export interface DamageGroup {
 }
 
 export interface DamageLog {
+  type: "damage"
+
   successful: boolean
   original: DamageGroup
   final: DamageGroup
@@ -77,7 +79,7 @@ export function damageLogEmbed(log: DamageLog) {
   const embed = new MessageEmbed();
   embed
     .setTitle("Damage Log")
-    .setAuthor(`${(log.final?.attacker as (undefined | Creature))?.$?.info.display.name ?? log.final.attacker ?? "Unknown"} >>> ${(log.final.victim?.displayName ?? "Unknown")}`)
+    .setAuthor(`${(log.final?.from as (undefined | Creature))?.displayName ?? log.final.from ?? "Unknown"} >>> ${(log.final.to?.displayName ?? "Unknown")}`)
     .setColor("RED")
     .addField(
       "Before",
@@ -125,3 +127,72 @@ function damageGroupString(group: DamageGroup) {
     return str.trim();;
   }()}`
 }
+
+
+
+export interface HealSource {
+  type: HealType
+  value: number
+}
+
+export interface HealGroup {
+  sources: HealSource[]
+  from?: Creature | string
+  to?: Creature
+}
+
+export interface HealLog {
+  type: "heal"
+
+  original: HealGroup
+  final: HealGroup
+
+  health_restored: number
+  shields_restored: number
+  stress_restored: number
+  mana_restored: number
+  injuries_restored: number
+
+  wasted: number
+}
+
+export function healLogEmbed(log: HealLog) {
+  const embed = new MessageEmbed();
+  embed
+    .setTitle("Damage Log")
+    .setAuthor(`${(log.final?.from as (undefined | Creature))?.displayName ?? log.final.from ?? "Unknown"} >>> ${(log.final.to?.displayName ?? "Unknown")}`)
+    .setColor("GREEN")
+    .addField(
+      "Before",
+      healGroupString(log.original),
+      true
+    );
+
+  embed.addField(
+    "After",
+    healGroupString(log.final),
+    true
+  ).addField(
+    "Total",
+    `**${log.health_restored}**/**${log.injuries_restored}** Health/Injuries\n` +
+    `**${log.shields_restored}**/**${log.shields_restored}** Shields\n` +
+    `**${log.mana_restored}** Mana\n` +
+    `**${log.stress_restored}** Intensity\n` 
+  )
+ 
+  return embed;
+}
+
+function healGroupString(group: HealGroup) {
+  return `**Sources**\n` +
+  `${function() {
+    var str = "";
+    for (const source of group.sources) {
+      str += `[**${source.value} ${DamageType[source.type]}**]\n`
+    }
+
+    return str.trim();;
+  }()}`
+}
+
+export type VitalsLog = DamageLog | HealLog;

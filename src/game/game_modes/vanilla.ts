@@ -29,7 +29,7 @@ export default [
           if (creature.active_effects.findIndex((v) => v.id === "dazed") !== -1) creature.$.status.attacks = false;
         },
         afterDamageTaken: (creature, log) => {
-          if (log.final.attacker === "Low-Health Stress") return;
+          if (log.final.from === "Low-Health Stress") return;
 
           const health = 100 * (creature.$.vitals.health / creature.$.stats.health.value);
           if (health < 50) {
@@ -42,7 +42,7 @@ export default [
               chance: 100,
               method: DamageMethod.Direct,
               useDodge: false,
-              attacker: "Low-Health Stress",
+              from: "Low-Health Stress",
               sources: [{
                 type: DamageType.Stress,
                 value: clamp(stress * lerp(mult_of_health, 0.2, 1.5), 1, 60),

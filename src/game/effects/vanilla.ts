@@ -124,7 +124,7 @@ export default [
         method: DamageMethod.Direct,
         sources: [{type: DamageType.True, value: Math.max(1, 0.025 * creature.$.stats.health.value), shieldReaction: ShieldReaction.Ignore}],
         useDodge: false,
-        attacker: "Hypothermia",
+        from: "Hypothermia",
       })
     },
     type: EffectType.Wound
@@ -151,7 +151,7 @@ export default [
         penetration: {cutting: 999},
         sources: [{type: DamageType.True, value: Math.max(1, severity * 0.03 * creature.$.stats.health.value), shieldReaction: ShieldReaction.Ignore}],
         useDodge: false,
-        attacker: "Chemical Burns",
+        from: "Chemical Burns",
       })
     },
     type: EffectType.Wound

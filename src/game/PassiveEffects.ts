@@ -81,6 +81,7 @@ export class PassiveEffect {
     afterGiveHealing?: (creature: Creature, db: typeof Mongoose, damage: HealLog) => Promise<void>
 
     onFightExit?: (creature: Creature, db: typeof Mongoose, fight: Fight) => Promise<void>
+    onFightEnter?: (creature: Creature, db: typeof Mongoose, fight: Fight) => Promise<void>
   }
 
   constructor(data: PassiveEffect["$"]) {

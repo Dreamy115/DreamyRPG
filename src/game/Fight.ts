@@ -62,11 +62,8 @@ export class Fight {
           continue;
         }
 
-        creature.$.vitals.shield = creature.$.stats.shield.value;
-        creature.$.vitals.action_points = 0;
-        creature.$.abilities.hand = [];
-        creature.$.abilities.stacks = 0;
-        creature.reshuffleAbilityDeck();
+        for (const passive of creature.passives)
+          await passive.$.onFightEnter?.(creature, db, this);
 
         saving.push(creature.put(db));
       }

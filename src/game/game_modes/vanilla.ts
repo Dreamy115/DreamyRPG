@@ -1,6 +1,6 @@
 import { clamp, invLerp, lerp } from "../..";
 import Creature from "../Creature";
-import { DamageCause, DamageMethod, DamageType, ShieldReaction } from "../Damage";
+import { DamageCause, DamageMethod, DamageType, HealType, ShieldReaction } from "../Damage";
 import { GameDirective } from "../GameDirectives";
 import { PassiveEffect } from "../PassiveEffects";
 import { ModifierType } from "../Stats";
@@ -141,6 +141,29 @@ export default [
               severity: (creature.location?.$.rads ?? 0) - creature.$.stats.filtering.value
             }, db, true)
           }          
+        },
+        onFightExit: async (creature, db) => {
+          await creature.heal({
+            sources: [{
+              type: HealType.Plating, value: creature.$.stats.plating.value
+            }],
+            from: "Fight-Exit Plating Regen"
+          }, db)
+        },
+        onFightEnter: async (creature, db) => {
+          creature.$.vitals.action_points = 0;
+          creature.$.abilities.hand = [];
+          creature.$.abilities.stacks = 0;
+          creature.reshuffleAbilityDeck();
+
+          await creature.heal({
+            sources: [{
+              type: HealType.Plating, value: creature.$.stats.plating.value
+            },{
+              type: HealType.Shield, value: creature.$.stats.shield.value
+            }],
+            from: "Fight-Enter Regen"
+          }, db);
         }
       })
     ])

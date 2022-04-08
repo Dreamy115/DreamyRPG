@@ -1,4 +1,4 @@
-import { HealType } from "../Creature";
+import { HealType } from "../Damage";
 import { Shop } from "../Shops";
 
 export default [

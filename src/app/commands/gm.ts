@@ -1,7 +1,7 @@
 import { ApplicationCommandOptionChoice, MessageActionRow, MessageButton } from "discord.js";
 import { CONFIG, gameLoad, LocationManager } from "../..";
-import Creature, { CreatureDump, HealType } from "../../game/Creature";
-import { DamageCause, DamageGroup, damageLogEmbed, DamageMethod, DamageType, ShieldReaction } from "../../game/Damage";
+import Creature, { CreatureDump } from "../../game/Creature";
+import { DamageCause, DamageGroup, damageLogEmbed, DamageMethod, DamageType, ShieldReaction, HealType } from "../../game/Damage";
 import { Fight } from "../../game/Fight";
 import { TrackableStat } from "../../game/Stats";
 import { ApplicationCommandHandler } from "../commands";

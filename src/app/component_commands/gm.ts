@@ -1,6 +1,7 @@
 import { Message } from "discord.js";
 import { CONFIG, gameLoad, messageInput } from "../..";
-import Creature, { CreatureDump, HealType } from "../../game/Creature";
+import Creature, { CreatureDump } from "../../game/Creature";
+import { HealType } from "../../game/Damage";
 import { ComponentCommandHandler } from "../component_commands";
 
 export default [

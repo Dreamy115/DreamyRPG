@@ -1,9 +1,9 @@
 import { ApplicationCommandOptionChoice, MessageEmbed } from "discord.js";
 import { capitalize, CONFIG, ItemManager, LootTables } from "../..";
 import { CraftingMaterials, Material } from "../../game/Crafting";
-import Creature, { Attributes, HealType } from "../../game/Creature";
+import Creature, { Attributes } from "../../game/Creature";
 import { replaceLore } from "../../game/LoreReplacer";
-import { DamageType, DamageMethod, ShieldReaction, DamageCause, DamageGroup, damageLogEmbed } from "../../game/Damage";
+import { DamageType, DamageMethod, ShieldReaction, DamageCause, DamageGroup, damageLogEmbed, HealType, healLogEmbed } from "../../game/Damage";
 import { ConsumableItemData, createItem, InventoryItem, SpecializedWearableData, UltimateWearableItemData } from "../../game/Items";
 import { LootTable } from "../../game/LootTables";
 import { TrackableStat } from "../../game/Stats";
@@ -219,7 +219,7 @@ export default new ApplicationCommandHandler({
             for (const type of Object.values(HealType).filter(x => !isNaN(Number(x)))) {
               options.push({
                 name: HealType[Number(type)],
-                value: type
+                value: Number(type)
               })
             }
 
@@ -865,13 +865,23 @@ export default new ApplicationCommandHandler({
       return;
     } break;
     case "heal": {
-      creature.heal({
-        from: "Healing GM-Commmand",
-        sources: [{
-          type: interaction.options.getInteger("type", true),
-          value: interaction.options.getNumber("amount", true),
-        }]
+      await interaction.followUp({
+        content: "Saved!"
       });
+      interaction.followUp({
+        ephemeral: false,
+        embeds: [
+          healLogEmbed(creature.heal({
+            from: "Healing GM-Commmand",
+            sources: [{
+              type: interaction.options.getInteger("type", true),
+              value: interaction.options.getNumber("amount", true),
+            }]
+          }))
+        ]
+      });
+      creature.put(db);
+      return;
     } break;
     case "crafting_materials": {
       const mat = interaction.options.getString("material", true) as Material;

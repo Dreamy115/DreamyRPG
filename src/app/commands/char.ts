@@ -4,7 +4,7 @@ import { Material, Schematic } from "../../game/Crafting.js";
 import Creature, { Attributes, diceRoll, Stats } from "../../game/Creature.js";
 import { AbilityType, CreatureAbility } from "../../game/CreatureAbilities.js";
 import { replaceLore } from "../../game/LoreReplacer";
-import { reductionMultiplier, DAMAGE_TO_INJURY_RATIO, DamageMethod, DamageType } from "../../game/Damage.js";
+import { reductionMultiplier, DAMAGE_TO_INJURY_RATIO, DamageMethod, DamageType, damageLogEmbed, healLogEmbed } from "../../game/Damage.js";
 import { CombatPosition } from "../../game/Fight.js";
 import { AttackData, SlotDescriptions, Item, ItemQualityEmoji, InventoryItem, EquippableInventoryItem, WearableInventoryItem, WearableItemData, WeaponItemData, ConsumableItemData, ItemSlot, SpecializedWearableData, WeaponCategory } from "../../game/Items.js";
 import { cToF } from "../../game/Locations.js";
@@ -1347,13 +1347,16 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
 
       var i = 0;
       for (var a = index * PER_INDEX_PAGE; a < (index + 1) * PER_INDEX_PAGE && a < creature.$.vitalsHistory.length; a++) {
-        embeds[i] = 
+        const his = creature.$.vitalsHistory[a];
+        embeds[i] = his.type === "damage"
+        ? damageLogEmbed(his)
+        : healLogEmbed(his);
         i++;
       }
     } break;
   }
 
-  embed.setFooter(
+  embeds[embeds.length - 1].setFooter(
     `ID: ${creature.$._id}${(creature.$.info.locked || creature.$.info.npc) ? "" : " | NOT LOCKED"}` +
     (scrollable
     ? ` | ${(index * PER_INDEX_PAGE) + 1}-${(index + 1) * PER_INDEX_PAGE}/${total}`

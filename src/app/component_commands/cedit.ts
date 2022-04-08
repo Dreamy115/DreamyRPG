@@ -2,7 +2,7 @@ import { ButtonInteraction, ColorResolvable, CommandInteraction, Message, Messag
 import Mongoose from "mongoose";
 import { capitalize, clamp, CONFIG, invLerp, ItemManager, lerp, limitString, LootTables, messageInput, PerkManager, removeMarkdown, removeVowels, SchematicsManager, SkillManager, SpeciesManager } from "../..";
 import { CraftingMaterials, Material } from "../../game/Crafting";
-import Creature, { Attributes, CreatureDump, HealType } from "../../game/Creature";
+import Creature, { Attributes, CreatureDump } from "../../game/Creature";
 import { AbilityUseLog } from "../../game/CreatureAbilities";
 import { DamageCause, DamageGroup, damageLogEmbed, DamageMethod, DamageType, ShieldReaction } from "../../game/Damage";
 import { ConsumableItemData, createItem, DEFAULT_ITEM_OPT_STEP, EquippableInventoryItem, InventoryItem, Item, ItemQualityColor, ItemQualityEmoji, SpecializedWearableData, WeaponItemData, WearableInventoryItem, WearableItemData } from "../../game/Items";

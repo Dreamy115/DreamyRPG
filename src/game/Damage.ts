@@ -1,5 +1,5 @@
 import { MessageEmbed } from "discord.js";
-import Creature, { HealType } from "./Creature";
+import Creature from "./Creature";
 
 export enum DamageType {
   "Stress" = -1,
@@ -141,6 +141,11 @@ export interface HealGroup {
   to?: Creature
 }
 
+export enum HealType {
+  "Health", "Shield", "Overheal", "Mana", "Injuries", "Stress"
+}
+
+
 export interface HealLog {
   type: "heal"
 
@@ -175,7 +180,7 @@ export function healLogEmbed(log: HealLog) {
   ).addField(
     "Total",
     `**${log.health_restored}**/**${log.injuries_restored}** Health/Injuries\n` +
-    `**${log.shields_restored}**/**${log.shields_restored}** Shields\n` +
+    `**${log.shields_restored}** Shields\n` +
     `**${log.mana_restored}** Mana\n` +
     `**${log.stress_restored}** Intensity\n` 
   )
@@ -188,7 +193,7 @@ function healGroupString(group: HealGroup) {
   `${function() {
     var str = "";
     for (const source of group.sources) {
-      str += `[**${source.value} ${DamageType[source.type]}**]\n`
+      str += `[**${source.value} ${HealType[source.type]}**]\n`
     }
 
     return str.trim();;

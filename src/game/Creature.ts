@@ -6,7 +6,7 @@ import { AbilitiesManager, capitalize, clamp, CONFIG, db, EffectManager, ItemMan
 import { AppliedActiveEffect, EffectStacking } from "./ActiveEffects.js";
 import { CraftingMaterials, Material } from "./Crafting.js";
 import { CreatureAbility } from "./CreatureAbilities.js";
-import { DamageCause, DamageGroup, DamageLog, DamageMethod as DamageMethod, DamageType, DAMAGE_TO_INJURY_RATIO, HealGroup, HealLog, reductionMultiplier, ShieldReaction, VitalsLog } from "./Damage.js";
+import { DamageCause, DamageGroup, DamageLog, DamageMethod as DamageMethod, DamageType, DAMAGE_TO_INJURY_RATIO, HealGroup, HealLog, HealType, reductionMultiplier, ShieldReaction, VitalsLog } from "./Damage.js";
 import { Fight } from "./Fight.js";
 import { GameDirective } from "./GameDirectives.js";
 import { AttackData, AttackSet, Item, ItemSlot, InventoryItem, EquippableInventoryItem, WeaponInventoryItem, WearableInventoryItem, NormalWearableItemData, SlotDescriptions, MaskWearableItemData, WeaponItemData, ShieldWearableItemData, VestWearableItemData, JacketWearableItemData, BackpackWearableItemData, GlovesWearableItemData, ConsumableItemData, GenericItemData } from "./Items.js";
@@ -603,6 +603,7 @@ export default class Creature {
     const group: DamageGroup = JSON.parse(JSON.stringify(original));
 
     const log: DamageLog = {
+      type: "damage",
       original,
       final: group,
       successful: true,
@@ -774,6 +775,7 @@ export default class Creature {
     const group: HealGroup = JSON.parse(JSON.stringify(original));
 
     const log: HealLog = {
+      type: "heal",
       original,
       final: group,
       health_restored: 0,
@@ -784,8 +786,19 @@ export default class Creature {
       wasted: 0
     }
 
+    group.to = original.to;
+    group.from = original.from;
+
+    log.final.to = this;
+    log.original.to = this;
+
     for (const passive of this.passives) {
       passive.$.beforeGotHealed?.(this, group);
+    }
+    if (group.from instanceof Creature) {
+      for (const passive of group.from.passives) {
+        passive.$.beforeGiveHealing?.(group.from, group);
+      }
     }
 
     for (const src of group.sources) {
@@ -822,24 +835,29 @@ export default class Creature {
           const _injuries = this.$.vitals.injuries;
 
           this.$.vitals.injuries -= src.value;
-          log.injuries_restored += Math.min(this.$.vitals.injuries, this.$.stats.health.value) - _injuries;
+          log.injuries_restored += _injuries - Math.min(this.$.vitals.injuries, this.$.stats.health.value);
         } break;
         case HealType.Stress: {
           const _intensity = this.$.vitals.intensity;
 
           this.$.vitals.intensity -= src.value;
-          log.stress_restored += Math.min(this.$.vitals.intensity, this.$.stats.health.value) - _intensity;
+          log.stress_restored += _intensity - Math.min(this.$.vitals.intensity, this.$.stats.health.value);
         } break;
       }
       this.vitalsIntegrity();
     }
 
-    for (const [o_src, f_src] of [log.original.sources, log.final.sources]) {
-      log.wasted += Math.max(o_src.value - f_src.value, 0);
+    for (var i = 0; i < Math.max(log.original.sources.length, log.final.sources.length); i++) {
+      log.wasted += Math.max((log.original.sources[i]?.value ?? 0) - (log.final.sources[i]?.value ?? 0), 0);
     }
 
     for (const passive of this.passives) {
       passive.$.afterGotHealed?.(this, log);
+    }
+    if (group.from instanceof Creature) {
+      for (const passive of group.from.passives) {
+        passive.$.afterGiveHealing?.(group.from, log);
+      }
     }
 
     this.$.vitalsHistory.unshift(log);
@@ -1141,6 +1159,7 @@ export default class Creature {
       },
       abilities: this.$.abilities,
       active_effects: this.$.active_effects,
+      vitalsHistory: this.$.vitalsHistory,
       sim_message: this.$.sim_message,
       vars: this.$.vars
     }
@@ -1484,10 +1503,6 @@ export interface CreatureDump {
   sim_message?: string | null
   active_effects?: AppliedActiveEffect[]
   vars?: Record<string, number | undefined>
-}
-
-export enum HealType {
-  "Health", "Shield", "Overheal", "Mana", "Injuries", "Stress"
 }
 
 function globalOrLocalPusherArray<T>(array: T[], input: (T | string)[], manager: any) {

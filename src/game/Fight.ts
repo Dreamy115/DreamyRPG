@@ -2,12 +2,12 @@ import NodeCache from "node-cache";
 import { AbilitiesManager, CONFIG, EffectManager, ItemManager, limitString, removeMarkdown, shuffle } from "..";
 import Mongoose from "mongoose";
 import { Client, EmbedFieldData, InteractionReplyOptions, MessageActionRow, MessageButton, MessageEmbed, MessagePayload, MessageSelectMenu, MessageSelectOptionData, SnowflakeUtil, User } from "discord.js";
-import Creature, { HealType } from "./Creature";
+import Creature from "./Creature";
 import { textStat } from "./Stats";
 import { replaceLore } from "./LoreReplacer";
 import { bar_styles, make_bar } from "../app/Bars";
 import { DisplaySeverity, romanNumeral } from "./ActiveEffects";
-import { DamageMethod } from "./Damage";
+import { DamageMethod, HealType } from "./Damage";
 import { WeaponItemData } from "./Items";
 
 export class Fight {

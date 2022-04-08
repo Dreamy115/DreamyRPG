@@ -27,6 +27,15 @@ export default [
 
           if (creature.active_effects.findIndex((v) => v.id === "suppressed") !== -1) creature.$.status.abilities = false;
           if (creature.active_effects.findIndex((v) => v.id === "dazed") !== -1) creature.$.status.attacks = false;
+
+          creature.$.stats.vamp.modifiers.push({
+            type: ModifierType.CAP_MAX,
+            value: 80
+          });
+          creature.$.stats.siphon.modifiers.push({
+            type: ModifierType.CAP_MAX,
+            value: 80
+          });
         },
         afterDamageTaken: async (creature, db, log) => {
           if (log.final.from === "Low-Health Stress") return;

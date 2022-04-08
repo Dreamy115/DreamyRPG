@@ -216,13 +216,9 @@ export default class Creature {
 
 
     // CAPPING
-    this.$.stats.vamp.modifiers.push({
+    this.$.stats.plating_effectiveness.modifiers.push({
       type: ModifierType.CAP_MAX,
-      value: 80
-    });
-    this.$.stats.siphon.modifiers.push({
-      type: ModifierType.CAP_MAX,
-      value: 80
+      value: 100
     });
     //
 
@@ -233,8 +229,6 @@ export default class Creature {
     this.$.vitals.action_points *= this.$.stats.action_points.value;
     this.$.vitals.heat *= this.$.stats.heat_capacity.value;
     this.$.vitals.intensity *= this.$.stats.mental_strength.value;
-
-    this.vitalsIntegrity();
 
     // POSTLOAD
     for (const passive of passives) {

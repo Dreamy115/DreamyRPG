@@ -366,7 +366,7 @@ export default new ApplicationCommandHandler(
                 const creature: Creature = Creature.cache.get(data._id) ?? new Creature(data);
 
                 for (var i = 0; i < amount; i++) {
-                  creature.tick();
+                  await creature.tick(db);
                 }
 
                 creature.put(db);
@@ -390,20 +390,20 @@ export default new ApplicationCommandHandler(
                 const data = document as CreatureDump;
                 const creature: Creature = Creature.cache.get(data._id) ?? new Creature(data);
 
-                creature.heal({
+                await creature.heal({
                   from: "Long-Rest Regen",
                   sources: [{
                     type: HealType.Overheal,
                     value: creature.$.stats.health.value + creature.$.stats.shield.value
                   }]
-                });
-                creature.heal({
+                }, db);
+                await creature.heal({
                   from: "Long-Rest Regen",
                   sources: [{
-                    value: creature.$.stats.mana.value,
-                    type: HealType.Mana
+                    value: creature.$.stats.action_points.value,
+                    type: HealType.ActionPoints
                   }]
-                });
+                }, db);
 
                 creature.put(db);
               }
@@ -505,7 +505,7 @@ export default new ApplicationCommandHandler(
               if (!char) continue;
   
               for (const passive of char.passives)
-                await passive.$.onFightExit?.(char, fight, db);
+                await passive.$.onFightExit?.(char, db, fight);
             }
 
             await fight.delete(db);

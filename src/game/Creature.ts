@@ -49,7 +49,7 @@ export default class Creature {
         ranged: new TrackableStat(100),
         damage: new TrackableStat(15),
         health: new TrackableStat(100),
-        mana: new TrackableStat(30),
+        action_points: new TrackableStat(30),
         mana_regen: new TrackableStat(10),
         shield: new TrackableStat(0),
         shield_regen: new TrackableStat(0),
@@ -82,7 +82,7 @@ export default class Creature {
       vitals: {
         health: (data.vitals?.health ?? 1),
         injuries: (data.vitals?.injuries ?? 0),
-        mana: (data.vitals?.mana ?? 0),
+        action_points: (data.vitals?.action_points ?? 0),
         shield: (data.vitals?.shield ?? 0),
         heat: (data.vitals?.heat ?? 1),
         intensity: (data.vitals?.intensity ?? 0)
@@ -165,7 +165,7 @@ export default class Creature {
     this.$.stats.parry.base += (slottedItems.backpack?.$ as BackpackWearableItemData).base_parry ?? 0;
     this.$.stats.deflect.base += (slottedItems.backpack?.$ as BackpackWearableItemData).base_deflect ?? 0;
     
-    this.$.stats.mana.base += (slottedItems.gloves?.$ as GlovesWearableItemData).base_mana ?? 0;
+    this.$.stats.action_points.base += (slottedItems.gloves?.$ as GlovesWearableItemData).base_mana ?? 0;
     this.$.stats.mana_regen.base += (slottedItems.gloves?.$ as GlovesWearableItemData).base_mana_regen ?? 0;
     this.$.stats.tech.base += (slottedItems.gloves?.$ as GlovesWearableItemData).base_tech ?? 0;
 
@@ -228,8 +228,8 @@ export default class Creature {
     if (isNaN(this.$.vitals.injuries)) {
       this.$.vitals.injuries = 0;
     }
-    if (isNaN(this.$.vitals.mana)) {
-      this.$.vitals.mana = 0;
+    if (isNaN(this.$.vitals.action_points)) {
+      this.$.vitals.action_points = 0;
     }
     if (isNaN(this.$.vitals.shield)) {
       this.$.vitals.shield = 0;
@@ -241,7 +241,7 @@ export default class Creature {
     this.$.vitals.health *= this.$.stats.health.value;
     this.$.vitals.injuries *= this.$.stats.health.value;
     this.$.vitals.shield *= this.$.stats.shield.value;
-    this.$.vitals.mana *= this.$.stats.mana.value;
+    this.$.vitals.action_points *= this.$.stats.action_points.value;
     this.$.vitals.heat *= this.$.stats.heat_capacity.value;
     this.$.vitals.intensity *= this.$.stats.mental_strength.value;
 
@@ -375,7 +375,7 @@ export default class Creature {
   vitalsIntegrity() {
     this.$.vitals.injuries = Math.round(clamp(this.$.vitals.injuries, 0, this.$.stats.health.value));
     this.$.vitals.health = Math.round(clamp(this.$.vitals.health, 0, this.$.stats.health.value - this.$.vitals.injuries));
-    this.$.vitals.mana = Math.round(clamp(this.$.vitals.mana, 0, this.$.stats.mana.value));
+    this.$.vitals.action_points = Math.round(clamp(this.$.vitals.action_points, 0, this.$.stats.action_points.value));
     this.$.vitals.shield = Math.round(clamp(this.$.vitals.shield, 0, this.$.stats.shield.value));
     this.$.vitals.heat = Math.round(clamp(this.$.vitals.heat, 0, this.$.stats.heat_capacity.value));
     this.$.vitals.intensity = Math.round(clamp(this.$.vitals.intensity, 0, this.$.stats.mental_strength.value));
@@ -389,8 +389,8 @@ export default class Creature {
     if (isNaN(this.$.vitals.injuries))
       this.$.vitals.injuries = 0;
 
-    if (isNaN(this.$.vitals.mana))
-      this.$.vitals.mana = 0;
+    if (isNaN(this.$.vitals.action_points))
+      this.$.vitals.action_points = 0;
 
     if (isNaN(this.$.vitals.intensity))
       this.$.vitals.intensity = 0;
@@ -599,7 +599,7 @@ export default class Creature {
     return false;
   }
 
-  applyDamage(original: DamageGroup): DamageLog {
+  async applyDamage(original: DamageGroup, db: typeof mongoose): Promise<DamageLog> {
     const group: DamageGroup = JSON.parse(JSON.stringify(original));
 
     const log: DamageLog = {
@@ -622,15 +622,17 @@ export default class Creature {
     group.to = original.to;
     group.from = original.from;
 
-    log.final.to = this;
-    log.original.to = this;
+    log.final.to = `creature:${this.id}`;
+    log.original.to = `creature:${this.id}`;
+
+    const from = group.from?.startsWith("creature:") ? await Creature.fetch(group.from.split(":")[1], db).catch(() => null) : null;
 
     for (const passive of this.passives) {
-      passive.$.beforeDamageTaken?.(this, group);
+      await passive.$.beforeDamageTaken?.(this, db, group);
     }
-    if (group.from instanceof Creature) {
-      for (const passive of group.from.passives) {
-        passive.$.beforeDamageGiven?.(group.from, group);
+    if (from) {
+      for (const passive of from.passives) {
+        await passive.$.beforeDamageGiven?.(from, db, group);
       }
     }
 
@@ -645,7 +647,7 @@ export default class Creature {
           log.total_damage_mitigated += s.value;
       }
       for (const passive of this.passives)
-        passive.$.onDodge?.(this, log);
+        await passive.$.onDodge?.(this, db, log);
     } else {
       for (const source of group.sources) {
         if (source.type === DamageType.Stress) {
@@ -738,27 +740,27 @@ export default class Creature {
       }
 
       for (const passive of this.passives) {
-        passive.$.afterDamageTaken?.(this, log);
+        await passive.$.afterDamageTaken?.(this, db, log);
       }
 
-      if (group.from instanceof Creature) {
-        group.from.heal({
+      if (from) {
+        await from.heal({
           from: group.to,
           sources: [{
             type: HealType.Health,
-            value: Math.round(log.total_physical_damage * group.from.$.stats.vamp.value / 100)
+            value: Math.round(log.total_physical_damage * from.$.stats.vamp.value / 100)
           }]
-        });
-        group.from.heal({
+        }, db);
+        await from.heal({
           from: group.to,
           sources: [{
             type: HealType.Shield,
-            value: Math.round(log.total_energy_damage * group.from.$.stats.siphon.value / 100)
+            value: Math.round(log.total_energy_damage * from.$.stats.siphon.value / 100)
           }]
-        });
+        }, db);
   
-        for (const passive of group.from.passives) {
-          passive.$.afterDamageGiven?.(group.from, log);
+        for (const passive of from.passives) {
+          await passive.$.afterDamageGiven?.(from, db, log);
         }
       }
     }
@@ -771,9 +773,8 @@ export default class Creature {
     return log;
   }
 
-  heal(original: HealGroup) {
+  async heal(original: HealGroup, db: typeof mongoose) {
     const group: HealGroup = JSON.parse(JSON.stringify(original));
-
     const log: HealLog = {
       type: "heal",
       original,
@@ -782,22 +783,20 @@ export default class Creature {
       injuries_restored: 0,
       mana_restored: 0,
       shields_restored: 0,
-      stress_restored: 0,
-      wasted: 0
+      stress_restored: 0
     }
+    
+    log.final.to = `creature:${this.id}`;
+    log.original.to = `creature:${this.id}`;
 
-    group.to = original.to;
-    group.from = original.from;
-
-    log.final.to = this;
-    log.original.to = this;
+    const from = group.from?.startsWith("creature:") ? await Creature.fetch(group.from.split(":")[1], db).catch(() => null) : null;
 
     for (const passive of this.passives) {
-      passive.$.beforeGotHealed?.(this, group);
+      await passive.$.beforeGotHealed?.(this, db, group);
     }
-    if (group.from instanceof Creature) {
-      for (const passive of group.from.passives) {
-        passive.$.beforeGiveHealing?.(group.from, group);
+    if (from) {
+      for (const passive of from.passives) {
+        await passive.$.beforeGiveHealing?.(from, db, group);
       }
     }
 
@@ -825,11 +824,11 @@ export default class Creature {
           log.health_restored += Math.min(this.$.vitals.health, this.$.stats.health.value) - _health;
           log.shields_restored += Math.min(this.$.vitals.shield, this.$.stats.shield.value) - _shield;
         } break;
-        case HealType.Mana: {
-          const _mana = this.$.vitals.mana;
+        case HealType.ActionPoints: {
+          const _mana = this.$.vitals.action_points;
 
-          this.$.vitals.mana += src.value;
-          log.mana_restored += Math.min(this.$.vitals.mana, this.$.stats.mana.value) - _mana;
+          this.$.vitals.action_points += src.value;
+          log.mana_restored += Math.min(this.$.vitals.action_points, this.$.stats.action_points.value) - _mana;
         } break;
         case HealType.Injuries: {
           const _injuries = this.$.vitals.injuries;
@@ -847,16 +846,12 @@ export default class Creature {
       this.vitalsIntegrity();
     }
 
-    for (var i = 0; i < Math.max(log.original.sources.length, log.final.sources.length); i++) {
-      log.wasted += Math.max((log.original.sources[i]?.value ?? 0) - (log.final.sources[i]?.value ?? 0), 0);
-    }
-
     for (const passive of this.passives) {
-      passive.$.afterGotHealed?.(this, log);
+      await passive.$.afterGotHealed?.(this, db, log);
     }
-    if (group.from instanceof Creature) {
-      for (const passive of group.from.passives) {
-        passive.$.afterGiveHealing?.(group.from, log);
+    if (from) {
+      for (const passive of from.passives) {
+        await passive.$.afterGiveHealing?.(from, db, log);
       }
     }
 
@@ -892,7 +887,7 @@ export default class Creature {
     return effects;
   }
 
-  applyActiveEffect(effect: AppliedActiveEffect, override_existing = false): boolean {
+  async applyActiveEffect(effect: AppliedActiveEffect, db: typeof mongoose, override_existing = false): Promise<boolean> {
     let effectData = EffectManager.map.get(effect.id);
     if (!effectData) return false;
 
@@ -944,14 +939,14 @@ export default class Creature {
       this.$.active_effects.push(effect);
     }
 
-    effectData.$.onApply?.(this, effect);
+    await effectData.$.onApply?.(this, db, effect);
     
     if (effectData.$.preload || effectData.$.postload || effectData.$.passives)
       this.reload();
       
     return true;
   }
-  clearActiveEffect(id: string, type: "expire" | "delete"): boolean {
+  async clearActiveEffect(id: string, type: "expire" | "delete", db: typeof mongoose): Promise<boolean> {
     const index = this.$.active_effects.findIndex((v) => v.id === id);
     if (index === -1) {
       const effect = this.active_effects.find((v) => v.id === id);
@@ -960,11 +955,11 @@ export default class Creature {
       const effectData = EffectManager.map.get(effect.id);
       switch (type) {
         case "delete": {
-          effectData?.$.onDelete?.(this, effect);
+          await effectData?.$.onDelete?.(this, db, effect);
         } break;
         case "expire": {
           effect.ticks = 0;
-          effectData?.$.onTick?.(this, effect);
+          await effectData?.$.onTick?.(this, db, effect);
         } break;
       }
 
@@ -977,47 +972,47 @@ export default class Creature {
 
     switch (type) {
       case "delete": {
-        effectData?.$.onDelete?.(this, effect);
+        await effectData?.$.onDelete?.(this, db, effect);
       } break;
       case "expire": {
         effect.ticks = 0;
-        effectData?.$.onTick?.(this, effect);
+        await effectData?.$.onTick?.(this, db, effect);
       } break;
     }
 
     return true;
   }
-  clearAllEffects(type: "expire" | "delete") {
+  async clearAllEffects(type: "expire" | "delete", db: typeof mongoose) {
     for (const effect of this.active_effects) {
-      this.clearActiveEffect(effect.id, type);
+      await this.clearActiveEffect(effect.id, type, db);
     }
   }
 
-  tickEffects() {
+  async tickEffects(db: typeof mongoose) {
     for (const effect of this.active_effects) {
       const effectData = EffectManager.map.get(effect.id);
       if (!effectData) {
-        this.clearActiveEffect(effect.id, "delete");
+        await this.clearActiveEffect(effect.id, "delete", db);
         continue;
       }
       if (--effect.ticks === 0) {
-        this.clearActiveEffect(effect.id, "expire");
+        await this.clearActiveEffect(effect.id, "expire", db);
       } else {
         if (effect.ticks < 0) effect.ticks = -1;
-        effectData.$.onTick?.(this, effect);
+        effectData.$.onTick?.(this, db, effect);
       }
     }
   }
 
-  tick() {
+  async tick(db: typeof mongoose) {
     for (const passive of this.passives) {
-      passive.$.beforeTick?.(this);
+      await passive.$.beforeTick?.(this, db);
     }
     
-    this.tickEffects();
+    await this.tickEffects(db);
       
     for (const passive of this.passives)
-      passive.$.afterTick?.(this);
+      await passive.$.afterTick?.(this, db);
   }
 
   get canUseAttacks(): boolean {
@@ -1141,7 +1136,7 @@ export default class Creature {
       vitals: {
         health: this.$.vitals.health / this.$.stats.health.value,
         injuries: this.$.vitals.injuries / this.$.stats.health.value,
-        mana: this.$.vitals.mana / this.$.stats.mana.value,
+        action_points: this.$.vitals.action_points / this.$.stats.action_points.value,
         shield: this.$.vitals.shield / this.$.stats.shield.value,
         heat: this.$.vitals.heat / this.$.stats.heat_capacity.value,
         intensity: this.$.vitals.intensity / this.$.stats.mental_strength.value
@@ -1212,8 +1207,8 @@ export default class Creature {
   static readonly BAR_STYLES = {
     Health: ["<:h_0:961326242689347674>", "<:h_75:961326242697736282>", "<:h_50:961326242706116648>", "<:h_25:961326242710290532>", "<:h_100:961326242689343518>"],
     Injuries: ["<:inj:961328087289708604>"],
-    Shield: ["<:s_0:961328715869061121>", "<:s_25:961328716078800936>", "<:s_50:961328716133318746>", "<:s_75:961328716150108271>", "<:s_100:961328716116549632>"],
-    Mana: ["<:m_0:961380795119960104>", "<:m_25:961380795136753714>", "<:m_50:961380795233239050>", "<:m_75:961380795208065034>", "<:m_100:961380795203870741>"],
+    Shield: ["<:s_0:961328715869061121>", "<:s_25:961328716078800936>", "<:s_50:961328716133318746>", "<:s_75:962026630971265094>", "<:s_100:961328716116549632>"],
+    ActionPoints: ["<:m_0:962028272688971826>", "<:m_25:962028272672182303>", "<:m_50:962028272705753158>", "<:m_75:962028272793833492>", "<:m_100:962028272722526218>"],
     Heat: bar_styles[3]
   }
 
@@ -1277,7 +1272,7 @@ export default class Creature {
     {
       type: ModifierType.ADD,
       value: 0.5,
-      stat: "mana"
+      stat: "action_points"
     },
     {
       type: ModifierType.ADD,
@@ -1363,7 +1358,7 @@ export default class Creature {
       {
         type: ModifierType.ADD_PERCENT,
         value: 0.1,
-        stat: "mana"
+        stat: "action_points"
       },
       {
         type: ModifierType.ADD_PERCENT,
@@ -1534,10 +1529,10 @@ export function diceRoll(size = 6): number {
 
 export type Attributes = "STR" | "FOR" | "REJ" | "PER" | "INT" | "DEX" | "CHA" | "MND";
 
-export type Vitals = "health" | "mana" | "shield" | "injuries" | "heat" | "intensity";
+export type Vitals = "health" | "action_points" | "shield" | "injuries" | "heat" | "intensity";
 
 export type Stats = 
   "accuracy" | "armor" | "dissipate" | "lethality" | "passthrough" | "cutting" | "melee" | "damage" | "ranged" |
-  "health" | "mana" | "mana_regen" | "shield" | "shield_regen" | "parry" | "deflect" | "tenacity" | "filtering" |
+  "health" | "action_points" | "mana_regen" | "shield" | "shield_regen" | "parry" | "deflect" | "tenacity" | "filtering" |
   "tech" | "vamp" | "siphon" | "initiative" | "min_comfortable_temperature" | "heat_capacity" | "attack_cost" |
   "ult_stack_target" | "stress_resistance" | "mental_strength";

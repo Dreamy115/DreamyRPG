@@ -4,7 +4,7 @@ import { capitalize, clamp, CONFIG, invLerp, ItemManager, lerp, limitString, Loo
 import { CraftingMaterials, Material } from "../../game/Crafting";
 import Creature, { Attributes, CreatureDump } from "../../game/Creature";
 import { AbilityUseLog } from "../../game/CreatureAbilities";
-import { DamageCause, DamageGroup, damageLogEmbed, DamageMethod, DamageType, ShieldReaction } from "../../game/Damage";
+import { DamageCause, DamageGroup, damageLogEmbed, DamageMethod, DamageType, healLogEmbed, ShieldReaction } from "../../game/Damage";
 import { ConsumableItemData, createItem, DEFAULT_ITEM_OPT_STEP, EquippableInventoryItem, InventoryItem, Item, ItemQualityColor, ItemQualityEmoji, SpecializedWearableData, WeaponItemData, WearableInventoryItem, WearableItemData } from "../../game/Items";
 import itemsWs from "../../game/items/items.ws";
 import { LootTable } from "../../game/LootTables";
@@ -602,7 +602,7 @@ export default new ComponentCommandHandler(
                         const index = creature.$.items.backpack.findIndex((v) => v.id === item.$.id);
                         if (index === -1) throw new Error("Creature doesn't have item " + item.$.id);
                       
-                        const log = await item.$.onUse?.(creature);
+                        const log = await item.$.onUse?.(creature, db);
                         if (log === undefined) throw new Error("This item cannot be used directly. It must be consumed via an Ability or other means.");
 
                         const table = LootTables.map.get(item.$.returnTable ?? "");
@@ -648,11 +648,16 @@ export default new ComponentCommandHandler(
                           ? `\n\nItem Returns: **${log.returns.join("**, **")}**`
                           : ""
                         ),
-                        embeds: (log.damageLogs?.length ?? 0 > 0) ? function () {
+                        embeds: (log.vitalsLogs?.length ?? 0 > 0) ? await async function () {
                           const array: MessageEmbed[] = [];
 
-                          for (const dmglog of log.damageLogs ?? [])
-                            array.push(damageLogEmbed(dmglog));
+                          for (const vlog of log.vitalsLogs ?? []) {
+                            array.push(await (
+                              vlog.type === "damage"
+                              ? damageLogEmbed(vlog, db)
+                              : healLogEmbed(vlog, db)
+                            ))
+                          }
 
                           return array;
                         }() : undefined
@@ -1296,7 +1301,7 @@ export default new ComponentCommandHandler(
               interaction.followUp({
                 ephemeral: true,
                 content: `Expendable points: **${creature.totalAttributePointsUsed}**/${creature.$.experience.level}\nPoint assignment is final!`,
-                embeds: [(await infoEmbed(creature, Bot, "attributes")).embeds[0]],
+                embeds: [(await infoEmbed(creature, Bot, db, "attributes")).embeds[0]],
                 components: attributeComponents(creature, "Add ", "cedit/$ID/edit/attr/$ATTR")
               })
               return;
@@ -1372,7 +1377,7 @@ export default new ComponentCommandHandler(
                   } break;
                   case "service": {
                     try {
-                      log = await thing.onBuy(creature);
+                      log = await thing.onBuy(creature, db);
                     } catch (e) {
                       console.error(e);
                       await interaction.followUp({
@@ -1390,11 +1395,15 @@ export default new ComponentCommandHandler(
 
                 await interaction.followUp({
                   content: `[**${id}**] ${log.text}`,
-                  embeds: function() {
+                  embeds: await async function() {
                     const array: MessageEmbed[] = [];
 
-                    for (const dmg of log.damageLogs ?? []) {
-                      array.push(damageLogEmbed(dmg));
+                    for (const vlog of log.vitalsLogs ?? []) {
+                      array.push(await (
+                        vlog.type === "damage"
+                        ? damageLogEmbed(vlog, db)
+                        : healLogEmbed(vlog, db)
+                      ))
                     }
 
                     return array;

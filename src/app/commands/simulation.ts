@@ -90,11 +90,11 @@ export async function setSim(guild: Guild, db: typeof Mongoose, Bot: Client) {
         const creature: Creature = Creature.cache.get(data._id) ?? new Creature(data);
 
         if (!(await creature.getFightID(db))) {
-          creature.tick();
+          await creature.tick(db);
         }
 
         if (!creature.$.info.npc && sim_channel) {
-          const {embeds} = await infoEmbed(creature, Bot, "stats");
+          const {embeds} = await infoEmbed(creature, Bot, db, "stats");
           const msg = await sim_channel.messages.fetch(creature.$.sim_message ?? "").catch(() => null);
           if (msg) {
             try {

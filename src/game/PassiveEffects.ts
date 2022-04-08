@@ -63,24 +63,24 @@ export class PassiveEffect {
     postload?: (creature: Creature) => void
     modifiers?: NamedModifier[]
 
-    beforeDamageTaken?: (creature: Creature, damage: DamageGroup) => void
-    afterDamageTaken?: (creature: Creature, log: DamageLog) => void
-    beforeDamageGiven?: (creature: Creature, damage: DamageGroup) => void
-    afterDamageGiven?: (creature: Creature, log: DamageLog) => void
-    onDodge?: (Creature: Creature, log: DamageLog) => void
-    beforeTick?: (creature: Creature) => void
-    afterTick?: (creature: Creature) => void
+    beforeDamageTaken?: (creature: Creature, db: typeof Mongoose, damage: DamageGroup) => Promise<void>
+    afterDamageTaken?: (creature: Creature, db: typeof Mongoose, log: DamageLog) => Promise<void>
+    beforeDamageGiven?: (creature: Creature, db: typeof Mongoose, damage: DamageGroup) => Promise<void>
+    afterDamageGiven?: (creature: Creature, db: typeof Mongoose, log: DamageLog) => Promise<void>
+    onDodge?: (Creature: Creature, db: typeof Mongoose, log: DamageLog) => Promise<void>
+    beforeTick?: (creature: Creature, db: typeof Mongoose) => Promise<void>
+    afterTick?: (creature: Creature, db: typeof Mongoose) => Promise<void>
 
-    onBust?: (creature: Creature, db: typeof Mongoose) => Promise<void> | void
-    onAttack?: (creature: Creature, log: DamageLog, db: typeof Mongoose) => Promise<void> | void
-    onAbility?: (creature: Creature, ability: CreatureAbility, ult: boolean, db: typeof Mongoose) => Promise<void> | void
+    onBust?: (creature: Creature, db: typeof Mongoose) => Promise<void>
+    onAttack?: (creature: Creature, db: typeof Mongoose, log: DamageLog) => Promise<void>
+    onAbility?: (creature: Creature, db: typeof Mongoose, ability: CreatureAbility, ult: boolean) => Promise<void>
 
-    beforeGotHealed?: (creature: Creature, damage: HealGroup) => void
-    afterGotHealed?: (creature: Creature, damage: HealLog) => void
-    beforeGiveHealing?: (creature: Creature, damage: HealGroup) => void
-    afterGiveHealing?: (creature: Creature, damage: HealLog) => void
+    beforeGotHealed?: (creature: Creature, db: typeof Mongoose, damage: HealGroup) => Promise<void>
+    afterGotHealed?: (creature: Creature, db: typeof Mongoose, damage: HealLog) => Promise<void>
+    beforeGiveHealing?: (creature: Creature, db: typeof Mongoose, damage: HealGroup) => Promise<void>
+    afterGiveHealing?: (creature: Creature, db: typeof Mongoose, damage: HealLog) => Promise<void>
 
-    onFightExit?: (creature: Creature, fight: Fight, db: typeof Mongoose) => Promise<void> | void
+    onFightExit?: (creature: Creature, db: typeof Mongoose, fight: Fight) => Promise<void>
   }
 
   constructor(data: PassiveEffect["$"]) {

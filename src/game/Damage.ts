@@ -1,4 +1,5 @@
 import { MessageEmbed } from "discord.js";
+import Mongoose from "mongoose";
 import Creature from "./Creature";
 
 export enum DamageType {
@@ -17,8 +18,8 @@ export interface DamageSource {
 
 export interface DamageGroup {
   sources: DamageSource[]
-  from?: Creature | string
-  to?: Creature
+  from?: string
+  to?: string
   method: DamageMethod
   penetration?: {
     lethality?: number
@@ -75,11 +76,14 @@ export function reductionMultiplier(protection: number): number {
   return 100 / (100 + Math.max(0, protection));
 }
 
-export function damageLogEmbed(log: DamageLog) {
+export async function damageLogEmbed(log: DamageLog, db: typeof Mongoose) {
+  const from = log.final.from?.startsWith("creature:") ? await Creature.fetch(log.final.from.split(":")[1], db).catch(() => null) : null;
+  const to = log.final.to?.startsWith("creature:") ? await Creature.fetch(log.final.to.split(":")[1], db).catch(() => null) : null;
+
   const embed = new MessageEmbed();
   embed
     .setTitle("Damage Log")
-    .setAuthor(`${(log.final?.from as (undefined | Creature))?.displayName ?? log.final.from ?? "Unknown"} >>> ${(log.final.to?.displayName ?? "Unknown")}`)
+    .setAuthor(`${from?.displayName ?? log.final.from ?? "Unknown"} >>> ${(to?.displayName ?? log.final.to ?? "Unknown")}`)
     .setColor("RED")
     .addField(
       "Before",
@@ -137,12 +141,12 @@ export interface HealSource {
 
 export interface HealGroup {
   sources: HealSource[]
-  from?: Creature | string
-  to?: Creature
+  from?: string
+  to?: string
 }
 
 export enum HealType {
-  "Health", "Shield", "Overheal", "Mana", "Injuries", "Stress"
+  "Health", "Shield", "Overheal", "ActionPoints", "Injuries", "Stress"
 }
 
 
@@ -157,15 +161,16 @@ export interface HealLog {
   stress_restored: number
   mana_restored: number
   injuries_restored: number
-
-  wasted: number
 }
 
-export function healLogEmbed(log: HealLog) {
+export async function healLogEmbed(log: HealLog, db: typeof Mongoose) {
+  const from = log.final.from?.startsWith("creature:") ? await Creature.fetch(log.final.from.split(":")[1], db).catch(() => null) : null;
+  const to = log.final.to?.startsWith("creature:") ? await Creature.fetch(log.final.to.split(":")[1], db).catch(() => null) : null;
+
   const embed = new MessageEmbed();
   embed
     .setTitle("Damage Log")
-    .setAuthor(`${(log.final?.from as (undefined | Creature))?.displayName ?? log.final.from ?? "Unknown"} >>> ${(log.final.to?.displayName ?? "Unknown")}`)
+    .setAuthor(`${from?.displayName ?? log.final.from ?? "Unknown"} >>> ${(to?.displayName ?? log.final.to ?? "Unknown")}`)
     .setColor("GREEN")
     .addField(
       "Before",
@@ -181,7 +186,7 @@ export function healLogEmbed(log: HealLog) {
     "Total",
     `**${log.health_restored}**/**${log.injuries_restored}** Health/Injuries\n` +
     `**${log.shields_restored}** Shields\n` +
-    `**${log.mana_restored}** Mana\n` +
+    `**${log.mana_restored}** Action Points\n` +
     `**${log.stress_restored}** Intensity\n` 
   )
  

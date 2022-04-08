@@ -18,6 +18,7 @@ import { bar_styles, make_bar } from "../Bars.js";
 import { ApplicationCommandHandler } from "../commands.js";
 import { attributeComponents, ceditMenu, consumeMenu, scrapMenu } from "../component_commands/cedit.js";
 import { abilitiesDescriptor, attackDescriptor, namedModifierDescriptor, modifiersDescriptor, passivesDescriptor, perksDescriptor } from "./handbook.js";
+import Mongoose from "mongoose";
 
 export default new ApplicationCommandHandler(
   {
@@ -662,7 +663,7 @@ export default new ApplicationCommandHandler(
           }
         }
 
-        const info = await infoEmbed(char, Bot, page);
+        const info = await infoEmbed(char, Bot, db, page);
 
         const components: MessageActionRow[] = [];
         if (info.scrollable)
@@ -718,7 +719,7 @@ export default new ApplicationCommandHandler(
 )
 
 const PER_INDEX_PAGE = 5;
-export async function infoEmbed(creature: Creature, Bot: Client, page: string, index = 0): Promise<{gm_embeds: MessageEmbed[], embeds: MessageEmbed[], attachments?: MessageAttachment[], scrollable: boolean}> {
+export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mongoose, page: string, index = 0): Promise<{gm_embeds: MessageEmbed[], embeds: MessageEmbed[], attachments?: MessageAttachment[], scrollable: boolean}> {
   const embeds = [new MessageEmbed()];
   // ALIAS
   const embed = embeds[0];
@@ -800,8 +801,8 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
           ) +
           ` **Health** **${creature.$.vitals.health}**/**${creature.$.stats.health.value - creature.$.vitals.injuries}** ` + 
           `(**${(100 * creature.$.vitals.health / creature.$.stats.health.value).toFixed(0)}%**)\n` +
-          make_bar(100 * creature.$.vitals.mana / creature.$.stats.mana.value, Creature.BAR_STYLES.Mana, creature.$.stats.mana.value / creature.$.stats.attack_cost.value).str +
-          ` **Mana** ${textStat(creature.$.vitals.mana, creature.$.stats.mana.value)} ` +
+          make_bar(100 * creature.$.vitals.action_points / creature.$.stats.action_points.value, Creature.BAR_STYLES.ActionPoints, creature.$.stats.action_points.value / creature.$.stats.attack_cost.value).str +
+          ` **Action Points** ${textStat(creature.$.vitals.action_points, creature.$.stats.action_points.value)} ` +
           `**${creature.$.stats.mana_regen.value}**/t\n\n` +
           make_bar(100 * creature.$.vitals.heat / creature.$.stats.heat_capacity.value, Creature.BAR_STYLES.Heat, BAR_LENGTH / 3).str +
           ` **Heat** ${textStat(creature.$.vitals.heat, creature.$.stats.heat_capacity.value)} ` +
@@ -974,7 +975,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
             value: `${replaceLore(ability.$.info.lore, ability.$.info.lore_replacers, creature)}\n\n` +
             `**${ability.$.haste ?? 1}** Haste\n` +
             `**${ability.$.min_targets}**${ability.$.max_targets ? `to **${ability.$.max_targets}**` : ""} Targets\n` +
-            `**${ability.$.cost}** Mana\n` +
+            `**${ability.$.cost}** Action Points\n` +
             `Type **${AbilityType[ability.$.type]}**`
           })
         }
@@ -1346,11 +1347,12 @@ export async function infoEmbed(creature: Creature, Bot: Client, page: string, i
       scrollable = true;
 
       var i = 0;
-      for (var a = index * PER_INDEX_PAGE; a < (index + 1) * PER_INDEX_PAGE && a < creature.$.vitalsHistory.length; a++) {
+      total = creature.$.vitalsHistory.length;
+      for (var a = index * PER_INDEX_PAGE; a < (index + 1) * PER_INDEX_PAGE && a < total; a++) {
         const his = creature.$.vitalsHistory[a];
         embeds[i] = his.type === "damage"
-        ? damageLogEmbed(his)
-        : healLogEmbed(his);
+        ? await damageLogEmbed(his, db)
+        : await healLogEmbed(his, db);
         i++;
       }
     } break;
@@ -1501,7 +1503,7 @@ export function describeItem(invitem?: InventoryItem, creature?: Creature) {
           str += `Armor **${item.$.base_armor}** | **${item.$.base_dissipate}** Dissipate\n`;
         } break;
         case "gloves": {
-          str += `Mana: **${item.$.base_mana}** **${item.$.base_mana_regen}**/t\nTech: **${item.$.base_tech}**\n`;
+          str += `Action Points: **${item.$.base_mana}** **${item.$.base_mana_regen}**/t\nTech: **${item.$.base_tech}**\n`;
         } break;
         case "backpack": {
           str += `Parry **${item.$.base_parry}** | **${item.$.base_deflect}** Deflect\n`;

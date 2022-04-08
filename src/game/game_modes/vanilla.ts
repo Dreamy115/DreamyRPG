@@ -28,7 +28,7 @@ export default [
           if (creature.active_effects.findIndex((v) => v.id === "suppressed") !== -1) creature.$.status.abilities = false;
           if (creature.active_effects.findIndex((v) => v.id === "dazed") !== -1) creature.$.status.attacks = false;
         },
-        afterDamageTaken: (creature, log) => {
+        afterDamageTaken: async (creature, db, log) => {
           if (log.final.from === "Low-Health Stress") return;
 
           const health = 100 * (creature.$.vitals.health / creature.$.stats.health.value);
@@ -37,7 +37,7 @@ export default [
             const stress = lerp(lerped, 1, 20);
             const mult_of_health = log.total_health_damage / creature.$.stats.health.value;
 
-            creature.applyDamage({
+            await creature.applyDamage({
               cause: DamageCause.Other,
               chance: 100,
               method: DamageMethod.Direct,
@@ -48,19 +48,19 @@ export default [
                 value: clamp(stress * lerp(mult_of_health, 0.2, 1.5), 1, 60),
                 shieldReaction: ShieldReaction.Normal 
               }]
-            });
+            }, db);
           }
         },
-        beforeTick: (creature) => {
+        beforeTick: async (creature, db) => {
           creature.$.vitals.intensity--;
 
           if (creature.alive) {
             if (creature.$.vitals.injuries >= creature.$.stats.health.value) {
-              creature.applyActiveEffect({
+              await creature.applyActiveEffect({
                 id: "death",
                 severity: 1,
                 ticks: -1
-              }, true)
+              }, db, true)
             }
           } else {
             creature.$.vitals.health = 0;
@@ -72,41 +72,41 @@ export default [
           /*if (intensity_percent >= 100) {
 
           } else */if (intensity_percent >= 75) {
-            creature.applyActiveEffect({
+            await creature.applyActiveEffect({
               id: "intensity-stressed",
               severity: intensity_percent,
               ticks: -1
-            }, true);
+            }, db, true);
           } else if (intensity_percent < 75 && intensity_percent > 65) {
-            creature.applyActiveEffect({
+            await creature.applyActiveEffect({
               id: "intensity-nothing",
               severity: intensity_percent,
               ticks: -1
-            }, true);
+            }, db, true);
           } else if (intensity_percent <= 65 && intensity_percent >= 35) {
-            creature.applyActiveEffect({
+            await creature.applyActiveEffect({
               id: "intensity-optimal",
               severity: intensity_percent,
               ticks: -1
-            }, true);
+            }, db, true);
           } else if (intensity_percent < 35 && intensity_percent > 15) {
-            creature.applyActiveEffect({
+            await creature.applyActiveEffect({
               id: "intensity-nothing",
               severity: intensity_percent,
               ticks: -1
-            }, true);
+            }, db, true);
           } else if (intensity_percent <= 15) {
-            creature.applyActiveEffect({
+            await creature.applyActiveEffect({
               id: "intensity-bored",
               severity: intensity_percent,
               ticks: -1
-            }, true);
+            }, db, true);
           }
         },
-        afterTick: (creature) => {
+        afterTick: async (creature, db) => {
           if (creature.alive) {
             creature.$.vitals.shield += creature.$.stats.shield_regen.value;
-            creature.$.vitals.mana += creature.$.stats.mana_regen.value;
+            creature.$.vitals.action_points += creature.$.stats.mana_regen.value;
           }
       
           if (creature.deltaHeat >= 0) {
@@ -118,19 +118,19 @@ export default [
           creature.vitalsIntegrity();
 
           if (creature.$.vitals.heat <= 0) {
-            creature.applyActiveEffect({
+            await creature.applyActiveEffect({
               id: "hypothermia",
               ticks: 1,
               severity: 1
-            }, true)
+            }, db, true)
           }
       
           if (creature.$.stats.filtering.value < (creature.location?.$.rads ?? 0)) {
-            creature.applyActiveEffect({
+            await creature.applyActiveEffect({
               id: "filter_fail",
               ticks: 1,
               severity: (creature.location?.$.rads ?? 0) - creature.$.stats.filtering.value
-            }, true)
+            }, db, true)
           }          
         }
       })

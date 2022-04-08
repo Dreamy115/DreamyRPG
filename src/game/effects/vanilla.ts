@@ -21,8 +21,8 @@ export default [
       ]
     },
     type: EffectType.Wound,
-    onTick: (creature, {ticks, severity}) => {
-      creature.applyDamage({
+    onTick: async (creature, db, {ticks, severity}) => {
+      await creature.applyDamage({
         cause: DamageCause.DoT,
         chance: 100,
         method: DamageMethod.Direct,
@@ -32,7 +32,7 @@ export default [
           value: severity,
           shieldReaction: ShieldReaction.Ignore
         }]
-      })
+      }, db)
     }
   }),
   new ActiveEffect({
@@ -117,15 +117,15 @@ export default [
         value: -3
       });
     },
-    onTick(creature, {ticks, severity}) {
-      creature.applyDamage({
+    async onTick(creature, db, {ticks, severity}) {
+      await creature.applyDamage({
         cause: DamageCause.DoT,
         chance: 100,
         method: DamageMethod.Direct,
         sources: [{type: DamageType.True, value: Math.max(1, 0.025 * creature.$.stats.health.value), shieldReaction: ShieldReaction.Ignore}],
         useDodge: false,
         from: "Hypothermia",
-      })
+      }, db)
     },
     type: EffectType.Wound
   }),
@@ -143,8 +143,8 @@ export default [
         }
       ]
     },
-    onTick(creature, {ticks, severity}) {
-      creature.applyDamage({
+    async onTick(creature, db, {ticks, severity}) {
+      await creature.applyDamage({
         cause: DamageCause.DoT,
         chance: 100,
         method: DamageMethod.Direct,
@@ -152,7 +152,7 @@ export default [
         sources: [{type: DamageType.True, value: Math.max(1, severity * 0.03 * creature.$.stats.health.value), shieldReaction: ShieldReaction.Ignore}],
         useDodge: false,
         from: "Chemical Burns",
-      })
+      }, db)
     },
     type: EffectType.Wound
   }),

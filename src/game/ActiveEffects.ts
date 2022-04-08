@@ -1,4 +1,5 @@
 import fs from "fs";
+import Mongoose from "mongoose";
 import path from "path";
 import { capitalize } from "..";
 
@@ -46,9 +47,9 @@ export class ActiveEffect {
     consecutive_limit: number
     stacking?: EffectStacking
     conflicts_with?: Set<string>
-    onApply?: (creature: Creature, {ticks, severity}: AppliedActiveEffect) => void
-    onTick?: (creature: Creature, {ticks, severity}: AppliedActiveEffect) => void
-    onDelete?: (creature: Creature, {ticks, severity}: AppliedActiveEffect) => void
+    onApply?: (creature: Creature, db: typeof Mongoose, {ticks, severity}: AppliedActiveEffect) => Promise<void>
+    onTick?: (creature: Creature, db: typeof Mongoose, {ticks, severity}: AppliedActiveEffect) => Promise<void>
+    onDelete?: (creature: Creature, db: typeof Mongoose, {ticks, severity}: AppliedActiveEffect) => Promise<void>
     preload?: (creature: Creature, {ticks, severity}: AppliedActiveEffect) => void
     postload?: (creature: Creature, {ticks, severity}: AppliedActiveEffect) => void
     vars?: Record<string, number>

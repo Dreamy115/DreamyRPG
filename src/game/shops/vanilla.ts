@@ -18,15 +18,15 @@ export default [
           plastic: 0
         },
         type: "service",
-        onBuy: async (creature) => {
-          creature.heal({
+        onBuy: async (creature, db) => {
+          await creature.heal({
             from: "Service",
             sources: [{value: 60, type: HealType.Injuries}]
-          });
-          creature.heal({
+          }, db);
+          await creature.heal({
             from: "Service",
             sources: [{value: 60, type: HealType.Health}]
-          });
+          }, db);
           return {
             text: "Healed for **60** Injuries and Health"
           }

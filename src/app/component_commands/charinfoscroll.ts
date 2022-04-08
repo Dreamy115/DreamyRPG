@@ -56,7 +56,7 @@ export default new ComponentCommandHandler(
     const msg = await channel.messages.fetch(interaction.message.id);
 
     let index = Number(args.shift());
-    const info = await infoEmbed(creature, Bot, page ?? "", index);
+    const info = await infoEmbed(creature, Bot, db, page ?? "", index);
     
     const components = info.scrollable
     ? [

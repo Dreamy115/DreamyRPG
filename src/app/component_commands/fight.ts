@@ -2,7 +2,7 @@ import { Message, MessageActionRow, MessageButton, MessageEmbed, MessageSelectMe
 import { AbilitiesManager, CONFIG, ItemManager, limitString, rotateLine, sleep } from "../..";
 import Creature, { diceRoll } from "../../game/Creature";
 import { replaceLore } from "../../game/LoreReplacer";
-import { DamageCause, DamageLog, damageLogEmbed, DamageMethod, DamageSource, ShieldReaction } from "../../game/Damage";
+import { DamageCause, DamageLog, damageLogEmbed, DamageMethod, DamageSource, healLogEmbed, ShieldReaction } from "../../game/Damage";
 import { Combatant, CombatPosition, Fight } from "../../game/Fight";
 import { Item, ItemQualityEmoji } from "../../game/Items";
 import { abilitiesDescriptor } from "../commands/handbook";
@@ -139,7 +139,7 @@ export default new ComponentCommandHandler(
             if (!char) continue;
 
             for (const passive of char.passives)
-              await passive.$.onFightExit?.(char, fight, db);
+              await passive.$.onFightExit?.(char, db, fight);
           }
 
           fight.delete(db);
@@ -171,11 +171,11 @@ export default new ComponentCommandHandler(
 
         if (interaction.isButton()) {
           if (creature.$.abilities.stacks === 0) {
-            if (creature.$.vitals.mana >= creature.$.stats.attack_cost.value) {
-              creature.$.vitals.mana -= creature.$.stats.attack_cost.value
+            if (creature.$.vitals.action_points >= creature.$.stats.attack_cost.value) {
+              creature.$.vitals.action_points -= creature.$.stats.attack_cost.value
             } else {
               interaction.editReply({
-                content: "Not enough Mana"
+                content: "Not enough Action Points"
               });
               return;
             }
@@ -312,7 +312,7 @@ export default new ComponentCommandHandler(
                 break;
             }
 
-            logs.push(target.applyDamage({
+            logs.push(await target.applyDamage({
               cause: attack_type,
               chance: rotateLine(skill_value / 100, Creature.PROFICIENCY_ACCURACY_SCALE, 1) * accuracy_mod * (creature.$.stats.accuracy.value + (set.modifiers?.accuracy ?? 0)),
               method: creature.attackSet.type,
@@ -322,8 +322,8 @@ export default new ComponentCommandHandler(
                 cutting: (set.modifiers?.cutting ?? 0) + creature.$.stats.cutting.value
               },
               useDodge: true,
-              from: creature,
-              to: target,
+              from: `creature:${creature.id}`,
+              to: `creature:${target.id}`,
               sources: function () {
                 const array: DamageSource[] = [];
 
@@ -337,12 +337,12 @@ export default new ComponentCommandHandler(
 
                 return array;
               }()
-            }));
+            }, db));
           }
 
           const embeds: MessageEmbed[] = []; 
           for (const log of logs) {
-            embeds.push(damageLogEmbed(log));
+            embeds.push(await damageLogEmbed(log, db));
             // @ts-expect-error WTF
             for (const passive of creature.passives) {
               await passive.$.onAttack?.(creature, log);
@@ -436,17 +436,21 @@ export default new ComponentCommandHandler(
 
             try {
               await ability.$.test(creature);
-              const uselog = await ability.$.use(creature, targets, accuracy_mods);
-              creature.$.vitals.mana -= ability.$.cost;
+              const uselog = await ability.$.use(creature, db, targets, accuracy_mods);
+              creature.$.vitals.action_points -= ability.$.cost;
               creature.$.abilities.hand.splice(creature.$.abilities.hand.findIndex((v) => v === ability.$.id), 1);
 
-              const damage_embeds = [];
-              for (const log of uselog.damageLogs ?? []) {
-                damage_embeds.push(damageLogEmbed(log));
+              const vlog_embeds = [];
+              for (const vlog of uselog.vitalsLogs ?? []) {
+                vlog_embeds.push(await (
+                  vlog.type === "damage"
+                  ? damageLogEmbed(vlog, db)
+                  : healLogEmbed(vlog, db)
+                ))
               }
 
               for (const passive of creature.passives)
-                await passive.$.onAbility?.(creature, ability, true, db);
+                await passive.$.onAbility?.(creature, db, ability, true);
 
               await creature.put(db);
               for (const target of targets) {
@@ -460,7 +464,7 @@ export default new ComponentCommandHandler(
               await interaction.followUp({
                 ephemeral: false,
                 content: uselog.text,
-                embeds: damage_embeds.length > 0 ? damage_embeds : undefined
+                embeds: vlog_embeds.length > 0 ? vlog_embeds : undefined
               })
 
               interaction.followUp(await fight.announceTurn(db, Bot));
@@ -593,10 +597,10 @@ export default new ComponentCommandHandler(
               }
             }
 
-            if (creature.$.vitals.mana < ability.$.cost) {
+            if (creature.$.vitals.action_points < ability.$.cost) {
               interaction.followUp({
                 ephemeral: true,
-                content: "Not enough mana"
+                content: "Not enough action_points"
               })
               return;
             }
@@ -614,17 +618,21 @@ export default new ComponentCommandHandler(
 
             try {
               await ability.$.test(creature);
-              const uselog = await ability.$.use(creature, targets, accuracy_mods);
-              creature.$.vitals.mana -= ability.$.cost;
+              const uselog = await ability.$.use(creature, db, targets, accuracy_mods);
+              creature.$.vitals.action_points -= ability.$.cost;
               creature.$.abilities.hand.splice(creature.$.abilities.hand.findIndex((v) => v === ability.$.id), 1);
 
-              const damage_embeds = [];
-              for (const log of uselog.damageLogs ?? []) {
-                damage_embeds.push(damageLogEmbed(log));
+              const vlog_embeds = [];
+              for (const vlog of uselog.vitalsLogs ?? []) {
+                vlog_embeds.push(await (
+                  vlog.type === "damage"
+                  ? damageLogEmbed(vlog, db)
+                  : healLogEmbed(vlog, db)
+                ))
               }
 
               for (const passive of creature.passives)
-                await passive.$.onAbility?.(creature, ability, false, db);
+                await passive.$.onAbility?.(creature, db, ability, false);
 
               await creature.put(db);
               for (const target of targets) {
@@ -638,7 +646,7 @@ export default new ComponentCommandHandler(
               await interaction.followUp({
                 ephemeral: false,
                 content: uselog.text,
-                embeds: damage_embeds.length > 0 ? damage_embeds : undefined
+                embeds: vlog_embeds.length > 0 ? vlog_embeds : undefined
               })
 
               interaction.followUp(await fight.announceTurn(db, Bot));
@@ -669,10 +677,10 @@ export default new ComponentCommandHandler(
               return;
             }
 
-            if (creature.$.vitals.mana < ability.$.cost) {
+            if (creature.$.vitals.action_points < ability.$.cost) {
               interaction.followUp({
                 ephemeral: true,
-                content: "Not enough mana"
+                content: "Not enough action_points"
               })
               return;
             }
@@ -754,16 +762,16 @@ export default new ComponentCommandHandler(
             return;
           }
 
-          if (creature.$.vitals.mana < Creature.ABILITY_DISCARD_COST) {
+          if (creature.$.vitals.action_points < Creature.ABILITY_DISCARD_COST) {
             interaction.followUp({
               ephemeral: true,
-              content: "Not enough mana"
+              content: "Not enough action_points"
             })
             return;
           }
 
           creature.$.abilities.hand.splice(creature.$.abilities.hand.findIndex((v) => v === ability.$.id), 1);
-          creature.$.vitals.mana -= Creature.ABILITY_DISCARD_COST;
+          creature.$.vitals.action_points -= Creature.ABILITY_DISCARD_COST;
           const new_ability = creature.drawAbilityCard();
 
           await creature.put(db);
@@ -787,10 +795,10 @@ export default new ComponentCommandHandler(
           return;
         }
 
-        if (creature.$.vitals.mana < creature.combat_switch_cost) {
+        if (creature.$.vitals.action_points < creature.combat_switch_cost) {
           interaction.followUp({
             ephemeral: true,
-            content: `Changing weapons mid-fight requires **${(100 * Creature.COMBAT_WEAPON_SWITCH_MULT).toFixed(0)}%** Attack Cost mana.`
+            content: `Changing weapons mid-fight requires **${(100 * Creature.COMBAT_WEAPON_SWITCH_MULT).toFixed(0)}%** Attack Cost action_points.`
           })
           return;
         }
@@ -829,7 +837,7 @@ export default new ComponentCommandHandler(
           }
           creature.$.items.primary_weapon = creature.$.items.weapons.splice(index, 1)[0];
           
-          creature.$.vitals.mana -= creature.combat_switch_cost;
+          creature.$.vitals.action_points -= creature.combat_switch_cost;
           creature.reload();
 
           await creature.put(db);

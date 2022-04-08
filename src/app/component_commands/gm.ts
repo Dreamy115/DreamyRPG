@@ -73,7 +73,7 @@ export default [
                   const creature: Creature = Creature.cache.get(document._id) ?? new Creature(document);
 
                   for (var i = 0; i < input; i++) {
-                    creature.tick();
+                    await creature.tick(db);
                   }
 
                   creature.put(db);
@@ -98,20 +98,20 @@ export default [
                   const document = data as CreatureDump;
                   const creature: Creature = Creature.cache.get(document._id) ?? new Creature(document);
 
-                  creature.heal({
+                  await creature.heal({
                     from: "Long-Rest Regen",
                     sources: [{
                       type: HealType.Overheal,
                       value: creature.$.stats.health.value + creature.$.stats.shield.value
                     }]
-                  });
-                  creature.heal({
+                  }, db);
+                  await creature.heal({
                     from: "Long-Rest Regen",
                     sources: [{
-                      value: creature.$.stats.mana.value,
-                      type: HealType.Mana
+                      value: creature.$.stats.action_points.value,
+                      type: HealType.ActionPoints
                     }]
-                  });
+                  }, db);
 
                   creature.put(db);
                 }

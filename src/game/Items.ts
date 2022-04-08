@@ -10,6 +10,7 @@ import { LoreReplacer } from "./LoreReplacer";
 import { CraftingMaterials } from "./Crafting";
 import { ItemManager, lerp } from "..";
 import { ItemModifierModuleInfo, ItemStatModule } from "./Modules";
+import Mongoose from "mongoose";
 
 export default class ItemsManager {
   map = new Map<string, Item>();
@@ -138,7 +139,7 @@ export interface ConsumableItemData extends BaseItemData {
     quality: ItemQuality
   }
   abilities?: Set<string>
-  onUse?: (creature: Creature) => Promise<AbilityUseLog>
+  onUse?: (creature: Creature, db: typeof Mongoose) => Promise<AbilityUseLog>
   returnTable?: string
 }
 

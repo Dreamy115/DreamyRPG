@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import Creature from "./Creature";
-import { DamageLog } from "./Damage";
+import { DamageLog, HealLog, VitalsLog } from "./Damage";
 import { LoreReplacer } from "./LoreReplacer";
 import Mongoose from "mongoose";
 
@@ -46,7 +46,7 @@ export class CreatureAbility {
     unique?: Set<string>
     haste?: number
     cost: number
-    use: (caster: Creature, targets: Creature[], accuracy_mods: number[]) => Promise<AbilityUseLog>
+    use: (caster: Creature, db: typeof Mongoose, targets: Creature[], accuracy_mods: number[]) => Promise<AbilityUseLog>
     test: (caster: Creature) => Promise<void> // Resolve if can use, Reject if cannot use currently
   }
 
@@ -61,7 +61,7 @@ export enum AbilityType {
 }
 
 export interface AbilityUseLog {
-  damageLogs?: DamageLog[]
+  vitalsLogs?: VitalsLog[]
   text: string
   returns?: string[]
 }

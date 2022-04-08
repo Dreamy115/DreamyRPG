@@ -235,6 +235,20 @@ export default new ApplicationCommandHandler({
       ]
     },
     {
+      name: "clear_history",
+      description: "Clears Health History of a character",
+      type: "SUB_COMMAND",
+      options: [
+        {
+          name: "cid",
+          description: "Find by ID",
+          type: "STRING",
+          autocomplete: true,
+          required: true
+        }
+      ]
+    },
+    {
       name: "effects",
       description: "Manage the Creature's ActiveEffects",
       type: "SUB_COMMAND_GROUP",
@@ -755,6 +769,9 @@ export default new ApplicationCommandHandler({
   }
 
   switch (interaction.options.getSubcommandGroup(false) ?? interaction.options.getSubcommand(true)) {
+    case "clear_history": {
+      creature.$.vitalsHistory = [];
+    } break;
     case "changeid": {
       const target_id = interaction.options.getString("target", true);
       if (!Creature.ID_REGEX.test(target_id)) {
@@ -834,7 +851,7 @@ export default new ApplicationCommandHandler({
     } break;
     case "tick": {
       for (var i = 0; i < interaction.options.getInteger("amount", true); i++)
-        creature.tick();
+        await creature.tick(db);
     } break;
     case "damage": {
       const damage: DamageGroup = {
@@ -855,10 +872,10 @@ export default new ApplicationCommandHandler({
         from: interaction.options.getString("attacker", false) ?? undefined
       }
 
-      const log = creature.applyDamage(damage);
+      const log = await creature.applyDamage(damage, db);
       await interaction.editReply({content: "OK"});
       interaction.followUp({
-        embeds: [damageLogEmbed(log)]
+        embeds: [await damageLogEmbed(log, db)]
       })
       
       creature.put(db);
@@ -871,13 +888,13 @@ export default new ApplicationCommandHandler({
       interaction.followUp({
         ephemeral: false,
         embeds: [
-          healLogEmbed(creature.heal({
+          await healLogEmbed(await creature.heal({
             from: "Healing GM-Commmand",
             sources: [{
               type: interaction.options.getInteger("type", true),
               value: interaction.options.getNumber("amount", true),
             }]
-          }))
+          }, db), db)
         ]
       });
       creature.put(db);
@@ -904,21 +921,23 @@ export default new ApplicationCommandHandler({
     case "effects": {
       switch (interaction.options.getSubcommand(true)) {
         case "apply": {
-          creature.applyActiveEffect({
+          await creature.applyActiveEffect({
             id: interaction.options.getString("effect_id", true),
             severity: interaction.options.getInteger("severity", true),
             ticks: interaction.options.getInteger("ticks", true)
-          }, true)
+          }, db, true)
         } break;
         case "clear": {
-          creature.clearActiveEffect(
+          await creature.clearActiveEffect(
             interaction.options.getString("effect", true),
-            interaction.options.getString("type", true) as "expire" | "delete"
+            interaction.options.getString("type", true) as "expire" | "delete",
+            db
           )
         } break;
         case "clear_all": {
-          creature.clearAllEffects(
-            interaction.options.getString("type", true) as "expire" | "delete"
+          await creature.clearAllEffects(
+            interaction.options.getString("type", true) as "expire" | "delete",
+            db
           )
         } break;
       }

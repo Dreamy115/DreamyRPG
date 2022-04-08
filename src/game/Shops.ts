@@ -1,4 +1,5 @@
 import fs from "fs";
+import Mongoose from "mongoose";
 import path from "path";
 import { AppliedActiveEffect } from "./ActiveEffects";
 import { CraftingMaterials } from "./Crafting";
@@ -63,5 +64,5 @@ interface ShopContentService extends ShopContentBase {
     name: string
     lore: string
   }
-  onBuy: (creature: Creature) => Promise<AbilityUseLog>
+  onBuy: (creature: Creature, db: typeof Mongoose) => Promise<AbilityUseLog>
 }

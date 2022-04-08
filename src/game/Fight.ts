@@ -63,7 +63,7 @@ export class Fight {
         }
 
         creature.$.vitals.shield = creature.$.stats.shield.value;
-        creature.$.vitals.mana = 0;
+        creature.$.vitals.action_points = 0;
         creature.$.abilities.hand = [];
         creature.$.abilities.stacks = 0;
         creature.reshuffleAbilityDeck();
@@ -117,7 +117,7 @@ export class Fight {
 
     if (!creature) throw new Error("Not enough characters in a fight or they are invalid");
 
-    creature.tick();
+    await creature.tick(db);
 
     let ab = creature.drawAbilityCard();
     while (ab !== null && creature.$.abilities.hand.length < Creature.MIN_HAND_AMOUNT) {
@@ -214,8 +214,8 @@ export class Fight {
           ) +
           ` **Health** **${char.$.vitals.health}**/**${char.$.stats.health.value - char.$.vitals.injuries}** ` + 
           `(**${Math.round(100 * char.$.vitals.health / char.$.stats.health.value)}%**)\n` +
-          make_bar(100 *char.$.vitals.mana / char.$.stats.mana.value, Creature.BAR_STYLES.Mana, BAR_LENGTH / 3).str +
-          ` **Mana** ${textStat(char.$.vitals.mana, char.$.stats.mana.value)} `+
+          make_bar(100 *char.$.vitals.action_points / char.$.stats.action_points.value, Creature.BAR_STYLES.ActionPoints, BAR_LENGTH / 3).str +
+          ` **Action Points** ${textStat(char.$.vitals.action_points, char.$.stats.action_points.value)} `+
           `**${char.$.stats.mana_regen.value}**/t\n` +
           (
             weapon

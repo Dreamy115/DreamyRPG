@@ -50,6 +50,7 @@ export default [
     slot: "vest",
     base_armor: 2,
     base_dissipate: 1,
+    base_plating: 5,
   }),
   new Item({
     id: "example_backpack",

@@ -13,7 +13,8 @@ export enum DamageMethod {
 export interface DamageSource {
   type: DamageType
   value: number
-  shieldReaction: ShieldReaction
+  shieldReaction?: ShieldReaction
+  platingReaction?: PlatingReaction
 }
 
 export interface DamageGroup {
@@ -44,6 +45,7 @@ export interface DamageLog {
 
   total_shield_damage: number
   total_health_damage: number
+  total_plating_damage: number
   total_injuries: number
 
   total_damage_mitigated: number
@@ -62,12 +64,24 @@ export enum DamageCause {
 export enum ShieldReaction {
   "Normal", "Ignore", "Only"
 }
+export enum PlatingReaction {
+  "Normal", "Ignore", "Only"
+}
+
 export function shieldReactionInfo(type: ShieldReaction): string {
   switch (type) {
     default: return "Undefined";
     case ShieldReaction.Normal: return "";
     case ShieldReaction.Only: return "Only Shield";
     case ShieldReaction.Ignore: return "Ignore Shield"
+  }
+}
+export function platingReactionInfo(type: PlatingReaction): string {
+  switch (type) {
+    default: return "Undefined";
+    case PlatingReaction.Normal: return "";
+    case PlatingReaction.Only: return "Only Plating";
+    case PlatingReaction.Ignore: return "Ignore Plating"
   }
 }
 
@@ -108,7 +122,7 @@ export async function damageLogEmbed(log: DamageLog, db: typeof Mongoose) {
   embed.addField(
     "Total",
     `**${log.total_damage_taken}** Damage Taken\n**${log.total_damage_mitigated}** Damage Mitigated\n\n` +
-    `**${log.total_shield_damage}** Shield Damage\n**${log.total_health_damage}** Health Damage\n**${log.total_injuries}** Injuries\n\n` +
+    `**${log.total_shield_damage}** Shield Damage\n**${log.total_plating_damage}** Plating Damage\n**${log.total_health_damage}** Health Damage\n**${log.total_injuries}** Injuries\n\n` +
     `**${log.total_physical_damage}**/**${log.total_energy_damage}**/**${log.total_true_damage}** Physical/Energy/True\n` +
     `Stress **${log.total_stress_applied}** Applied | **${log.total_stress_mitigated}** Mitigated`
   )
@@ -124,8 +138,9 @@ function damageGroupString(group: DamageGroup) {
   `${function() {
     var str = "";
     for (const source of group.sources) {
-      var reaction = source.type !== DamageType.Stress ? shieldReactionInfo(source.shieldReaction) : null;
-      str += `[**${source.value} ${DamageType[source.type]}**${reaction ? ` **${reaction}**` : ""}]\n`
+      var s_reaction = source.type !== DamageType.Stress ? shieldReactionInfo(source.shieldReaction ?? ShieldReaction.Normal) : null;
+      var p_reaction = source.type !== DamageType.Stress ? platingReactionInfo(source.platingReaction ?? PlatingReaction.Normal) : null;
+      str += `[**${source.value} ${DamageType[source.type]}**${s_reaction ? ` **${s_reaction}**` : ""}${p_reaction ? ` **${p_reaction}**` : ""}]\n`
     }
 
     return str.trim();;
@@ -146,7 +161,7 @@ export interface HealGroup {
 }
 
 export enum HealType {
-  "Health", "Shield", "Overheal", "ActionPoints", "Injuries", "Stress"
+  "Health", "Shield", "Overheal", "ActionPoints", "Injuries", "Stress", "Plating"
 }
 
 
@@ -158,6 +173,7 @@ export interface HealLog {
 
   health_restored: number
   shields_restored: number
+  plating_restored: number
   stress_restored: number
   mana_restored: number
   injuries_restored: number
@@ -185,7 +201,7 @@ export async function healLogEmbed(log: HealLog, db: typeof Mongoose) {
   ).addField(
     "Total",
     `**${log.health_restored}**/**${log.injuries_restored}** Health/Injuries\n` +
-    `**${log.shields_restored}** Shields\n` +
+    `**${log.shields_restored}**/**${log.plating_restored}** Shields/Plating\n` +
     `**${log.mana_restored}** Action Points\n` +
     `**${log.stress_restored}** Intensity\n` 
   )

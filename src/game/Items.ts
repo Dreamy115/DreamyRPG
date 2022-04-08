@@ -106,6 +106,7 @@ export interface VestWearableItemData extends WearableItemData {
   slot: "vest"
   base_armor: number
   base_dissipate: number
+  base_plating: number
 }
 export interface GlovesWearableItemData extends WearableItemData {
   slot: "gloves"

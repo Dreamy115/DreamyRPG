@@ -19,6 +19,7 @@ import { ApplicationCommandHandler } from "../commands.js";
 import { attributeComponents, ceditMenu, consumeMenu, scrapMenu } from "../component_commands/cedit.js";
 import { abilitiesDescriptor, attackDescriptor, namedModifierDescriptor, modifiersDescriptor, passivesDescriptor, perksDescriptor } from "./handbook.js";
 import Mongoose from "mongoose";
+import char from "../autocomplete/char.js";
 
 export default new ApplicationCommandHandler(
   {
@@ -754,18 +755,10 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
       }
     } break;
     case "stats": {
-      const health_injury_proportions = (creature.$.stats.health.value - creature.$.vitals.injuries) / creature.$.stats.health.value;
-
-      let health_length_mod, shield_length_mod;
-      if (creature.$.stats.health.value >= creature.$.stats.shield.value) {
-        health_length_mod = (creature.$.stats.health.value - creature.$.stats.shield.value) / creature.$.stats.health.value;
-      } else {
-        health_length_mod = (creature.$.stats.shield.value - creature.$.stats.health.value) / creature.$.stats.shield.value;
-      }
-      shield_length_mod = 1 - health_length_mod;
-
       const modules = creature.stat_modules;
       const cum_mods = creature.getModuleCumulativeModifiers();
+
+      const injury_ratio = creature.$.vitals.injuries / creature.$.stats.health.value;
 
       embed.addField(
         "Basic",
@@ -789,18 +782,28 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
           `*(**${creature.$.stats.health.value}** Health - **${creature.$.vitals.injuries}** Injuries)*\n` +
           (
             creature.$.stats.shield.value > 0
-            ? make_bar(100 * creature.$.vitals.shield / creature.$.stats.shield.value, Creature.BAR_STYLES.Shield, shield_length_mod * BAR_LENGTH).str +
+            ? make_bar(100 * creature.$.vitals.shield / creature.$.stats.shield.value, Creature.BAR_STYLES.Shield, Math.max(1, Math.floor(creature.$.vitals.shield / creature.$.stats.shield.value))).str +
             ` **Shield** ${textStat(creature.$.vitals.shield, creature.$.stats.shield.value)} `
             : "No **Shield** "
           ) + `**${creature.$.stats.shield_regen.value}**/t\n` +
-          (make_bar(100 * creature.$.vitals.health / (creature.$.stats.health.value - creature.$.vitals.injuries), Creature.BAR_STYLES.Health, Math.max(1, health_length_mod * Math.floor(BAR_LENGTH * health_injury_proportions))).str ?? "") +
+          (make_bar(100 * creature.$.vitals.health / (creature.$.stats.health.value - creature.$.vitals.injuries), Creature.BAR_STYLES.Health, Math.max(1, (1 - injury_ratio) * Math.floor(creature.$.stats.health.value / BAR_LENGTH))).str ?? "") +
           (
             creature.$.vitals.injuries > 0
-            ? make_bar(100, Creature.BAR_STYLES.Injuries, Math.max(1, health_length_mod * Math.ceil(BAR_LENGTH - (BAR_LENGTH * health_injury_proportions)))).str
+            ? make_bar(100, Creature.BAR_STYLES.Injuries, Math.max(1, injury_ratio * Math.floor(creature.$.stats.health.value / BAR_LENGTH))).str
+            : ""
+          ) +
+          (
+            creature.$.stats.plating.value > 0
+            ? make_bar(100 * creature.$.vitals.plating / creature.$.stats.plating.value, Creature.BAR_STYLES.Plating, Math.max(1, Math.floor(creature.$.stats.plating.value / BAR_LENGTH))).str
             : ""
           ) +
           ` **Health** **${creature.$.vitals.health}**/**${creature.$.stats.health.value - creature.$.vitals.injuries}** ` + 
           `(**${(100 * creature.$.vitals.health / creature.$.stats.health.value).toFixed(0)}%**)\n` +
+          (
+            creature.$.stats.plating.value > 0
+            ? `**Plating** ${textStat(creature.$.vitals.plating, creature.$.stats.plating.value)} _[**${creature.$.stats.plating_effectiveness.value}** Plating Effectiveness]_`
+            : "No Plating"
+          ) + "\n" +
           make_bar(100 * creature.$.vitals.action_points / creature.$.stats.action_points.value, Creature.BAR_STYLES.ActionPoints, creature.$.stats.action_points.value / creature.$.stats.attack_cost.value).str +
           ` **Action Points** ${textStat(creature.$.vitals.action_points, creature.$.stats.action_points.value)} ` +
           `**${creature.$.stats.mana_regen.value}**/t\n\n` +
@@ -1368,7 +1371,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
   return {gm_embeds, embeds, scrollable, attachments};
 }
 
-const BAR_LENGTH = 16;
+const BAR_LENGTH = 10;
 
 export function tableDescriptor(table: LootTable, perks?: Set<string>) {
   const pools = table.getHighestFromPerks(perks ?? new Set());

@@ -186,15 +186,7 @@ export class Fight {
         const char = await Creature.fetch(c, db).catch(() => null);
         if (!char) continue;
 
-        const health_injury_proportions = (char.$.stats.health.value - char.$.vitals.injuries) / char.$.stats.health.value;
-
-        let health_length_mod, shield_length_mod;
-        if (char.$.stats.health.value >= char.$.stats.shield.value) {
-          health_length_mod = (char.$.stats.health.value - char.$.stats.shield.value) / char.$.stats.health.value;
-        } else {
-          health_length_mod = (char.$.stats.shield.value - char.$.stats.health.value) / char.$.stats.shield.value;
-        }
-        shield_length_mod = 1 - health_length_mod;
+        const injury_ratio = creature.$.vitals.injuries / creature.$.stats.health.value;
 
         const weapon = ItemManager.map.get(char.$.items.primary_weapon?.id ?? "");
 
@@ -202,19 +194,29 @@ export class Fight {
           `*(**${char.$.stats.health.value}** Health - **${char.$.vitals.injuries}** Injuries)*\n` +
           (
             char.$.stats.shield.value > 0
-            ? (make_bar(100 * char.$.vitals.shield / char.$.stats.shield.value, Creature.BAR_STYLES.Shield, shield_length_mod * BAR_LENGTH).str || "") +
+            ? (make_bar(100 * char.$.vitals.shield / char.$.stats.shield.value, Creature.BAR_STYLES.Shield, Math.max(1, Math.floor(char.$.stats.shield.value / BAR_LENGTH))).str || "") +
             ` **Shield** ${textStat(char.$.vitals.shield, char.$.stats.shield.value)} `
             : "No **Shield** "
           ) + `**${char.$.stats.shield_regen.value}**/t\n` +
-          (make_bar(100 * char.$.vitals.health / (char.$.stats.health.value - char.$.vitals.injuries), Creature.BAR_STYLES.Health, Math.max(1, health_length_mod * Math.floor(BAR_LENGTH * health_injury_proportions))).str || "") +
+          (make_bar(100 * char.$.vitals.health / (char.$.stats.health.value - char.$.vitals.injuries), Creature.BAR_STYLES.Health, Math.max(1, (1 - injury_ratio) * Math.floor(creature.$.stats.health.value / BAR_LENGTH))).str || "") +
           (
             char.$.vitals.injuries > 0
-            ? make_bar(100, Creature.BAR_STYLES.Injuries, Math.max(1, health_length_mod * Math.ceil(BAR_LENGTH - (BAR_LENGTH * health_injury_proportions)))).str
+            ? make_bar(100, Creature.BAR_STYLES.Injuries, Math.max(1, injury_ratio * Math.floor(creature.$.stats.health.value / BAR_LENGTH))).str
             : ""
           ) +
-          ` **Health** **${char.$.vitals.health}**/**${char.$.stats.health.value - char.$.vitals.injuries}** ` + 
+          (
+            creature.$.stats.plating.value > 0
+            ? make_bar(100 * creature.$.vitals.plating / creature.$.stats.plating.value, Creature.BAR_STYLES.Plating, Math.max(1, Math.floor(creature.$.stats.plating.value / BAR_LENGTH))).str
+            : ""
+          ) +
+          ` **Health** **${char.$.vitals.health}**/**${char.$.stats.health.value - char.$.vitals.injuries}**\n` + 
+          (
+            creature.$.stats.plating.value > 0
+            ? `**Plating** ${textStat(creature.$.vitals.plating, creature.$.stats.plating.value)} _[**${creature.$.stats.plating_effectiveness.value}**]_`
+            : "No Plating"
+          ) + "\n" +
           `(**${Math.round(100 * char.$.vitals.health / char.$.stats.health.value)}%**)\n` +
-          make_bar(100 *char.$.vitals.action_points / char.$.stats.action_points.value, Creature.BAR_STYLES.ActionPoints, BAR_LENGTH / 3).str +
+          make_bar(100 *char.$.vitals.action_points / char.$.stats.action_points.value, Creature.BAR_STYLES.ActionPoints, creature.$.stats.action_points.value / creature.$.stats.attack_cost.value).str +
           ` **Action Points** ${textStat(char.$.vitals.action_points, char.$.stats.action_points.value)} `+
           `**${char.$.stats.mana_regen.value}**/t\n` +
           (

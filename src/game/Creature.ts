@@ -730,13 +730,16 @@ export default class Creature {
               switch (source.platingReaction) {
                 default:
                 case PlatingReaction.Normal: {
-                  log.total_plating_damage += Math.min(source.value, this.$.vitals.plating);
-                  this.$.vitals.plating -= source.value;
+                  log.total_plating_damage += Math.ceil(Math.min(this.$.vitals.plating, source.value * clamp(this.$.stats.plating_effectiveness.value / 100, 0, 1)));
+                  this.$.vitals.plating -= Math.ceil(source.value * clamp(this.$.stats.plating_effectiveness.value / 100, 0, 1));
 
-                  this.$.vitals.health -= this.$.vitals.plating;
+                  const injuries = -(Math.min(0, this.$.vitals.plating) + Math.floor(-source.value * (1 - clamp(this.$.stats.plating_effectiveness.value / 100, 0, 1))));
 
-                  log.total_injuries += Math.round(Math.min(0, -this.$.vitals.plating) * DAMAGE_TO_INJURY_RATIO * reductionMultiplier(this.$.stats.tenacity.value - (group.penetration?.cutting ?? 0)));
-                  this.$.vitals.injuries -= Math.round(Math.min(0, -this.$.vitals.plating) * DAMAGE_TO_INJURY_RATIO * reductionMultiplier(this.$.stats.tenacity.value - (group.penetration?.cutting ?? 0)));
+                  this.$.vitals.health -= Math.round(injuries);
+                  log.total_health_damage += Math.round(injuries);
+
+                  log.total_injuries += Math.round(injuries * DAMAGE_TO_INJURY_RATIO * reductionMultiplier(this.$.stats.tenacity.value - (group.penetration?.cutting ?? 0)));
+                  this.$.vitals.injuries += Math.round(injuries * DAMAGE_TO_INJURY_RATIO * reductionMultiplier(this.$.stats.tenacity.value - (group.penetration?.cutting ?? 0)));
                   
                   this.$.vitals.plating = Math.max(0, this.$.vitals.plating);
                 } break;
@@ -745,7 +748,7 @@ export default class Creature {
                   this.$.vitals.health -= source.value;
 
                   log.total_injuries += Math.round(source.value * DAMAGE_TO_INJURY_RATIO * reductionMultiplier(this.$.stats.tenacity.value - (group.penetration?.cutting ?? 0)));
-                  this.$.vitals.injuries -= Math.round(source.value * DAMAGE_TO_INJURY_RATIO * reductionMultiplier(this.$.stats.tenacity.value - (group.penetration?.cutting ?? 0)));
+                  this.$.vitals.injuries += Math.round(source.value * DAMAGE_TO_INJURY_RATIO * reductionMultiplier(this.$.stats.tenacity.value - (group.penetration?.cutting ?? 0)));
                 } break;
                 case PlatingReaction.Only: {
                   log.total_plating_damage -= Math.max(-this.$.vitals.plating, Math.min(0, this.$.vitals.shield));
@@ -876,13 +879,15 @@ export default class Creature {
           const _injuries = this.$.vitals.injuries;
 
           this.$.vitals.injuries -= src.value;
-          log.injuries_restored += _injuries - Math.min(this.$.vitals.injuries, this.$.stats.health.value);
+          this.$.vitals.injuries = clamp(this.$.vitals.injuries, 0, this.$.stats.health.value);
+          log.injuries_restored += Math.min(_injuries - this.$.vitals.injuries, this.$.stats.health.value);
         } break;
         case HealType.Stress: {
           const _intensity = this.$.vitals.intensity;
 
           this.$.vitals.intensity -= src.value;
-          log.stress_restored += _intensity - Math.min(this.$.vitals.intensity, this.$.stats.health.value);
+          this.$.vitals.intensity = clamp(this.$.vitals.intensity, 0, this.$.stats.mental_strength.value);
+          log.stress_restored += Math.min(_intensity - this.$.vitals.intensity, this.$.stats.mental_strength.value);
         } break;
       }
       this.vitalsIntegrity();

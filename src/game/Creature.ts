@@ -981,7 +981,7 @@ export default class Creature {
       this.$.active_effects.push(effect);
     }
 
-    await effectData.$.onApply?.(this, db, effect);
+    await effectData.$.onApply?.(this, db, effect, effect.vars);
     
     if (effectData.$.preload || effectData.$.postload || effectData.$.passives)
       this.reload();
@@ -997,11 +997,11 @@ export default class Creature {
       const effectData = EffectManager.map.get(effect.id);
       switch (type) {
         case "delete": {
-          await effectData?.$.onDelete?.(this, db, effect);
+          await effectData?.$.onDelete?.(this, db, effect, effect.vars);
         } break;
         case "expire": {
           effect.ticks = 0;
-          await effectData?.$.onTick?.(this, db, effect);
+          await effectData?.$.onTick?.(this, db, effect, effect.vars);
         } break;
       }
 
@@ -1014,11 +1014,11 @@ export default class Creature {
 
     switch (type) {
       case "delete": {
-        await effectData?.$.onDelete?.(this, db, effect);
+        await effectData?.$.onDelete?.(this, db, effect, effect.vars);
       } break;
       case "expire": {
         effect.ticks = 0;
-        await effectData?.$.onTick?.(this, db, effect);
+        await effectData?.$.onTick?.(this, db, effect, effect.vars);
       } break;
     }
 
@@ -1041,7 +1041,7 @@ export default class Creature {
         await this.clearActiveEffect(effect.id, "expire", db);
       } else {
         if (effect.ticks < 0) effect.ticks = -1;
-        effectData.$.onTick?.(this, db, effect);
+        effectData.$.onTick?.(this, db, effect, effect.vars);
       }
     }
   }

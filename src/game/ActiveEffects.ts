@@ -47,9 +47,9 @@ export class ActiveEffect {
     consecutive_limit: number
     stacking?: EffectStacking
     conflicts_with?: Set<string>
-    onApply?: (creature: Creature, db: typeof Mongoose, {ticks, severity}: AppliedActiveEffect) => Promise<void>
-    onTick?: (creature: Creature, db: typeof Mongoose, {ticks, severity}: AppliedActiveEffect) => Promise<void>
-    onDelete?: (creature: Creature, db: typeof Mongoose, {ticks, severity}: AppliedActiveEffect) => Promise<void>
+    onApply?: (creature: Creature, db: typeof Mongoose, {ticks, severity}: AppliedActiveEffect, vars: ActiveEffect["$"]["vars"]) => Promise<void>
+    onTick?: (creature: Creature, db: typeof Mongoose, {ticks, severity}: AppliedActiveEffect, vars: ActiveEffect["$"]["vars"]) => Promise<void>
+    onDelete?: (creature: Creature, db: typeof Mongoose, {ticks, severity}: AppliedActiveEffect, vars: ActiveEffect["$"]["vars"]) => Promise<void>
     preload?: (creature: Creature, {ticks, severity}: AppliedActiveEffect) => void
     postload?: (creature: Creature, {ticks, severity}: AppliedActiveEffect) => void
     vars?: Record<string, number>

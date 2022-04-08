@@ -736,6 +736,7 @@ export default class Creature {
               log.total_energy_damage += source.value;
             } break;
           }
+          log.total_damage_taken += source.value;
         }
       }
 

@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { PerkManager, capitalize, ItemManager } from "..";
+import { capitalize, ItemManager, PerkManager } from "..";
 import Creature from "./Creature";
 import { ItemQuality, ItemQualityEmoji } from "./Items";
 

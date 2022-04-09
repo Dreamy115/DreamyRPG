@@ -1,7 +1,6 @@
 import { CraftingMaterials } from "../Crafting";
-import { HealType, DamageMethod, DamageType } from "../Damage";
+import { DamageMethod, DamageType, HealType } from "../Damage";
 import { Item, ItemQuality, WeaponCategory } from "../Items";
-import { PassiveEffect } from "../PassiveEffects";
 
 export default [
   new Item({

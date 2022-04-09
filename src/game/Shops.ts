@@ -1,7 +1,6 @@
 import fs from "fs";
 import Mongoose from "mongoose";
 import path from "path";
-import { AppliedActiveEffect } from "./ActiveEffects";
 import { CraftingMaterials } from "./Crafting";
 import Creature from "./Creature";
 import { AbilityUseLog } from "./CreatureAbilities";

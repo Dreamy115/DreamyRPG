@@ -1,5 +1,5 @@
 import { ApplicationCommandOptionChoice } from "discord.js";
-import { SkillManager, EffectManager, ItemManager, SchematicsManager } from "../..";
+import { EffectManager, ItemManager, SchematicsManager, SkillManager } from "../..";
 import { DisplaySeverity, romanNumeral } from "../../game/ActiveEffects";
 import Creature from "../../game/Creature";
 import { AutocompleteHandler } from "../autocomplete";

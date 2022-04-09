@@ -5,7 +5,6 @@ import Creature, { CreatureDump } from "../../game/Creature";
 import { ApplicationCommandHandler } from "../commands";
 import { infoEmbed } from "./char";
 
-import { createPatch } from "rfc6902";
 
 export default new ApplicationCommandHandler({
   name: "simulation",

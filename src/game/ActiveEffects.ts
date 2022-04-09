@@ -2,10 +2,9 @@ import fs from "fs";
 import Mongoose from "mongoose";
 import path from "path";
 import { capitalize } from "..";
-
-import Creature, { Attributes, CreatureData, Stats } from "./Creature";
-import { replaceLore } from "./LoreReplacer";
+import Creature, { Attributes, Stats } from "./Creature";
 import { PassiveEffect } from "./PassiveEffects";
+
 
 export default class ActiveEffectManager {
   map = new Map<string, ActiveEffect>();

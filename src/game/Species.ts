@@ -1,8 +1,8 @@
 import fs from "fs";
 import path from "path";
-
 import { PassiveEffect } from "./PassiveEffects";
 import { CreaturePerk } from "./Perks";
+
 
 export default class CreatureSpeciesManager {
   map = new Map<string, CreatureSpecies>();

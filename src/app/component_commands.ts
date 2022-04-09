@@ -1,7 +1,7 @@
-import { ApplicationCommandData, Client, CommandInteraction, MessageComponentInteraction } from "discord.js";
+import { Client, MessageComponentInteraction } from "discord.js";
 import Mongoose from "mongoose";
-
 import { Handler, Manager } from "./HandleManagers";
+
 
 export default new Manager<ComponentCommandHandler>();
 

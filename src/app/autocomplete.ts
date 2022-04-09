@@ -1,4 +1,4 @@
-import { ApplicationCommandData, AutocompleteInteraction, Client, CommandInteraction, MessageComponentInteraction } from "discord.js";
+import { AutocompleteInteraction, Client } from "discord.js";
 import Mongoose from "mongoose";
 import { Handler, Manager } from "./HandleManagers";
 

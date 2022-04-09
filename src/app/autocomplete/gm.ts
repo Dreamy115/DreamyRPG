@@ -1,7 +1,4 @@
 import { ApplicationCommandOptionChoice } from "discord.js";
-import { EffectManager, ItemManager, SkillManager } from "../..";
-import { DisplaySeverity, romanNumeral } from "../../game/ActiveEffects";
-import Creature from "../../game/Creature";
 import { Fight } from "../../game/Fight";
 import { AutocompleteHandler } from "../autocomplete";
 import { autocompleteCreatures } from "./char";

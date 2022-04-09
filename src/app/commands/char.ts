@@ -1,25 +1,24 @@
-import { ApplicationCommandOptionChoice, Client, EmbedFieldData, Invite, MessageActionRow, MessageAttachment, MessageButton, MessageEmbed, MessageSelectMenu } from "discord.js";
-import { DisplaySeverity, replaceEffectLore, romanNumeral } from "../../game/ActiveEffects.js";
+import { ApplicationCommandOptionChoice, Client, EmbedFieldData, MessageActionRow, MessageAttachment, MessageButton, MessageEmbed, MessageSelectMenu } from "discord.js";
+import Mongoose from "mongoose";
+import { replaceEffectLore } from "../../game/ActiveEffects.js";
 import { Material, Schematic } from "../../game/Crafting.js";
 import Creature, { Attributes, diceRoll, Stats } from "../../game/Creature.js";
 import { AbilityType, CreatureAbility } from "../../game/CreatureAbilities.js";
-import { replaceLore } from "../../game/LoreReplacer";
-import { reductionMultiplier, DAMAGE_TO_INJURY_RATIO, DamageMethod, DamageType, damageLogEmbed, healLogEmbed } from "../../game/Damage.js";
+import { damageLogEmbed, DamageMethod, DamageType, DAMAGE_TO_INJURY_RATIO, healLogEmbed, reductionMultiplier } from "../../game/Damage.js";
 import { CombatPosition } from "../../game/Fight.js";
-import { AttackData, SlotDescriptions, Item, ItemQualityEmoji, InventoryItem, EquippableInventoryItem, WearableInventoryItem, WearableItemData, WeaponItemData, ConsumableItemData, ItemSlot, SpecializedWearableData, WeaponCategory } from "../../game/Items.js";
+import { AttackData, ConsumableItemData, EquippableInventoryItem, InventoryItem, Item, ItemQualityEmoji, ItemSlot, SlotDescriptions, SpecializedWearableData, WeaponCategory, WeaponItemData, WearableInventoryItem, WearableItemData } from "../../game/Items.js";
 import { cToF } from "../../game/Locations.js";
 import { LootTable } from "../../game/LootTables.js";
+import { replaceLore } from "../../game/LoreReplacer";
 import { ItemStatModule, ModuleType } from "../../game/Modules.js";
-import { PassiveEffect, NamedModifier } from "../../game/PassiveEffects.js";
+import { NamedModifier, PassiveEffect } from "../../game/PassiveEffects.js";
 import { CreaturePerk } from "../../game/Perks.js";
-import { textStat, ModifierType, TrackableStat } from "../../game/Stats.js";
-import { SpeciesManager, capitalize, ItemManager, EffectManager, AbilitiesManager, CONFIG, SchematicsManager, PerkManager, LocationManager, limitString, LootTables, PassivesManager, rotateLine, invLerp } from "../../index.js";
-import { bar_styles, make_bar } from "../Bars.js";
+import { ModifierType, textStat, TrackableStat } from "../../game/Stats.js";
+import { AbilitiesManager, capitalize, CONFIG, EffectManager, invLerp, ItemManager, LootTables, PassivesManager, PerkManager, rotateLine, SchematicsManager, SpeciesManager } from "../../index.js";
+import { make_bar } from "../Bars.js";
 import { ApplicationCommandHandler } from "../commands.js";
-import { attributeComponents, ceditMenu, consumeMenu, scrapMenu } from "../component_commands/cedit.js";
-import { abilitiesDescriptor, attackDescriptor, namedModifierDescriptor, modifiersDescriptor, passivesDescriptor, perksDescriptor } from "./handbook.js";
-import Mongoose from "mongoose";
-import char from "../autocomplete/char.js";
+import { ceditMenu, consumeMenu, scrapMenu } from "../component_commands/cedit.js";
+import { attackDescriptor, modifiersDescriptor, namedModifierDescriptor, passivesDescriptor } from "./handbook.js";
 
 export default new ApplicationCommandHandler(
   {

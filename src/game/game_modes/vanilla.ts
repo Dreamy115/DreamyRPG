@@ -1,5 +1,4 @@
 import { clamp, invLerp, lerp } from "../..";
-import Creature from "../Creature";
 import { DamageCause, DamageMethod, DamageType, HealType, ShieldReaction } from "../Damage";
 import { GameDirective } from "../GameDirectives";
 import { PassiveEffect } from "../PassiveEffects";

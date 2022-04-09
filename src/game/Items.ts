@@ -1,16 +1,16 @@
 import fs from "fs";
+import Mongoose from "mongoose";
 import path from "path";
-
-import { NamedModifier, PassiveEffect } from "./PassiveEffects";
-import { DamageMethod, DamageType, ShieldReaction } from "./Damage";
-import { CreaturePerk } from "./Perks";
+import { ItemManager, lerp } from "..";
+import { CraftingMaterials } from "./Crafting";
 import Creature, { Attributes, diceRoll, Stats } from "./Creature";
 import { AbilityUseLog } from "./CreatureAbilities";
+import { DamageMethod, DamageType, ShieldReaction } from "./Damage";
 import { LoreReplacer } from "./LoreReplacer";
-import { CraftingMaterials } from "./Crafting";
-import { ItemManager, lerp } from "..";
 import { ItemModifierModuleInfo, ItemStatModule } from "./Modules";
-import Mongoose from "mongoose";
+import { NamedModifier, PassiveEffect } from "./PassiveEffects";
+import { CreaturePerk } from "./Perks";
+
 
 export default class ItemsManager {
   map = new Map<string, Item>();

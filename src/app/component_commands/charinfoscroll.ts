@@ -1,7 +1,7 @@
 import { Message, MessageActionRow, MessageButton } from "discord.js";
 import { CONFIG } from "../..";
 import Creature from "../../game/Creature";
-import char, { infoEmbed } from "../commands/char";
+import { infoEmbed } from "../commands/char";
 import { ComponentCommandHandler } from "../component_commands";
 
 export default new ComponentCommandHandler(

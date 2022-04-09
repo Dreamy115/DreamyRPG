@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { Directives, SETTINGS } from "..";
 import { LocationEffect } from "./Locations";
-import { PassiveEffect, NamedModifier } from "./PassiveEffects";
+import { PassiveEffect } from "./PassiveEffects";
 
 export default class DirectiveManager {
   map = new Map<string, GameDirective>();

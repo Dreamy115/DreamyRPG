@@ -1,11 +1,9 @@
 import { ApplicationCommandOptionChoice } from "discord.js";
 import Mongoose from "mongoose";
-import { capitalize, ItemManager, PerkManager, SchematicsManager } from "../..";
-import { CraftingCheckError, CraftingMaterials, Material } from "../../game/Crafting";
+import { ItemManager, SchematicsManager } from "../..";
+import { CraftingCheckError } from "../../game/Crafting";
 import Creature from "../../game/Creature";
-import { Item } from "../../game/Items";
 import { AutocompleteHandler } from "../autocomplete";
-import { getAutocompleteListOfItems } from "./handbook";
 
 export default new AutocompleteHandler(
   "char",

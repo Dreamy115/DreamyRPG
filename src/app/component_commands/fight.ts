@@ -1,13 +1,12 @@
-import { Message, MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu, MessageSelectMenuOptions, MessageSelectOptionData } from "discord.js";
+import { Message, MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu, MessageSelectOptionData } from "discord.js";
 import { AbilitiesManager, CONFIG, ItemManager, limitString, rotateLine, sleep } from "../..";
 import Creature, { diceRoll } from "../../game/Creature";
-import { replaceLore } from "../../game/LoreReplacer";
+import { AbilityType } from "../../game/CreatureAbilities";
 import { DamageCause, DamageLog, damageLogEmbed, DamageMethod, DamageSource, healLogEmbed, ShieldReaction } from "../../game/Damage";
 import { Combatant, CombatPosition, Fight } from "../../game/Fight";
 import { Item, ItemQualityEmoji } from "../../game/Items";
-import { abilitiesDescriptor } from "../commands/handbook";
+import { replaceLore } from "../../game/LoreReplacer";
 import { ComponentCommandHandler } from "../component_commands";
-import { AbilityType } from "../../game/CreatureAbilities";
 
 export default new ComponentCommandHandler(
   "fight",

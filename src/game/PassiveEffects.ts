@@ -1,13 +1,13 @@
 import fs from "fs";
-import path from "path";
-
-import Creature, { Attributes, Stats } from "./Creature";
-import { LoreReplacer } from "./LoreReplacer";
-import { DamageCause, DamageGroup, DamageLog, DamageMethod, HealGroup, HealLog } from "./Damage";
-import { Modifier } from "./Stats";
-import { CreatureAbility } from "./CreatureAbilities";
-import { Fight } from "./Fight";
 import Mongoose from "mongoose";
+import path from "path";
+import Creature, { Attributes, Stats } from "./Creature";
+import { CreatureAbility } from "./CreatureAbilities";
+import { DamageGroup, DamageLog, HealGroup, HealLog } from "./Damage";
+import { Fight } from "./Fight";
+import { LoreReplacer } from "./LoreReplacer";
+import { Modifier } from "./Stats";
+
 
 export default class PassiveEffectManager {
   map = new Map<string, PassiveEffect>();

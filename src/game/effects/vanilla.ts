@@ -1,8 +1,6 @@
-import { clamp, invLerp, lerp } from "../..";
+import { invLerp, lerp } from "../..";
 import { ActiveEffect, DisplaySeverity, EffectType } from "../ActiveEffects";
-import Creature from "../Creature";
 import { DamageCause, DamageMethod, DamageType, ShieldReaction } from "../Damage";
-import { PassiveEffect } from "../PassiveEffects";
 import { ModifierType } from "../Stats";
 
 export default [

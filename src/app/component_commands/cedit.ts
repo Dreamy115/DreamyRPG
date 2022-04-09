@@ -1,18 +1,17 @@
 import { ButtonInteraction, ColorResolvable, CommandInteraction, Message, MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu, MessageSelectOptionData } from "discord.js";
 import Mongoose from "mongoose";
-import { capitalize, clamp, CONFIG, invLerp, ItemManager, lerp, limitString, LootTables, messageInput, PerkManager, removeMarkdown, removeVowels, SchematicsManager, SkillManager, SpeciesManager } from "../..";
+import { capitalize, clamp, CONFIG, invLerp, ItemManager, lerp, limitString, LootTables, messageInput, removeMarkdown, removeVowels, SchematicsManager, SpeciesManager } from "../..";
 import { CraftingMaterials, Material } from "../../game/Crafting";
 import Creature, { Attributes, CreatureDump } from "../../game/Creature";
 import { AbilityUseLog } from "../../game/CreatureAbilities";
-import { DamageCause, DamageGroup, damageLogEmbed, DamageMethod, DamageType, healLogEmbed, ShieldReaction } from "../../game/Damage";
-import { ConsumableItemData, createItem, DEFAULT_ITEM_OPT_STEP, EquippableInventoryItem, InventoryItem, Item, ItemQualityColor, ItemQualityEmoji, SpecializedWearableData, WeaponItemData, WearableInventoryItem, WearableItemData } from "../../game/Items";
-import itemsWs from "../../game/items/items.ws";
+import { damageLogEmbed, healLogEmbed } from "../../game/Damage";
+import { createItem, DEFAULT_ITEM_OPT_STEP, EquippableInventoryItem, InventoryItem, Item, ItemQualityColor, ItemQualityEmoji, SpecializedWearableData, WeaponItemData, WearableInventoryItem, WearableItemData } from "../../game/Items";
 import { LootTable } from "../../game/LootTables";
 import { replaceLore } from "../../game/LoreReplacer";
-import { ItemStatModule, ModuleType } from "../../game/Modules";
-import { ModifierType, TrackableStat } from "../../game/Stats";
+import { ModuleType } from "../../game/Modules";
+import { TrackableStat } from "../../game/Stats";
 import { infoEmbed, tableDescriptor } from "../commands/char";
-import { namedModifierDescriptor, modifierDescirptor } from "../commands/handbook";
+import { modifierDescirptor, namedModifierDescriptor } from "../commands/handbook";
 import { ComponentCommandHandler } from "../component_commands";
 
 export default new ComponentCommandHandler(

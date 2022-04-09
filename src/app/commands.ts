@@ -1,7 +1,7 @@
 import { ApplicationCommandData, Client, CommandInteraction, ContextMenuInteraction } from "discord.js";
 import mongoose from "mongoose";
-
 import { Handler, Manager } from "./HandleManagers";
+
 
 export default new Manager<ApplicationCommandHandler>();
 

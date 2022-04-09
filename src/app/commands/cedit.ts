@@ -2,13 +2,13 @@ import { ApplicationCommandOptionChoice, MessageEmbed } from "discord.js";
 import { capitalize, CONFIG, ItemManager, LootTables } from "../..";
 import { CraftingMaterials, Material } from "../../game/Crafting";
 import Creature, { Attributes } from "../../game/Creature";
-import { replaceLore } from "../../game/LoreReplacer";
-import { DamageType, DamageMethod, ShieldReaction, DamageCause, DamageGroup, damageLogEmbed, HealType, healLogEmbed, PlatingReaction } from "../../game/Damage";
+import { DamageCause, DamageGroup, damageLogEmbed, DamageMethod, DamageType, healLogEmbed, HealType, PlatingReaction, ShieldReaction } from "../../game/Damage";
 import { ConsumableItemData, createItem, InventoryItem, SpecializedWearableData, UltimateWearableItemData } from "../../game/Items";
 import { LootTable } from "../../game/LootTables";
+import { replaceLore } from "../../game/LoreReplacer";
 import { TrackableStat } from "../../game/Stats";
 import { ApplicationCommandHandler } from "../commands";
-import { ceditMenu, gm_ceditMenu } from "../component_commands/cedit";
+import { ceditMenu } from "../component_commands/cedit";
 
 export default new ApplicationCommandHandler({
   name: "cedit",

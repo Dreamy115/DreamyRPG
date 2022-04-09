@@ -1,20 +1,19 @@
-import { Client, MessageEmbed } from "discord.js";
 import mongoose from "mongoose";
 import NodeCache from "node-cache";
 import { bar_styles } from "../app/Bars.js";
-import { AbilitiesManager, capitalize, clamp, CONFIG, db, EffectManager, ItemManager, LocationManager, PassivesManager, PerkManager, rotateLine, SchematicsManager, shuffle, SkillManager, SpeciesManager } from "../index.js";
+import { AbilitiesManager, clamp, CONFIG, EffectManager, ItemManager, LocationManager, PassivesManager, PerkManager, rotateLine, SchematicsManager, shuffle, SkillManager, SpeciesManager } from "../index.js";
 import { AppliedActiveEffect, EffectStacking } from "./ActiveEffects.js";
 import { CraftingMaterials, Material } from "./Crafting.js";
 import { CreatureAbility } from "./CreatureAbilities.js";
-import { DamageCause, DamageGroup, DamageLog, DamageMethod as DamageMethod, DamageType, DAMAGE_TO_INJURY_RATIO, HealGroup, HealLog, HealType, PlatingReaction, reductionMultiplier, ShieldReaction, VitalsLog } from "./Damage.js";
+import { DamageCause, DamageGroup, DamageLog, DamageMethod, DamageType, DAMAGE_TO_INJURY_RATIO, HealGroup, HealLog, HealType, PlatingReaction, reductionMultiplier, ShieldReaction, VitalsLog } from "./Damage.js";
 import { Fight } from "./Fight.js";
 import { GameDirective } from "./GameDirectives.js";
-import { AttackData, AttackSet, Item, ItemSlot, InventoryItem, EquippableInventoryItem, WeaponInventoryItem, WearableInventoryItem, NormalWearableItemData, SlotDescriptions, MaskWearableItemData, WeaponItemData, ShieldWearableItemData, VestWearableItemData, JacketWearableItemData, BackpackWearableItemData, GlovesWearableItemData, ConsumableItemData, GenericItemData } from "./Items.js";
+import { AttackSet, BackpackWearableItemData, ConsumableItemData, GenericItemData, GlovesWearableItemData, InventoryItem, Item, ItemSlot, JacketWearableItemData, MaskWearableItemData, ShieldWearableItemData, SlotDescriptions, VestWearableItemData, WeaponInventoryItem, WeaponItemData, WearableInventoryItem } from "./Items.js";
 import { ItemStatModule, ModuleType } from "./Modules.js";
-import { PassiveEffect, NamedModifier } from "./PassiveEffects.js";
+import { NamedModifier, PassiveEffect } from "./PassiveEffects.js";
 import { CreaturePerk } from "./Perks.js";
 import { CreatureSkill } from "./Skills.js";
-import { Modifier, ModifierType, textStat, TrackableStat } from "./Stats.js";
+import { ModifierType, TrackableStat } from "./Stats.js";
 
 export default class Creature {
   static cache: NodeCache = new NodeCache({

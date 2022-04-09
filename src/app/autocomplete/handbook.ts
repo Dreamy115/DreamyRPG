@@ -1,12 +1,7 @@
-import { ApplicationCommandOptionChoice, Interaction } from "discord.js";
-import { ItemManager, SpeciesManager, PassivesManager, AbilitiesManager, EffectManager, PerkManager, SkillManager, SchematicsManager, LocationManager, LootTables, Directives } from "../..";
-import ActiveEffectManager, { ActiveEffect } from "../../game/ActiveEffects";
+import { ApplicationCommandOptionChoice } from "discord.js";
+import { AbilitiesManager, Directives, EffectManager, ItemManager, LocationManager, LootTables, PassivesManager, PerkManager, SchematicsManager, SkillManager, SpeciesManager } from "../..";
 import { Schematic } from "../../game/Crafting";
-import CreatureAbilitiesManager, { CreatureAbility } from "../../game/CreatureAbilities";
-import ItemsManager, { Item } from "../../game/Items";
 import { LootTable } from "../../game/LootTables";
-import PassiveEffectManager from "../../game/PassiveEffects";
-import CreatureSpeciesManager, { CreatureSpecies } from "../../game/Species";
 import { AutocompleteHandler } from "../autocomplete";
 import { ManagedItems } from "../commands/handbook";
 

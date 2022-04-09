@@ -1,14 +1,10 @@
-import { Client, Guild, MessageEmbed, NewsChannel, TextChannel } from "discord.js";
-import Mongoose from "mongoose";
+import { MessageEmbed } from "discord.js";
 import { CONFIG, Directives, EffectManager, SETTINGS } from "../..";
 import Creature from "../../game/Creature";
-import { ApplicationCommandHandler } from "../commands";
-import { infoEmbed } from "./char";
-
-import { createPatch } from "rfc6902";
 import { GameDirective } from "../../game/GameDirectives";
+import { ApplicationCommandHandler } from "../commands";
 import { passivesDescriptor, perksDescriptor } from "./handbook";
-import { DisplaySeverity, romanNumeral } from "../../game/ActiveEffects";
+
 
 export default new ApplicationCommandHandler({
   name: "directive",

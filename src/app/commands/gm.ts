@@ -1,11 +1,9 @@
-import { ApplicationCommandOptionChoice, MessageActionRow, MessageButton } from "discord.js";
+import { MessageActionRow, MessageButton } from "discord.js";
 import { CONFIG, gameLoad, LocationManager } from "../..";
 import Creature, { CreatureDump } from "../../game/Creature";
-import { DamageCause, DamageGroup, damageLogEmbed, DamageMethod, DamageType, ShieldReaction, HealType } from "../../game/Damage";
+import { HealType } from "../../game/Damage";
 import { Fight } from "../../game/Fight";
-import { TrackableStat } from "../../game/Stats";
 import { ApplicationCommandHandler } from "../commands";
-import { ceditMenu, gm_ceditMenu } from "../component_commands/cedit";
 
 export default new ApplicationCommandHandler(
   {

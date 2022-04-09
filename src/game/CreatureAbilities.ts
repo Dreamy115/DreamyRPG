@@ -1,9 +1,9 @@
 import fs from "fs";
+import Mongoose from "mongoose";
 import path from "path";
 import Creature from "./Creature";
-import { DamageLog, HealLog, VitalsLog } from "./Damage";
+import { VitalsLog } from "./Damage";
 import { LoreReplacer } from "./LoreReplacer";
-import Mongoose from "mongoose";
 
 export default class CreatureAbilitiesManager {
   map = new Map<string, CreatureAbility>();

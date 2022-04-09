@@ -717,7 +717,7 @@ export default new ApplicationCommandHandler(
   }
 )
 
-const PER_INDEX_PAGE = 5;
+const PER_INDEX_PAGE = 10;
 export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mongoose, page: string, index = 0): Promise<{gm_embeds: MessageEmbed[], embeds: MessageEmbed[], attachments?: MessageAttachment[], scrollable: boolean}> {
   const embeds = [new MessageEmbed()];
   // ALIAS
@@ -1349,7 +1349,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
 
       var i = 0;
       total = creature.$.vitalsHistory.length;
-      for (var a = index * PER_INDEX_PAGE; a < (index + 1) * PER_INDEX_PAGE && a < total; a++) {
+      for (var a = index * 5; a < (index + 1) * 5 && a < total; a++) {
         const his = creature.$.vitalsHistory[a];
         embeds[i] = his.type === "damage"
         ? await damageLogEmbed(his, db)
@@ -1359,10 +1359,12 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
     } break;
   }
 
+  const ind = page === "vitalsHistory" ? 5 : PER_INDEX_PAGE;
+
   embeds[embeds.length - 1].setFooter(
     `ID: ${creature.$._id}${(creature.$.info.locked || creature.$.info.npc) ? "" : " | NOT LOCKED"}` +
     (scrollable
-    ? ` | ${(index * PER_INDEX_PAGE) + 1}-${(index + 1) * PER_INDEX_PAGE}/${total}`
+    ? ` | ${(index * ind) + 1}-${(index + 1) * ind}/${total}`
     : "")
   )
 

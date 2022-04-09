@@ -805,7 +805,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
           make_bar(100 * creature.$.vitals.action_points / creature.$.stats.action_points.value, Creature.BAR_STYLES.ActionPoints, creature.$.stats.action_points.value / creature.$.stats.attack_cost.value).str +
           ` **Action Points** ${textStat(creature.$.vitals.action_points, creature.$.stats.action_points.value)} ` +
           `**${creature.$.stats.ap_regen.value}**/t\n\n` +
-          make_bar(100 * creature.$.vitals.heat / creature.$.stats.heat_capacity.value, Creature.BAR_STYLES.Heat, BAR_LENGTH / 3).str +
+          make_bar(100 * creature.$.vitals.heat / creature.$.stats.heat_capacity.value, Creature.BAR_STYLES.Heat, creature.$.stats.heat_capacity.value / BAR_LENGTH).str +
           ` **Heat** ${textStat(creature.$.vitals.heat, creature.$.stats.heat_capacity.value)} ` +
           `**${creature.deltaHeat}**/t${creature.deltaHeat < 0 ? " ⚠️" : ""}\n` +
           `**${creature.$.stats.filtering.value}** Filtering >> **${(creature.location?.$.rads ?? 0)}** Area${(creature.location?.$.rads ?? 0) > creature.$.stats.filtering.value ? " ⚠️" : ""}\n` +
@@ -820,10 +820,10 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
             `**${creature.$.stats.damage.value}** Damage Rating *(Melee **${creature.getFinalDamage(DamageMethod.Melee).toFixed(1)}** | **${creature.getFinalDamage(DamageMethod.Ranged).toFixed(1)}** Ranged)*\n` +
             `**${creature.$.stats.tech.value}** Tech *(Ability Power)*\n` +
             "\n" +
-            `**${creature.$.stats.lethality.value}** Lethality | **${creature.$.stats.passthrough.value}** Passthrough | **${creature.$.stats.cutting.value}** Cutting\n` +
-            `*(Reduces effectivenes of enemy **Armor**, **Dissipate**, and **Tenacity** respectively)*` +
+            `Lethality **${creature.$.stats.lethality.value}** | **${creature.$.stats.passthrough.value}** Passthrough\nPiercing **${creature.$.stats.piercing.value}** | **${creature.$.stats.cutting.value}** Cutting\n` +
+            `_(Reduces enemy **Armor**|**Dissipate** and **Plating**|**Tenacity**.)_` +
             "\n" +
-            `Vamp **${creature.$.stats.vamp.value}%** | **${creature.$.stats.siphon.value}%** Siphon *(Regenerates **health** | **shields** by **%** of damage dealt when dealing **Physical** | **Energy** Damage)*\n` +
+            `Vamp **${creature.$.stats.vamp.value}%** | **${creature.$.stats.siphon.value}%** Siphon *(Regenerates **health** | **shields** by **%** of **Physical** | **Energy** Damage dealt.)*\n` +
             "\n" +
             `**${creature.$.stats.initiative.value}** Initiative` 
         },

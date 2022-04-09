@@ -26,6 +26,7 @@ export interface DamageGroup {
     lethality?: number
     passthrough?: number
     cutting?: number
+    piercing?: number
   }
   chance: number
   useDodge: boolean
@@ -133,7 +134,7 @@ export async function damageLogEmbed(log: DamageLog, db: typeof Mongoose) {
 function damageGroupString(group: DamageGroup) {
   return `**${group.chance.toFixed(2)}%** Chance\n**${DamageMethod[group.method]} ${DamageCause[group.cause]}**\n` +
   `*${!group.useDodge ? "Not " : ""}Dodgeable*\n` +
-  `Lethality **${group.penetration?.lethality ?? 0}** | **${group.penetration?.passthrough ?? 0}** Passthrough | **${group.penetration?.cutting ?? 0}** Cutting\n\n` +
+  `Lethality **${group.penetration?.lethality ?? 0}** | **${group.penetration?.passthrough ?? 0}** Passthrough\nPiercing **${group.penetration?.piercing ?? 0}** | **${group.penetration?.cutting ?? 0}** Cutting\n\n` +
   `**Sources**\n` +
   `${function() {
     var str = "";

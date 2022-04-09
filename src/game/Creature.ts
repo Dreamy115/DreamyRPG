@@ -43,6 +43,7 @@ export default class Creature {
         lethality: new TrackableStat(0),
         passthrough: new TrackableStat(0),
         cutting: new TrackableStat(0),
+        piercing: new TrackableStat(0),
         dissipate: new TrackableStat(0),
         melee: new TrackableStat(100),
         ranged: new TrackableStat(100),
@@ -672,13 +673,13 @@ export default class Creature {
                 } break;
                 default: 
                 case PlatingReaction.Normal: {
-                  log.total_plating_damage -= Math.ceil(Math.max(-this.$.vitals.plating, Math.min(0, this.$.vitals.shield) * clamp(this.$.stats.plating_effectiveness.value / 100, 0, 1)));
-                  this.$.vitals.plating += Math.ceil(Math.min(0, this.$.vitals.shield) * clamp(this.$.stats.plating_effectiveness.value / 100, 0, 1));
-                  this.$.vitals.health += Math.floor(Math.min(0, this.$.vitals.shield) * (1 - clamp(this.$.stats.plating_effectiveness.value / 100, 0, 1)));
+                  log.total_plating_damage -= Math.ceil(Math.max(-this.$.vitals.plating, Math.min(0, this.$.vitals.shield) * clamp((this.$.stats.plating_effectiveness.value - (group.penetration?.piercing ?? 0)) / 100, 0, 1)));
+                  this.$.vitals.plating += Math.ceil(Math.min(0, this.$.vitals.shield) * clamp((this.$.stats.plating_effectiveness.value - (group.penetration?.piercing ?? 0)) / 100, 0, 1));
+                  this.$.vitals.health += Math.floor(Math.min(0, this.$.vitals.shield) * (1 - clamp((this.$.stats.plating_effectiveness.value - (group.penetration?.piercing ?? 0)) / 100, 0, 1)));
 
                   this.$.vitals.health += Math.min(0, this.$.vitals.plating);
-                  log.total_health_damage -= Math.min(0, this.$.vitals.plating) + Math.floor(Math.min(0, this.$.vitals.shield) * (1 - clamp(this.$.stats.plating_effectiveness.value / 100, 0, 1)));
-                  injuries = -(Math.min(0, this.$.vitals.plating) + Math.floor(Math.min(0, this.$.vitals.shield) * (1 - clamp(this.$.stats.plating_effectiveness.value / 100, 0, 1))));
+                  log.total_health_damage -= Math.min(0, this.$.vitals.plating) + Math.floor(Math.min(0, this.$.vitals.shield) * (1 - clamp((this.$.stats.plating_effectiveness.value - (group.penetration?.piercing ?? 0)) / 100, 0, 1)));
+                  injuries = -(Math.min(0, this.$.vitals.plating) + Math.floor(Math.min(0, this.$.vitals.shield) * (1 - clamp((this.$.stats.plating_effectiveness.value - (group.penetration?.piercing ?? 0)) / 100, 0, 1))));
 
                   this.$.vitals.plating = Math.max(0, this.$.vitals.plating);
                 } break;
@@ -729,10 +730,10 @@ export default class Creature {
               switch (source.platingReaction) {
                 default:
                 case PlatingReaction.Normal: {
-                  log.total_plating_damage += Math.ceil(Math.min(this.$.vitals.plating, source.value * clamp(this.$.stats.plating_effectiveness.value / 100, 0, 1)));
-                  this.$.vitals.plating -= Math.ceil(source.value * clamp(this.$.stats.plating_effectiveness.value / 100, 0, 1));
+                  log.total_plating_damage += Math.ceil(Math.min(this.$.vitals.plating, source.value * clamp((this.$.stats.plating_effectiveness.value - (group.penetration?.piercing ?? 0)) / 100, 0, 1)));
+                  this.$.vitals.plating -= Math.ceil(source.value * clamp((this.$.stats.plating_effectiveness.value - (group.penetration?.piercing ?? 0)) / 100, 0, 1));
 
-                  const injuries = -(Math.min(0, this.$.vitals.plating) + Math.floor(-source.value * (1 - clamp(this.$.stats.plating_effectiveness.value / 100, 0, 1))));
+                  const injuries = -(Math.min(0, this.$.vitals.plating) + Math.floor(-source.value * (1 - clamp((this.$.stats.plating_effectiveness.value - (group.penetration?.piercing ?? 0)) / 100, 0, 1))));
 
                   this.$.vitals.health -= Math.round(injuries);
                   log.total_health_damage += Math.round(injuries);
@@ -1580,7 +1581,7 @@ export type Attributes = "STR" | "FOR" | "REJ" | "PER" | "INT" | "DEX" | "CHA" |
 export type Vitals = "health" | "plating" | "action_points" | "shield" | "injuries" | "heat" | "intensity";
 
 export type Stats = 
-  "accuracy" | "armor" | "dissipate" | "lethality" | "passthrough" | "cutting" | "melee" | "damage" | "ranged" |
+  "accuracy" | "armor" | "dissipate" | "lethality" | "piercing" | "passthrough" | "cutting" | "melee" | "damage" | "ranged" |
   "health" | "plating" | "plating_effectiveness" | "action_points" | "ap_regen" | "shield" | "shield_regen" | "parry" | "deflect" | "tenacity" | "filtering" |
   "tech" | "vamp" | "siphon" | "initiative" | "min_comfortable_temperature" | "heat_capacity" | "attack_cost" |
   "ult_stack_target" | "stress_resistance" | "mental_strength";

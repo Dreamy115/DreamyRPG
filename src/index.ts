@@ -1,31 +1,30 @@
 import { ApplicationCommandData, AutocompleteInteraction, Client, CommandInteraction, Intents, Snowflake, SnowflakeUtil, TextBasedChannels } from "discord.js";
-import fs from "fs";
 import Mongoose from "mongoose";
-import path from "path";
 import YAML from "yaml";
-import AutocompleteManager from "./app/autocomplete.js";
-import ApplicationCommandManager from "./app/commands.js";
-import { setSim } from "./app/commands/simulation.js";
-import ComponentCommandManager from "./app/component_commands.js";
-import ActiveEffectManager from "./game/ActiveEffects.js";
-import CraftingManager from "./game/Crafting.js";
-import CreatureAbilitiesManager from "./game/CreatureAbilities.js";
-import DirectiveManager from "./game/GameDirectives.js";
-import ItemsManager from "./game/Items.js";
-import GameLocationManager from "./game/Locations.js";
-import LootTableManager from "./game/LootTables.js";
-import PassiveEffectManager from "./game/PassiveEffects.js";
-import CreaturePerkManager from "./game/Perks.js";
-import LocationShopsManager from "./game/Shops.js";
-import CreatureSkillManager from "./game/Skills.js";
-import CreatureSpeciesManager from "./game/Species.js";
 
+import fs from "fs";
+import path from "path";
 
 var clamp = (amt: number, min: number, max: number) => {
   return Math.min(max, Math.max(min, amt));
 }
-export { clamp };
+export {clamp};
 
+import ApplicationCommandManager from "./app/commands.js";
+import ComponentCommandManager from "./app/component_commands.js";
+import CreatureSpeciesManager from "./game/Species.js";
+import PassiveEffectManager from "./game/PassiveEffects.js";
+import ItemsManager from "./game/Items.js";
+import CreatureAbilitiesManager from "./game/CreatureAbilities.js";
+import ActiveEffectManager from "./game/ActiveEffects.js";
+import AutocompleteManager from "./app/autocomplete.js";
+import CreaturePerkManager from "./game/Perks.js";
+import CreatureSkillManager from "./game/Skills.js";
+import CraftingManager from "./game/Crafting.js";
+import GameLocationManager from "./game/Locations.js";
+import LocationShopsManager from "./game/Shops.js";
+import LootTableManager from "./game/LootTables.js";
+import DirectiveManager from "./game/GameDirectives.js";
 
 export const ItemManager = new ItemsManager();
 export const SpeciesManager = new CreatureSpeciesManager();
@@ -41,6 +40,7 @@ export const SchematicsManager = new CraftingManager();
 
 export const LootTables = new LootTableManager();
 
+import { setSim } from "./app/commands/simulation.js";
 
 process.on("uncaughtException", (e) => {
   console.error(e);

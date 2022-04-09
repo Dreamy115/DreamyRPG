@@ -20,6 +20,16 @@ export default [
         },
         hide: () => true,
         preload: (creature) => {
+          creature.$.stats.attack_cost.base += 8;
+          creature.$.stats.accuracy.base -= 10;
+          creature.$.stats.damage.base += 15;
+          creature.$.stats.plating_effectiveness.base -= 15;
+          creature.$.stats.action_points.base += 30;
+          creature.$.stats.ap_regen.base += 10;
+          creature.$.stats.parry.base += 10;
+          creature.$.stats.deflect.base += 5;
+          creature.$.stats.tenacity.base += 32;
+
           if (creature.active_effects.findIndex((v) => v.id === "death") !== -1) creature.$.status.alive = false;
 
           if (creature.$.vitals.health <= 0) creature.$.status.up = false;
@@ -115,7 +125,7 @@ export default [
         afterTick: async (creature, db) => {
           if (creature.alive) {
             creature.$.vitals.shield += creature.$.stats.shield_regen.value;
-            creature.$.vitals.action_points += creature.$.stats.mana_regen.value;
+            creature.$.vitals.action_points += creature.$.stats.ap_regen.value;
           }
       
           if (creature.deltaHeat >= 0) {

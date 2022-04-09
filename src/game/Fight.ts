@@ -215,7 +215,7 @@ export class Fight {
           `(**${Math.round(100 * char.$.vitals.health / char.$.stats.health.value)}%**)\n` +
           make_bar(100 *char.$.vitals.action_points / char.$.stats.action_points.value, Creature.BAR_STYLES.ActionPoints, creature.$.stats.action_points.value / creature.$.stats.attack_cost.value).str +
           ` **Action Points** ${textStat(char.$.vitals.action_points, char.$.stats.action_points.value)} `+
-          `**${char.$.stats.mana_regen.value}**/t\n` +
+          `**${char.$.stats.ap_regen.value}**/t\n` +
           (
             weapon
             ? `${weapon.displayName} -> **${char.getFinalDamage((weapon.$ as WeaponItemData).attack.type).toFixed(1)}**`

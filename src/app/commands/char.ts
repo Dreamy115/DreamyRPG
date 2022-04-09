@@ -605,7 +605,6 @@ export default new ApplicationCommandHandler(
         await interaction.deferReply({ ephemeral: true });
         
         const char = await Creature.fetch(interaction.user.id, db, false).catch(() => null);
-        console.log(char)
         if (char) {
           interaction.editReply({ content: "Character already exists!" });
           return;
@@ -806,7 +805,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
           ) + "\n" +
           make_bar(100 * creature.$.vitals.action_points / creature.$.stats.action_points.value, Creature.BAR_STYLES.ActionPoints, creature.$.stats.action_points.value / creature.$.stats.attack_cost.value).str +
           ` **Action Points** ${textStat(creature.$.vitals.action_points, creature.$.stats.action_points.value)} ` +
-          `**${creature.$.stats.mana_regen.value}**/t\n\n` +
+          `**${creature.$.stats.ap_regen.value}**/t\n\n` +
           make_bar(100 * creature.$.vitals.heat / creature.$.stats.heat_capacity.value, Creature.BAR_STYLES.Heat, BAR_LENGTH / 3).str +
           ` **Heat** ${textStat(creature.$.vitals.heat, creature.$.stats.heat_capacity.value)} ` +
           `**${creature.deltaHeat}**/t${creature.deltaHeat < 0 ? " ⚠️" : ""}\n` +

@@ -459,7 +459,6 @@ export default new ApplicationCommandHandler(
 
             try {
               await fight.prepare(db).then((log) => {
-                console.log(log)
                 interaction.editReply({
                   content: "Queueing..."
                 })

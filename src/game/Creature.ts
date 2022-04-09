@@ -38,8 +38,8 @@ export default class Creature {
       },
       stats: {
         ult_stack_target: new TrackableStat(0),
-        attack_cost: new TrackableStat(8),
-        accuracy: new TrackableStat(90),
+        attack_cost: new TrackableStat(0),
+        accuracy: new TrackableStat(100),
         armor: new TrackableStat(0),
         lethality: new TrackableStat(0),
         passthrough: new TrackableStat(0),
@@ -47,17 +47,17 @@ export default class Creature {
         dissipate: new TrackableStat(0),
         melee: new TrackableStat(100),
         ranged: new TrackableStat(100),
-        damage: new TrackableStat(15),
+        damage: new TrackableStat(0),
         health: new TrackableStat(100),
         plating: new TrackableStat(0),
         plating_effectiveness: new TrackableStat(50),
-        action_points: new TrackableStat(30),
-        mana_regen: new TrackableStat(10),
+        action_points: new TrackableStat(0),
+        ap_regen: new TrackableStat(0),
         shield: new TrackableStat(0),
         shield_regen: new TrackableStat(0),
-        parry: new TrackableStat(10),
-        deflect: new TrackableStat(5),
-        tenacity: new TrackableStat(32),
+        parry: new TrackableStat(0),
+        deflect: new TrackableStat(0),
+        tenacity: new TrackableStat(0),
         tech: new TrackableStat(0),
         vamp: new TrackableStat(0),
         siphon: new TrackableStat(0),
@@ -170,7 +170,7 @@ export default class Creature {
     this.$.stats.deflect.base += (slottedItems.backpack?.$ as BackpackWearableItemData).base_deflect ?? 0;
     
     this.$.stats.action_points.base += (slottedItems.gloves?.$ as GlovesWearableItemData).base_mana ?? 0;
-    this.$.stats.mana_regen.base += (slottedItems.gloves?.$ as GlovesWearableItemData).base_mana_regen ?? 0;
+    this.$.stats.ap_regen.base += (slottedItems.gloves?.$ as GlovesWearableItemData).base_mana_regen ?? 0;
     this.$.stats.tech.base += (slottedItems.gloves?.$ as GlovesWearableItemData).base_tech ?? 0;
 
     // Modules
@@ -1316,7 +1316,7 @@ export default class Creature {
     {
       type: ModifierType.ADD,
       value: 0.1,
-      stat: "mana_regen"
+      stat: "ap_regen"
     },
     {
       type: ModifierType.ADD,
@@ -1368,7 +1368,7 @@ export default class Creature {
       {
         type: ModifierType.ADD_PERCENT,
         value: 0.15,
-        stat: "mana_regen"
+        stat: "ap_regen"
       },
       {
         type: ModifierType.ADD_PERCENT,
@@ -1582,6 +1582,6 @@ export type Vitals = "health" | "plating" | "action_points" | "shield" | "injuri
 
 export type Stats = 
   "accuracy" | "armor" | "dissipate" | "lethality" | "passthrough" | "cutting" | "melee" | "damage" | "ranged" |
-  "health" | "plating" | "plating_effectiveness" | "action_points" | "mana_regen" | "shield" | "shield_regen" | "parry" | "deflect" | "tenacity" | "filtering" |
+  "health" | "plating" | "plating_effectiveness" | "action_points" | "ap_regen" | "shield" | "shield_regen" | "parry" | "deflect" | "tenacity" | "filtering" |
   "tech" | "vamp" | "siphon" | "initiative" | "min_comfortable_temperature" | "heat_capacity" | "attack_cost" |
   "ult_stack_target" | "stress_resistance" | "mental_strength";

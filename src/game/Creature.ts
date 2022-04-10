@@ -780,6 +780,8 @@ export default class Creature {
         }
       }
 
+      log.total_damage_taken = log.total_health_damage + log.total_plating_damage + log.total_shield_damage;
+
       for (const passive of this.passives) {
         await passive.$.afterDamageTaken?.(this, db, log);
       }
@@ -862,10 +864,10 @@ export default class Creature {
           const _shield = this.$.vitals.shield;
 
           this.$.vitals.health += src.value;
-          this.$.vitals.plating += Math.max(this.$.vitals.health - this.$.stats.health.value, 0);
+          this.$.vitals.plating += Math.max(this.$.vitals.health - (this.$.stats.health.value - this.$.vitals.injuries), 0);
           this.$.vitals.shield += Math.max(this.$.vitals.plating - this.$.stats.plating.value, 0);
           
-          log.health_restored += Math.min(this.$.vitals.health, this.$.stats.health.value) - _health;
+          log.health_restored += Math.min(this.$.vitals.health, (this.$.stats.health.value - this.$.vitals.injuries)) - _health;
           log.plating_restored += Math.min(this.$.vitals.plating, this.$.stats.plating.value) - _plating;
           log.shields_restored += Math.min(this.$.vitals.shield, this.$.stats.shield.value) - _shield;
         } break;

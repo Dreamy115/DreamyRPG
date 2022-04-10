@@ -805,6 +805,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
           make_bar(100 * creature.$.vitals.action_points / creature.$.stats.action_points.value, Creature.BAR_STYLES.ActionPoints, creature.$.stats.action_points.value / creature.$.stats.attack_cost.value).str +
           ` **Action Points** ${textStat(creature.$.vitals.action_points, creature.$.stats.action_points.value)} ` +
           `**${creature.$.stats.ap_regen.value}**/t\n\n` +
+          `Ult Charge ${textStat(creature.$.abilities.ult_stacks, creature.$.stats.ult_stack_target.value)}\n\n` +
           make_bar(100 * creature.$.vitals.heat / creature.$.stats.heat_capacity.value, Creature.BAR_STYLES.Heat, creature.$.stats.heat_capacity.value / BAR_LENGTH).str +
           ` **Heat** ${textStat(creature.$.vitals.heat, creature.$.stats.heat_capacity.value)} ` +
           `**${creature.deltaHeat}**/t${creature.deltaHeat < 0 ? " ⚠️" : ""}\n` +

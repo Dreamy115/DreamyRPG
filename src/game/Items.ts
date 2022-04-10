@@ -184,7 +184,7 @@ export const ItemQualityEmoji = [
   "🟢",
   "🔵",
   "🟣",
-  "🟠",
+  "🟡",
   "🔴",
 ]
 export const ItemQualityColor = [

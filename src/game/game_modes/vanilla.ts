@@ -47,7 +47,7 @@ export default [
           });
         },
         afterDamageTaken: async (creature, db, log) => {
-          if (log.final.from === "Low-Health Stress") return;
+          if (log.final.from === "Low-Health Stress" || log.total_damage_taken === 0) return;
 
           const health = 100 * (creature.$.vitals.health / creature.$.stats.health.value);
           if (health < 50) {
@@ -63,8 +63,7 @@ export default [
               from: "Low-Health Stress",
               sources: [{
                 type: DamageType.Stress,
-                value: clamp(stress * lerp(mult_of_health, 0.2, 1.5), 1, 60),
-                shieldReaction: ShieldReaction.Normal 
+                value: Math.round(clamp(stress * lerp(mult_of_health, 0.2, 1.5), 1, 60) * 10) / 10
               }]
             }, db);
           }
@@ -150,14 +149,6 @@ export default [
               severity: (creature.location?.$.rads ?? 0) - creature.$.stats.filtering.value
             }, db, true)
           }          
-        },
-        onFightExit: async (creature, db) => {
-          await creature.heal({
-            sources: [{
-              type: HealType.Plating, value: creature.$.stats.plating.value
-            }],
-            from: "Fight-Exit Plating Regen"
-          }, db)
         },
         onFightEnter: async (creature, db) => {
           creature.$.vitals.action_points = 0;

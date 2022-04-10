@@ -1292,22 +1292,22 @@ export default class Creature {
   static readonly LEVEL_MODS: NamedModifier[] = [
     {
       type: ModifierType.ADD_PERCENT,
-      value: 0.15,
+      value: 0.125,
       stat: "damage"
     },
     {
       type: ModifierType.ADD_PERCENT,
-      value: 0.075,
+      value: 0.05,
       stat: "health"
     },
     {
       type: ModifierType.ADD_PERCENT,
-      value: 0.075,
+      value: 0.065,
       stat: "shield_regen"
     },
     {
       type: ModifierType.ADD_PERCENT,
-      value: 0.085,
+      value: 0.075,
       stat: "shield"
     },
     {
@@ -1317,12 +1317,12 @@ export default class Creature {
     },
     {
       type: ModifierType.ADD,
-      value: 0.1,
+      value: 0.09,
       stat: "ap_regen"
     },
     {
       type: ModifierType.ADD,
-      value: 0.5,
+      value: 0.45,
       stat: "action_points"
     },
     {
@@ -1335,7 +1335,7 @@ export default class Creature {
     STR: [
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.1,
+        value: 0.08,
         stat: "melee"
       },
       {
@@ -1430,7 +1430,7 @@ export default class Creature {
       },
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.1,
+        value: 0.08,
         stat: "ranged"
       }
     ],

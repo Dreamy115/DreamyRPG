@@ -485,4 +485,4 @@ export interface Combatant {
   down: boolean
 }
 
-const BAR_LENGTH = 10;
+const BAR_LENGTH = 20;

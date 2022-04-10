@@ -59,7 +59,12 @@ export class ItemStatModule {
         {
           stat: "shield",
           type: ModifierType.ADD_PERCENT,
-          value: 0.1
+          value: 0.07
+        },
+        {
+          stat: "plating",
+          type: ModifierType.ADD_PERCENT,
+          value: 0.05
         }
       ]
     ],
@@ -79,12 +84,17 @@ export class ItemStatModule {
         {
           stat: "armor",
           type: ModifierType.ADD_PERCENT,
-          value: 0.125
+          value: 0.1
         },
         {
           stat: "dissipate",
           type: ModifierType.ADD_PERCENT,
-          value: 0.125
+          value: 0.1
+        },
+        {
+          stat: "plating_effectiveness",
+          type: ModifierType.ADD_PERCENT,
+          value: 0.07
         }
       ]
     ]

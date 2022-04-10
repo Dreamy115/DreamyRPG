@@ -774,37 +774,46 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
         }()
       ).addFields([
         {
-          name: "Vitals",
-          inline: false,
-          value: 
-          `*(**${creature.$.stats.health.value}** Health - **${creature.$.vitals.injuries}** Injuries)*\n` +
-          (
-            creature.$.stats.shield.value > 0
-            ? make_bar(100 * creature.$.vitals.shield / creature.$.stats.shield.value, Creature.BAR_STYLES.Shield, Math.max(1, Math.floor(creature.$.vitals.shield / creature.$.stats.shield.value))).str +
-            ` **Shield** ${textStat(creature.$.vitals.shield, creature.$.stats.shield.value)} `
-            : "No **Shield** "
-          ) + `**${creature.$.stats.shield_regen.value}**/t\n` +
-          (make_bar(100 * creature.$.vitals.health / (creature.$.stats.health.value - creature.$.vitals.injuries), Creature.BAR_STYLES.Health, Math.max(1, (1 - injury_ratio) * Math.floor(creature.$.stats.health.value / BAR_LENGTH))).str ?? "") +
+          name: `Health **${creature.$.vitals.health}**/**${creature.$.stats.health.value - creature.$.vitals.injuries}** ` + 
+          `(**${(100 * creature.$.vitals.health / creature.$.stats.health.value).toFixed(0)}%**)`,
+          value: (make_bar(100 * creature.$.vitals.health / (creature.$.stats.health.value - creature.$.vitals.injuries), Creature.BAR_STYLES.Health, Math.max(1, (1 - injury_ratio) * Math.floor(creature.$.stats.health.value / BAR_LENGTH))).str ?? "") +
           (
             creature.$.vitals.injuries > 0
             ? make_bar(100, Creature.BAR_STYLES.Injuries, Math.max(1, injury_ratio * Math.floor(creature.$.stats.health.value / BAR_LENGTH))).str
             : ""
-          ) +
-          (
+          ),
+          inline: true
+        },
+        {
+          name: (
+            creature.$.stats.plating.value > 0
+            ? `**Plating** ${textStat(creature.$.vitals.plating, creature.$.stats.plating.value)} _[**${creature.$.stats.plating_effectiveness.value}** Effect]_`
+            : "No Plating"
+          ),
+          value: (
             creature.$.stats.plating.value > 0
             ? make_bar(100 * creature.$.vitals.plating / creature.$.stats.plating.value, Creature.BAR_STYLES.Plating, Math.max(1, Math.floor(creature.$.stats.plating.value / BAR_LENGTH))).str
             : ""
-          ) +
-          ` **Health** **${creature.$.vitals.health}**/**${creature.$.stats.health.value - creature.$.vitals.injuries}** ` + 
-          `(**${(100 * creature.$.vitals.health / creature.$.stats.health.value).toFixed(0)}%**)\n` +
-          (
-            creature.$.stats.plating.value > 0
-            ? `**Plating** ${textStat(creature.$.vitals.plating, creature.$.stats.plating.value)} _[**${creature.$.stats.plating_effectiveness.value}** Plating Effectiveness]_`
-            : "No Plating"
-          ) + "\n" +
+          ),
+          inline: true
+        },
+        {
+          name: `Shield ${creature.$.stats.shield.value > 0 ? textStat(creature.$.vitals.shield, creature.$.stats.shield.value) : "---"} **${creature.$.stats.shield_regen.value}**/t`,
+          value: (
+            creature.$.stats.shield.value > 0
+            ? make_bar(100 * creature.$.vitals.shield / creature.$.stats.shield.value, Creature.BAR_STYLES.Shield, Math.max(1, Math.floor(creature.$.vitals.shield / creature.$.stats.shield.value))).str
+            : "No **Shield** "
+          ),
+          inline: true
+        },
+        {
+          name: "Vitals",
+          inline: false,
+          value: 
+          `*(**${creature.$.stats.health.value}** Health - **${creature.$.vitals.injuries}** Injuries)*\n\n` +
           make_bar(100 * creature.$.vitals.action_points / creature.$.stats.action_points.value, Creature.BAR_STYLES.ActionPoints, creature.$.stats.action_points.value / creature.$.stats.attack_cost.value).str +
           ` **Action Points** ${textStat(creature.$.vitals.action_points, creature.$.stats.action_points.value)} ` +
-          `**${creature.$.stats.ap_regen.value}**/t\n\n` +
+          `**${creature.$.stats.ap_regen.value}**/t\n` +
           `Ult Charge ${textStat(creature.$.abilities.ult_stacks, creature.$.stats.ult_stack_target.value)}\n\n` +
           make_bar(100 * creature.$.vitals.heat / creature.$.stats.heat_capacity.value, Creature.BAR_STYLES.Heat, creature.$.stats.heat_capacity.value / BAR_LENGTH).str +
           ` **Heat** ${textStat(creature.$.vitals.heat, creature.$.stats.heat_capacity.value)} ` +

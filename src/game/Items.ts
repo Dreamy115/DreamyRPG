@@ -160,6 +160,7 @@ export interface AttackData {
     passthrough?: number
     accuracy?: number
     cutting?: number
+    piercing?: number
   }
   sources: {
     type: DamageType

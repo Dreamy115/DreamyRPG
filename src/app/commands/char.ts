@@ -1010,8 +1010,11 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
             return str;
           }()}
           **${((attackdata.modifiers?.accuracy ?? 0) + (creature.$.stats.accuracy.value * rotateLine((type === DamageMethod.Melee ? creature.$.stats.melee.value : creature.$.stats.ranged.value) / 100, Creature.PROFICIENCY_ACCURACY_SCALE, 1))).toFixed(1)} *(${(creature.$.stats.accuracy.value * rotateLine((type === DamageMethod.Melee ? creature.$.stats.melee.value : creature.$.stats.ranged.value) / 100, Creature.PROFICIENCY_ACCURACY_SCALE, 1)).toFixed(1)} ${(attackdata.modifiers?.accuracy ?? 0) >= 0 ? "+" : "-"}${Math.abs(attackdata.modifiers?.accuracy ?? 0)})*** Accuracy
-          **${attackdata.modifiers?.lethality ?? 0}** Lethality
-          **${attackdata.modifiers?.passthrough ?? 0}** Passthrough\n\n`;
+          **${creature.$.stats.lethality.value + (attackdata.modifiers?.lethality ?? 0)}** Lethality _(${creature.$.stats.lethality.value} **${(attackdata.modifiers?.lethality ?? 0) > 0 ? "+" : "-"}${Math.abs((attackdata.modifiers?.lethality ?? 0))}**)_
+          **${creature.$.stats.passthrough.value + (attackdata.modifiers?.passthrough ?? 0)}** Passthrough _(${creature.$.stats.passthrough.value} **${(attackdata.modifiers?.passthrough ?? 0) > 0 ? "+" : "-"}${Math.abs((attackdata.modifiers?.passthrough ?? 0))}**)_
+          **${creature.$.stats.cutting.value + (attackdata.modifiers?.cutting ?? 0)}** Cutting _(${creature.$.stats.cutting.value} **${(attackdata.modifiers?.cutting ?? 0) > 0 ? "+" : "-"}${Math.abs((attackdata.modifiers?.cutting ?? 0))}**)_
+          **${creature.$.stats.piercing.value + (attackdata.modifiers?.piercing ?? 0)}** Piercing _(${creature.$.stats.piercing.value} **${(attackdata.modifiers?.piercing ?? 0) > 0 ? "+" : "-"}${Math.abs((attackdata.modifiers?.piercing ?? 0))}**)_`
+          + "\n\n";
         }
 
         return str;

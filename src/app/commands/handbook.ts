@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionData, ColorResolvable, MessageActionRow, MessageButton, MessageEmbed } from "discord.js";
+import { ApplicationCommandOptionChoice, ApplicationCommandOptionData, ColorResolvable, MessageActionRow, MessageButton, MessageEmbed } from "discord.js";
 import { AbilitiesManager, capitalize, CONFIG, Directives, EffectManager, ItemManager, LocationManager, LootTables, PassivesManager, PerkManager, SchematicsManager, SkillManager, SpeciesManager } from "../..";
 import { ActiveEffect } from "../../game/ActiveEffects";
 import { Material, Schematic } from "../../game/Crafting";
@@ -6,7 +6,7 @@ import Creature from "../../game/Creature";
 import { AbilityType, CreatureAbility } from "../../game/CreatureAbilities";
 import { DamageMethod, DamageType, ShieldReaction, shieldReactionInfo } from "../../game/Damage";
 import { GameDirective } from "../../game/GameDirectives";
-import { AttackData, Item, ItemQualityColor, ItemQualityEmoji } from "../../game/Items";
+import { AttackData, Item, ItemQualityColor, ItemQualityEmoji, WeaponCategory } from "../../game/Items";
 import { cToF, GameLocation } from "../../game/Locations";
 import { LootTable } from "../../game/LootTables";
 import { replaceLore } from "../../game/LoreReplacer";
@@ -17,6 +17,11 @@ import { CreatureSpecies } from "../../game/Species";
 import { Modifier, ModifierType } from "../../game/Stats";
 import { ApplicationCommandHandler } from "../commands";
 import { tableDescriptor } from "./char";
+import fs from "fs";
+import path from "path";
+import YAML from "yaml";
+
+const DOCUMENTATION: Record<string, string> = YAML.parse(fs.readFileSync(path.join(__dirname, "../../../documentation.yml")).toString()); 
 
 const ITEMS_PER_PAGE = 25;
 
@@ -115,6 +120,31 @@ export default new ApplicationCommandHandler(
             autocomplete: true
           }
         ]
+      },
+      {
+        name: "info",
+        description: "General info about the System",
+        type: "SUB_COMMAND",
+        options: [
+          {
+            name: "page",
+            description: "What do you want to get info on?",
+            type: "STRING",
+            required: true,
+            choices: function () {
+              const arr: ApplicationCommandOptionChoice[] = [];
+
+              for (const k in DOCUMENTATION) {
+                arr.push({
+                  name: capitalize(k.replaceAll(/_/g, " ")),
+                  value: k
+                });
+              }
+
+              return arr;
+            }()
+          }
+        ]
       }
     ]
   },
@@ -134,6 +164,12 @@ export default new ApplicationCommandHandler(
           ])
         ]
       })
+      return;
+    } else if (interaction.options.getSubcommand() === "info") {
+      interaction.reply({
+        ephemeral: true,
+        content: DOCUMENTATION[interaction.options.getString("page", true)] || "Not Found"
+      });
       return;
     }
 
@@ -362,8 +398,11 @@ export default new ApplicationCommandHandler(
               case "weapon": {
                 embed
                 .addField(
+                  "Damage",
+                  `${item.$.base_damage}`
+                ).addField(
                   "Type",
-                  `${DamageMethod[item.$.attack.type]} Weapon`
+                  `${DamageMethod[item.$.attack.type]} ${capitalize(WeaponCategory[item.$.category].replaceAll(/_/g, " "))}`
                 ).addFields([
                   {
                     name: "Crit",
@@ -605,7 +644,7 @@ export function attackDescriptor(attacks: AttackData[]) {
       }
 
       return str;
-    }()}**${attackdata.modifiers?.accuracy ?? 0}** Accuracy | **${attackdata.modifiers?.lethality ?? 0}** Lethality | **${attackdata.modifiers?.passthrough ?? 0}** Passthrough | **${attackdata.modifiers?.cutting ?? 0}** Cutting | **${attackdata.modifiers?.piercing ?? 0}** Piercing\n`;
+    }()}**${attackdata.modifiers?.accuracy ?? 0}** Accuracy\nLethality **${attackdata.modifiers?.lethality ?? 0}** | **${attackdata.modifiers?.passthrough ?? 0}** Passthrough\nCutting **${attackdata.modifiers?.cutting ?? 0}** | **${attackdata.modifiers?.piercing ?? 0}** Piercing\n`;
   }
 
   return str;

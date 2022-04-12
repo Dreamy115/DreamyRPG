@@ -8,7 +8,13 @@ import path from "path";
 var clamp = (amt: number, min: number, max: number) => {
   return Math.min(max, Math.max(min, amt));
 }
-export {clamp};
+var capitalize = function (str: string): string {
+  const array = str.split(/ +/g);
+  array.forEach((v, i, a) => a[i] = v.substr(0, 1).toUpperCase().concat(v.substr(1)));
+  
+  return array.join(" ");
+}
+export {clamp, capitalize};
 
 import ApplicationCommandManager from "./app/commands.js";
 import ComponentCommandManager from "./app/component_commands.js";
@@ -235,12 +241,6 @@ export async function messageInput(channel: TextBasedChannels, userid: Snowflake
   if (!input) throw new Error("No input");
 
   return input;
-}
-export function capitalize(str: string): string {
-  const array = str.split(/ +/g);
-  array.forEach((v, i, a) => a[i] = v.substr(0, 1).toUpperCase().concat(v.substr(1)));
-
-  return array.join(" ");
 }
 export function shuffle(array: any[]): any[] {
   let currentIndex = array.length,  randomIndex;

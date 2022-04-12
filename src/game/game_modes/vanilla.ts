@@ -28,6 +28,7 @@ export default [
           creature.$.stats.parry.base += 10;
           creature.$.stats.deflect.base += 5;
           creature.$.stats.tenacity.base += 32;
+          creature.$.stats.stress_resistance.base += 25;
 
           if (creature.active_effects.findIndex((v) => v.id === "death") !== -1) creature.$.status.alive = false;
 

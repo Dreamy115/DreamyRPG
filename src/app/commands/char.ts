@@ -1010,10 +1010,10 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
             return str;
           }()}
           **${((attackdata.modifiers?.accuracy ?? 0) + (creature.$.stats.accuracy.value * rotateLine((type === DamageMethod.Melee ? creature.$.stats.melee.value : creature.$.stats.ranged.value) / 100, Creature.PROFICIENCY_ACCURACY_SCALE, 1))).toFixed(1)} *(${(creature.$.stats.accuracy.value * rotateLine((type === DamageMethod.Melee ? creature.$.stats.melee.value : creature.$.stats.ranged.value) / 100, Creature.PROFICIENCY_ACCURACY_SCALE, 1)).toFixed(1)} ${(attackdata.modifiers?.accuracy ?? 0) >= 0 ? "+" : "-"}${Math.abs(attackdata.modifiers?.accuracy ?? 0)})*** Accuracy
-          **${creature.$.stats.lethality.value + (attackdata.modifiers?.lethality ?? 0)}** Lethality _(${creature.$.stats.lethality.value} **${(attackdata.modifiers?.lethality ?? 0) > 0 ? "+" : "-"}${Math.abs((attackdata.modifiers?.lethality ?? 0))}**)_
-          **${creature.$.stats.passthrough.value + (attackdata.modifiers?.passthrough ?? 0)}** Passthrough _(${creature.$.stats.passthrough.value} **${(attackdata.modifiers?.passthrough ?? 0) > 0 ? "+" : "-"}${Math.abs((attackdata.modifiers?.passthrough ?? 0))}**)_
-          **${creature.$.stats.cutting.value + (attackdata.modifiers?.cutting ?? 0)}** Cutting _(${creature.$.stats.cutting.value} **${(attackdata.modifiers?.cutting ?? 0) > 0 ? "+" : "-"}${Math.abs((attackdata.modifiers?.cutting ?? 0))}**)_
-          **${creature.$.stats.piercing.value + (attackdata.modifiers?.piercing ?? 0)}** Piercing _(${creature.$.stats.piercing.value} **${(attackdata.modifiers?.piercing ?? 0) > 0 ? "+" : "-"}${Math.abs((attackdata.modifiers?.piercing ?? 0))}**)_`
+          **${creature.$.stats.lethality.value + (attackdata.modifiers?.lethality ?? 0)}** Lethality _(${creature.$.stats.lethality.value} **${(attackdata.modifiers?.lethality ?? 0) >= 0 ? "+" : "-"}${Math.abs((attackdata.modifiers?.lethality ?? 0))}**)_
+          **${creature.$.stats.passthrough.value + (attackdata.modifiers?.passthrough ?? 0)}** Passthrough _(${creature.$.stats.passthrough.value} **${(attackdata.modifiers?.passthrough ?? 0) >= 0 ? "+" : "-"}${Math.abs((attackdata.modifiers?.passthrough ?? 0))}**)_
+          **${creature.$.stats.cutting.value + (attackdata.modifiers?.cutting ?? 0)}** Cutting _(${creature.$.stats.cutting.value} **${(attackdata.modifiers?.cutting ?? 0) >= 0 ? "+" : "-"}${Math.abs((attackdata.modifiers?.cutting ?? 0))}**)_
+          **${creature.$.stats.piercing.value + (attackdata.modifiers?.piercing ?? 0)}** Piercing _(${creature.$.stats.piercing.value} **${(attackdata.modifiers?.piercing ?? 0) >= 0 ? "+" : "-"}${Math.abs((attackdata.modifiers?.piercing ?? 0))}**)_`
           + "\n\n";
         }
 
@@ -1477,7 +1477,11 @@ export function describeItem(invitem?: InventoryItem, creature?: Creature) {
     lore = replaceLore(lore, (item.$ as ConsumableItemData).info.replacers, creature);
   }
 
-  str += `*${lore}*\n\n`;
+  str += `*${lore}*\n`;
+  if (item.$.type === "weapon") {
+    str += `Base Damage: **${item.$.base_damage}**\n`;
+  }
+  str += `\n`;
 
   if ((invitem as WearableInventoryItem)?.stat_module) {
     let stat_module: ItemStatModule = (invitem as WearableInventoryItem).stat_module;
@@ -1598,7 +1602,7 @@ export function describeItem(invitem?: InventoryItem, creature?: Creature) {
     switch (item.$.type) {
       case "weapon": {
         str += 
-          `\nWeapon Type: **${DamageMethod[item.$.attack.type]}** | **${capitalize(String(WeaponCategory[item.$.category]))}**\n` +
+          `\nWeapon Type: **${DamageMethod[item.$.attack.type]}** | **${capitalize(WeaponCategory[item.$.category].replaceAll(/_/g, " "))}**\n` +
           `- **Crit** Attack\n${attackDescriptor(item.$.attack.crit)}\n` +
           `- **Normal** Attack\n${attackDescriptor(item.$.attack.normal)}\n` +
           `- **Weak** Attack\n${attackDescriptor(item.$.attack.weak)}\n`

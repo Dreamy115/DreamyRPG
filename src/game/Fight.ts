@@ -329,7 +329,7 @@ export class Fight {
                   description: limitString(
                     test instanceof Error
                     ? test.message
-                    : removeMarkdown(replaceLore(ability.$.info.lore, ability.$.info.lore_replacers)),
+                    : removeMarkdown(replaceLore(ability.$.info.lore, ability.$.info.replacers ?? [])),
                   100)
                 })
                 continue;
@@ -368,7 +368,7 @@ export class Fight {
                   description: limitString(
                     test instanceof Error
                     ? test.message
-                    : removeMarkdown(replaceLore(ability.$.info.lore, ability.$.info.lore_replacers)),
+                    : removeMarkdown(replaceLore(ability.$.info.lore, ability.$.info.replacers ?? [])),
                   100)
                 })
                 continue;

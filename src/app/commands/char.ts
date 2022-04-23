@@ -964,7 +964,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
       if (ability)
         embed.addField(
           `Ultimate \`${ability.$.id}\` ${ability.$.info.name}`,
-          `${replaceLore(ability.$.info.lore, ability.$.info.lore_replacers, creature)}\n\n` +
+          `${replaceLore(ability.$.info.lore, ability.$.info.replacers ?? [], creature)}\n\n` +
           `**${ability.$.min_targets}**${ability.$.max_targets ? `to **${ability.$.max_targets}**` : ""} Targets\n` +
           `**${ability.$.cost}** Ult Stacks\n` +
           `Type **${AbilityType[ability.$.type]}**`
@@ -983,7 +983,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
 
           array.push({
             name: `<${i+1}> \`${ability.$.id}\` ${ability.$.info.name}`,
-            value: `${replaceLore(ability.$.info.lore, ability.$.info.lore_replacers, creature)}\n\n` +
+            value: `${replaceLore(ability.$.info.lore, ability.$.info.replacers ?? [], creature)}\n\n` +
             `**${ability.$.haste ?? 1}** Haste\n` +
             `**${ability.$.min_targets}**${ability.$.max_targets ? `to **${ability.$.max_targets}**` : ""} Targets\n` +
             `**${ability.$.cost}** Action Points\n` +
@@ -1059,7 +1059,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
 
         (effectData.$.hide?.(creature, effect) ? gm_embed : embed).addField(
           `<${i+1}> ${effectData.getDisplayName(effect)}`,
-          `*${replaceEffectLore(effectData.$.info.lore, effectData.$.info.replacers, effect, creature, true)}*\n\n${effect.ticks === -1 ? "**Cannot Expire**" : `for **${effect.ticks}** Ticks`} (\`${effect.id}\`)\n` +
+          `*${replaceEffectLore(effectData.$.info.lore, effectData.$.info.replacers ?? [], effect, creature, true)}*\n\n${effect.ticks === -1 ? "**Cannot Expire**" : `for **${effect.ticks}** Ticks`} (\`${effect.id}\`)\n` +
           `\n${passivesDescriptor(Array.from(effectData.$.passives ?? []), false, creature)}`
         )
 

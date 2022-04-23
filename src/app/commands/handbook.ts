@@ -477,7 +477,7 @@ export default new ApplicationCommandHandler(
             )
           } else if (item instanceof CreatureAbility) {
             embed.description =
-              replaceLore(embed.description || "", item.$.info.lore_replacers) +
+              replaceLore(embed.description || "", item.$.info.replacers ?? []) +
               `\n\n` +
               `Cost **${item.$.cost}**\n` +
               `Haste **${item.$.haste ?? 1}**\n` +
@@ -487,7 +487,7 @@ export default new ApplicationCommandHandler(
               var str = item.$.info.lore;
 
               for (const r in item.$.info.replacers) {
-                const rep = item.$.info.replacers[r];
+                const rep = item.$.info.replacers[Number(r)];
                 str = str.replaceAll(`{${r}}`, `**${rep.multiplier}** x **${capitalize(rep.stat)}**`);
               }
 

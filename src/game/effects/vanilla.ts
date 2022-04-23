@@ -40,7 +40,7 @@ export default [
     info: {
       name: "EMP",
       lore: "This Creature will not be able to regenerate shields until this expires",
-      replacers: []
+      
     },
     preload: (creature) => {
       creature.$.stats.shield_regen.modifiers.push({
@@ -57,7 +57,7 @@ export default [
     info: {
       name: "Suppressed",
       lore: "This Creature will not be able to use abilities until this expires",
-      replacers: []
+      
     },
     preload: (creature) => {
       creature.$.status.abilities = false;
@@ -71,7 +71,7 @@ export default [
     info: {
       name: "Dazed",
       lore: "This Creature will not be able to use attacks until this expires",
-      replacers: []
+      
     },
     preload: (creature) => {
       creature.$.status.attacks = false;
@@ -85,7 +85,7 @@ export default [
     info: {
       name: "Death",
       lore: "This Creature's story is over...",
-      replacers: []
+      
     },
     preload: (creature) => {
       creature.$.status.alive = false;
@@ -99,7 +99,7 @@ export default [
     info: {
       name: "Hypothermia",
       lore: "This Creature is freezing! **2.5%** Health True Damage every tick. **-3** DEX, **-3** PER, **-3** STR",
-      replacers: []
+      
     },
     preload(creature) {
       creature.$.attributes.DEX.modifiers.push({
@@ -161,7 +161,7 @@ export default [
     info: {
       name: "Stressed",
       lore: "This Creature is stressed and isn't at their peak performance. Decreased **INT**, **PER**, and **CHA**",
-      replacers: []
+      
     },
     conflicts_with: new Set(["intensity-optimal", "intensity-bored", "intensity-nothing"]),
     preload: (creature, {severity}) => {
@@ -189,7 +189,7 @@ export default [
     info: {
       name: "Adrenaline",
       lore: "This Creature is experiencing optimal intensity. Increased **DEX**, **PER**, and **Initiative**",
-      replacers: []
+      
     },
     conflicts_with: new Set(["intensity-bored", "intensity-stressed", "intensity-nothing"]),
     preload: (creature, {severity}) => {
@@ -215,7 +215,7 @@ export default [
     info: {
       name: "Calm",
       lore: "This Creature is calm. Reduced **Dodge**, and **Initiative**. **+1 MND**",
-      replacers: []
+      
     },
     conflicts_with: new Set(["intensity-optimal", "intensity-stressed", "intensity-nothing"]),
     preload: (creature, {severity}) => {
@@ -247,7 +247,7 @@ export default [
     info: {
       name: "Intensity",
       lore: "The intensity isn't currently affecting anything.",
-      replacers: []
+      
     },
     conflicts_with: new Set(["intensity-bored", "intensity-stressed", "intensity-optimal"]),
     type: EffectType.Other

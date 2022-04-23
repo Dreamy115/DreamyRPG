@@ -516,7 +516,7 @@ export default new ComponentCommandHandler(
                 new MessageEmbed()
                   .setTitle(ability.$.info.name)
                   .setDescription(
-                    replaceLore(ability.$.info.lore, ability.$.info.lore_replacers, creature) +
+                    replaceLore(ability.$.info.lore, ability.$.info.replacers ?? [], creature) +
                     `\n\n` +
                     `Cost **${ability.$.cost}**\n` +
                     `Haste **${ability.$.haste ?? 1}**\n` +
@@ -708,7 +708,7 @@ export default new ComponentCommandHandler(
                 new MessageEmbed()
                   .setTitle(ability.$.info.name)
                   .setDescription(
-                    replaceLore(ability.$.info.lore, ability.$.info.lore_replacers, creature) +
+                    replaceLore(ability.$.info.lore, ability.$.info.replacers ?? [], creature) +
                     `\n\n` +
                     `Cost **${ability.$.cost}**\n` +
                     `Haste **${ability.$.haste ?? 1}**\n` +

@@ -38,7 +38,7 @@ export class CreatureAbility {
     info: {
       name: string
       lore: string
-      lore_replacers: LoreReplacer[]
+      replacers?: LoreReplacer[]
     }
     type: AbilityType
     min_targets: number // If this is 0, only caster is provided and targets is empty

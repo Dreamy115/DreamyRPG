@@ -37,7 +37,7 @@ export class ActiveEffect {
     info: {
       name: string
       lore: string
-      replacers: EffectLoreReplacer[]
+      replacers?: EffectLoreReplacer[]
     }
     type: EffectType
     hide?: (creature?: Creature, active?: AppliedActiveEffect) => boolean

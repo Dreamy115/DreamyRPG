@@ -21,7 +21,6 @@ export default [
         preload: (creature) => {
           creature.$.stats.attack_cost.base += 8;
           creature.$.stats.accuracy.base -= 10;
-          creature.$.stats.damage.base += 15;
           creature.$.stats.plating_effectiveness.base -= 15;
           creature.$.stats.action_points.base += 30;
           creature.$.stats.ap_regen.base += 10;

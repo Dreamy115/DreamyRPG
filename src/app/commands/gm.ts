@@ -393,11 +393,7 @@ export default new ApplicationCommandHandler(
                   sources: [{
                     type: HealType.Overheal,
                     value: creature.$.stats.health.value + creature.$.stats.shield.value
-                  }]
-                }, db);
-                await creature.heal({
-                  from: "Long-Rest Regen",
-                  sources: [{
+                  },{
                     value: creature.$.stats.action_points.value,
                     type: HealType.ActionPoints
                   }]

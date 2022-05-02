@@ -163,7 +163,7 @@ export default class Creature {
     this.$.stats.dissipate.base += (slottedItems.vest?.$ as VestWearableItemData).base_dissipate ?? 0;
     this.$.stats.plating.base += (slottedItems.vest?.$ as VestWearableItemData).base_plating ?? 0;
 
-    this.$.stats.min_comfortable_temperature.base += (slottedItems.jacket?.$ as JacketWearableItemData).base_insulation ?? 0;
+    this.$.stats.min_comfortable_temperature.base -= (slottedItems.jacket?.$ as JacketWearableItemData).base_insulation ?? 0;
     this.$.stats.heat_capacity.base += (slottedItems.jacket?.$ as JacketWearableItemData).base_heat_capacity ?? 0;
     
     this.$.stats.parry.base += (slottedItems.backpack?.$ as BackpackWearableItemData).base_parry ?? 0;

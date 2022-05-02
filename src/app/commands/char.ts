@@ -365,6 +365,13 @@ export default new ApplicationCommandHandler(
           return;
         }
 
+        if (target.$._id === creature.$._id) {
+          interaction.editReply({
+            content: "Cannot give items to yourself!"
+          });
+          return;
+        }
+
         const index = creature.$.items.backpack.findIndex(v => v.id === interaction.options.getString("backpack_item", true));
         const item = creature.$.items.backpack.splice(index, 1)[0];
         if (index === -1 || !item) {
@@ -787,13 +794,13 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
         {
           name: (
             creature.$.stats.plating.value > 0
-            ? `**Plating** ${textStat(creature.$.vitals.plating, creature.$.stats.plating.value)} _[**${creature.$.stats.plating_effectiveness.value}** Effect]_`
+            ? `**Plating** ${textStat(creature.$.vitals.plating, creature.$.stats.plating.value)}` 
             : "No Plating"
-          ),
+          ) +` _[**${creature.$.stats.plating_effectiveness.value}** Effect]_`,
           value: (
             creature.$.stats.plating.value > 0
             ? make_bar(100 * creature.$.vitals.plating / creature.$.stats.plating.value, Creature.BAR_STYLES.Plating, Math.max(1, Math.floor(creature.$.stats.plating.value / BAR_LENGTH))).str
-            : ""
+            : "---"
           ),
           inline: true
         },

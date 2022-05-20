@@ -835,6 +835,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
             `**${creature.$.stats.accuracy.value}%** Accuracy *(Hit Chance)*\n` +
             `Melee **${creature.$.stats.melee.value}%** | **${creature.$.stats.ranged.value}%** Ranged *(Weapon Proficiency)*\n` +
             `**${creature.$.stats.damage.value}** Damage Rating *(Melee **${creature.getFinalDamage(DamageMethod.Melee).toFixed(1)}** | **${creature.getFinalDamage(DamageMethod.Ranged).toFixed(1)}** Ranged)*\n` +
+            `[**${(creature.getFinalDamage(creature.attackSet.type) * creature.$.stats.ap_regen.value / creature.$.stats.attack_cost.value).toFixed(1)}** DPS *(DMG\\*AP\\_REG/COST)*]\n` +
             `**${creature.$.stats.tech.value}** Tech *(Ability Power)*\n` +
             "\n" +
             `Lethality **${creature.$.stats.lethality.value}** | **${creature.$.stats.passthrough.value}** Passthrough\nPiercing **${creature.$.stats.piercing.value}** | **${creature.$.stats.cutting.value}** Cutting\n` +

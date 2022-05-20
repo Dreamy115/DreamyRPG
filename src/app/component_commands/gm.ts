@@ -106,6 +106,9 @@ export default [
                     },{
                       value: creature.$.stats.action_points.value,
                       type: HealType.ActionPoints
+                    },{
+                      value: creature.$.vitals.intensity,
+                      type: HealType.Stress
                     }]
                   }, db);
 

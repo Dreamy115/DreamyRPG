@@ -320,7 +320,7 @@ export default new ApplicationCommandHandler(
           rolls.push(diceRoll(DICE_ROLL_SIDES));
         }
   
-        const score = rolls.reduce((p,v) => p += v) + attr.value;
+        const score = rolls.reduce((p,v) => p += v) + attr.value + bonus;
 
         interaction.editReply({
           content:

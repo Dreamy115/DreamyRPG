@@ -42,7 +42,12 @@ export abstract class ItemStatModule {
         {
           stat: "damage",
           type: ModifierType.ADD_PERCENT,
-          value: 0.2
+          value: 0.15
+        },
+        {
+          stat: "accuracy",
+          type: ModifierType.ADD_PERCENT,
+          value: 0.02
         }
       ]
     ],
@@ -52,12 +57,12 @@ export abstract class ItemStatModule {
         {
           stat: "armor",
           type: ModifierType.ADD_PERCENT,
-          value: 0.05
+          value: 0.06
         },
         {
           stat: "dissipate",
           type: ModifierType.ADD_PERCENT,
-          value: 0.05
+          value: 0.06
         }
       ]
     ],
@@ -70,7 +75,7 @@ export abstract class ItemStatModule {
           value: 0.2
         },
         {
-          stat: "shield",
+          stat: "ap_regen",
           type: ModifierType.ADD_PERCENT,
           value: 0.05
         },
@@ -82,12 +87,12 @@ export abstract class ItemStatModule {
         {
           stat: "parry",
           type: ModifierType.ADD_PERCENT,
-          value: 0.12
+          value: 0.125
         },
         {
           stat: "deflect",
           type: ModifierType.ADD_PERCENT,
-          value: 0.12
+          value: 0.125
         },
         {
           stat: "initiative",

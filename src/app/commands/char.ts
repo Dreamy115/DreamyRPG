@@ -10,7 +10,7 @@ import { AttackData, ConsumableItemData, EquippableInventoryItem, InventoryItem,
 import { cToF } from "../../game/Locations.js";
 import { LootTable } from "../../game/LootTables.js";
 import { replaceLore } from "../../game/LoreReplacer";
-import { ItemStatModule, ModuleType } from "../../game/Modules.js";
+import { ItemStatModule, ModuleType, ModuleTypeEmoji } from "../../game/Modules.js";
 import { NamedModifier, PassiveEffect } from "../../game/PassiveEffects.js";
 import { CreaturePerk } from "../../game/Perks.js";
 import { ModifierType, textStat, TrackableStat } from "../../game/Stats.js";
@@ -149,6 +149,10 @@ export default new ApplicationCommandHandler(
               {
                 name: "All Active Modifiers",
                 value: "modifiers"
+              },
+              {
+                name: "Module Breakdown",
+                value: "modules"
               },
               {
                 name: "Health History",
@@ -761,20 +765,18 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
     } break;
     case "stats": {
       const modules = creature.stat_modules;
-      const cum_mods = creature.getModuleCumulativeModifiers();
 
       const injury_ratio = creature.$.vitals.injuries / creature.$.stats.health.value;
 
       embed.addField(
         "Basic",
         `Race - **${SpeciesManager.map.get(creature.$.info.species ?? "")?.$.info.name ?? "Unknown"}**\n` +
-        `Level **${creature.$.experience.level}**\n\n` +
         function () {
           const arr: string[] = [];
 
           for (const t of Object.values(ModuleType).filter(x => !isNaN(Number(x)))) {
             const type = t as ModuleType;
-            arr.push(`${ModuleType[type]} **${modules.get(type)?.length ?? 0}**  ${modifiersDescriptor(cum_mods.get(type) ?? [], " ")}`);
+            arr.push(`${ModuleTypeEmoji[type]}${ModuleType[type]} **${modules.get(type) ?? 0}**  ${modifiersDescriptor(ItemStatModule.getModifiers(type, modules.get(type) ?? 0) ?? [], " ")}`);
           }
 
           return arr.join("\n");
@@ -1094,6 +1096,48 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
         embed.setDescription("None");
       }
     } break;
+    case "modules": {
+      embed.addFields(
+        {
+          name: "Natural Modules",
+          value: function () {
+            const str: string[] = [];
+
+            for (const [type, amt] of creature.natural_stat_modules) {
+              str.push(`${ModuleTypeEmoji[type]} ${amt}`);
+            }
+
+            return str.join(", ");
+          }() || "None",
+          inline: true 
+        }, {
+          name: "Item Modules",
+          value: function () {
+            const str: string[] = [];
+
+            for (const [type, amt] of creature.item_only_stat_modules) {
+              str.push(`${ModuleTypeEmoji[type]} ${amt}`);
+            }
+
+            return str.join(", ");
+          }() || "None",
+          inline: true 
+        }, {
+          name: "Total Modules",
+          value: function () {
+            const arr: string[] = [];
+
+            for (const t of Object.values(ModuleType).filter(x => !isNaN(Number(x)))) {
+              const type = t as ModuleType;
+              arr.push(`${ModuleTypeEmoji[type]}${ModuleType[type]} **${creature.stat_modules.get(type) ?? 0}**  ${modifiersDescriptor(ItemStatModule.getModifiers(type, creature.stat_modules.get(type) ?? 0) ?? [], " ")}`);
+            }
+
+            return arr.join("\n");
+          }() || "None",
+          inline: false
+        },
+      );
+    } break;
     case "modifiers": {
       embed
       .addField(
@@ -1182,7 +1226,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
       embed
       .addField(
         "Points used",
-        `**${creature.totalAttributePointsUsed}**/${creature.$.experience.level}`
+        `**${creature.totalAttributePointsUsed}**/${Creature.ATTRIBUTE_POINTS}`
       ).setDescription(
         function () {
           var str = "";
@@ -1199,11 +1243,6 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
         }()
         +
         `\n*All attribute modifiers add to BASE stats, not modify. Descriptions are per-point.*`
-      ).addField(
-        "Per Level",
-        "Regardless of attributes, each Level provides a creature with:\n" +
-        modifiersDescriptor(Creature.LEVEL_MODS, ", ") +
-        "\non base stats."
       )
     } break;
     case "perks": {
@@ -1492,9 +1531,9 @@ export function describeItem(invitem?: InventoryItem, creature?: Creature) {
   str += `\n`;
 
   if ((invitem as WearableInventoryItem)?.stat_module) {
-    let stat_module: ItemStatModule = (invitem as WearableInventoryItem).stat_module;
+    let stat_module: ModuleType = (invitem as WearableInventoryItem).stat_module;
 
-    str += `Stat Module: **${ModuleType[stat_module.type]}** - **${(100 * stat_module.value).toFixed(2)}%**; ${modifiersDescriptor(stat_module.modifiers, ", ")}\n\n`;
+    str += `Stat Module: ${ModuleTypeEmoji[stat_module]}${ModuleType[stat_module]}; ${modifiersDescriptor(ItemStatModule.getModifiers(stat_module), ", ")}\n\n`;
   }
 
   if (((invitem as EquippableInventoryItem)?.modifier_modules?.length ?? 0) > 0) {
@@ -1538,7 +1577,7 @@ export function describeItem(invitem?: InventoryItem, creature?: Creature) {
         } break;
         case "ultimate": {
           const ult = AbilitiesManager.map.get(item.$.ultimate);
-          str += `Ultimate: **${ult?.$.info.name}**\n`
+          str += `**Ultimate**: **${ult?.$.info.name}**\n`
         } break;
       }
     }
@@ -1553,7 +1592,7 @@ export function describeItem(invitem?: InventoryItem, creature?: Creature) {
           perk = p;
         }
 
-        if (!perk) continue;
+        if (!perk || perk.$.hide?.(creature)) continue;
         
         perks.push(perk.$.info.name);
       }
@@ -1563,16 +1602,16 @@ export function describeItem(invitem?: InventoryItem, creature?: Creature) {
     if (item.$.passives) {
       const passives: string[] = [];
       for (const p of item.$.passives) {
-        let perk: PassiveEffect | undefined;
+        let pef: PassiveEffect | undefined;
         if (typeof p === "string") {
-          perk = PassivesManager.map.get(p)
+          pef = PassivesManager.map.get(p)
         } else {
-          perk = p;
+          pef = p;
         }
 
-        if (!perk) continue;
+        if (!pef || pef.$.hide?.(creature)) continue;
         
-        passives.push(perk.$.info.name);
+        passives.push(pef.$.info.name);
       }
 
       str += `**Passives**: **${passives.join("**, **")}**\n`;
@@ -1580,16 +1619,16 @@ export function describeItem(invitem?: InventoryItem, creature?: Creature) {
     if (item.$.abilities) {
       const abilities: string[] = [];
       for (const p of item.$.abilities) {
-        let perk: CreatureAbility | undefined;
+        let ab: CreatureAbility | undefined;
         if (typeof p === "string") {
-          perk = AbilitiesManager.map.get(p)
+          ab = AbilitiesManager.map.get(p)
         } else {
-          perk = p;
+          ab = p;
         }
 
-        if (!perk) continue;
+        if (!ab) continue;
         
-        abilities.push(perk.$.info.name);
+        abilities.push(ab.$.info.name);
       }
 
       str += `**Abilities**: **${abilities.join("**, **")}**\n`;

@@ -1,45 +1,38 @@
 import { diceRoll } from "./Creature";
+import { ItemQuality } from "./Items";
 import { NamedModifier } from "./PassiveEffects";
 import { Modifier, ModifierType } from "./Stats";
 
 export enum ModuleType {
-  "Offensive", "Shielding", "Technical", "Reducing"
+  "Offensive", "Defensive", "Technical", "Accelerating"
+}
+export const ModuleTypeEmoji: Record<ModuleType, string> = {
+  "0": "♦️",
+  "1": "♥️", 
+  "2": "♠️",
+  "3": "♣️"
 }
 
-export class ItemStatModule {
-  type: ModuleType
-  value: number
-
-  constructor(type: ItemStatModule["type"], value: ItemStatModule["value"]) {
-    this.type = type;
-    this.value = value;
+export abstract class ItemStatModule {
+  static generate(): ModuleType {
+    return Number(ModuleType[ModuleType[diceRoll(Object.values(ModuleType).filter(x => !isNaN(Number(x))).length) - 1] as unknown as ModuleType])
   }
 
-  static generate(): ItemStatModule {
-    const types = Object.values(ModuleType).filter(x => !isNaN(Number(x))) as ModuleType[]
-    const type = ModuleType[ModuleType[types[diceRoll(types.length) - 1]] as unknown as number] as unknown as ModuleType;
-  
-    return new ItemStatModule(
-      type,
-      (Math.random() * (ItemStatModule.MAX_GEN_VALUE - ItemStatModule.MIN_GEN_VALUE)) + ItemStatModule.MIN_GEN_VALUE
-    )
-  }
-
-  get modifiers(): NamedModifier[] {
+  static getModifiers(module: ModuleType, amount: number = 1): NamedModifier[] {
     const mods: NamedModifier[] = [];
 
-    for (const {stat, type, value} of ItemStatModule.MODIFIERS.get(this.type) ?? []) {
+    for (const {stat, type, value} of ItemStatModule.MODIFIERS.get(module) ?? []) {
       mods.push({
         stat,
         type,
-        value: value * this.value
+        value: value * amount
       })
     }
 
     return mods;
   }
-  static readonly MIN_GEN_VALUE = 0.2;
-  static readonly MAX_GEN_VALUE = 0.8;
+  static readonly MIN_GEN_VALUE = 0.25;
+  static readonly MAX_GEN_VALUE = 0.85;
 
 
   static readonly MODIFIERS = new Map<ModuleType, NamedModifier[]>([
@@ -54,15 +47,15 @@ export class ItemStatModule {
       ]
     ],
     [
-      ModuleType.Shielding,
+      ModuleType.Defensive,
       [
         {
-          stat: "shield",
+          stat: "armor",
           type: ModifierType.ADD_PERCENT,
-          value: 0.07
+          value: 0.05
         },
         {
-          stat: "plating",
+          stat: "dissipate",
           type: ModifierType.ADD_PERCENT,
           value: 0.05
         }
@@ -74,27 +67,32 @@ export class ItemStatModule {
         {
           stat: "tech",
           type: ModifierType.ADD_PERCENT,
-          value: 0.25
-        }
+          value: 0.2
+        },
+        {
+          stat: "shield",
+          type: ModifierType.ADD_PERCENT,
+          value: 0.05
+        },
       ]
     ],
     [
-      ModuleType.Reducing,
+      ModuleType.Accelerating,
       [
         {
-          stat: "armor",
+          stat: "parry",
           type: ModifierType.ADD_PERCENT,
-          value: 0.1
+          value: 0.12
         },
         {
-          stat: "dissipate",
+          stat: "deflect",
           type: ModifierType.ADD_PERCENT,
-          value: 0.1
+          value: 0.12
         },
         {
-          stat: "plating_effectiveness",
-          type: ModifierType.ADD_PERCENT,
-          value: 0.07
+          stat: "initiative",
+          type: ModifierType.ADD,
+          value: 1
         }
       ]
     ]

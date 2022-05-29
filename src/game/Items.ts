@@ -7,7 +7,7 @@ import Creature, { Attributes, diceRoll, Stats } from "./Creature";
 import { AbilityUseLog } from "./CreatureAbilities";
 import { DamageMethod, DamageType, ShieldReaction } from "./Damage";
 import { LoreReplacer } from "./LoreReplacer";
-import { ItemModifierModuleInfo, ItemStatModule } from "./Modules";
+import { ItemModifierModuleInfo, ItemStatModule, ModuleType } from "./Modules";
 import { NamedModifier, PassiveEffect } from "./PassiveEffects";
 import { CreaturePerk } from "./Perks";
 
@@ -74,6 +74,7 @@ interface PassiveItemData extends BaseItemData {
     choose: number,
     mods: Map<Stats | Attributes, ItemModifierModuleInfo>
   }
+  fixed_stat_module?: ModuleType
   recalibrate_cost?: CraftingMaterials
   optimize_step?: number
   optimize_cost?: CraftingMaterials
@@ -232,7 +233,7 @@ export function createItem(itemdata: Item|string): InventoryItem {
   switch (data.$.type) {
     default: return invi;
     case "wearable": {
-      (invi as WearableInventoryItem).stat_module = ItemStatModule.generate();
+      (invi as WearableInventoryItem).stat_module = data.$.fixed_stat_module ?? ItemStatModule.generate();
     } break;
     case "weapon":
   }
@@ -264,7 +265,7 @@ export interface EquippableInventoryItem extends BaseInventoryItem {
 }
 
 export interface WearableInventoryItem extends EquippableInventoryItem {
-  stat_module: ItemStatModule
+  stat_module: ModuleType
 }
 export interface WeaponInventoryItem extends EquippableInventoryItem {
 

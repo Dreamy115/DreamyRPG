@@ -20,6 +20,7 @@ import { tableDescriptor } from "./char";
 import fs from "fs";
 import path from "path";
 import YAML from "yaml";
+import { ItemStatModule, ModuleType, ModuleTypeEmoji } from "../../game/Modules";
 
 const DOCUMENTATION: Record<string, string> = YAML.parse(fs.readFileSync(path.join(__dirname, "../../../documentation.yml")).toString()); 
 
@@ -468,6 +469,20 @@ export default new ApplicationCommandHandler(
               {
                 name: "Perks",
                 value: perksDescriptor(Array.from(item.$.perks?.values() ?? []), IS_GM) || "None"
+              },
+              {
+                name: "Natural Modules",
+                value: function () {
+                  const str: string[] = [];
+
+                  if (!item.$.natural_modules) return;
+
+                  for (const [type, amt] of item.$.natural_modules) {
+                    str.push(`${ModuleTypeEmoji[type]} ${amt}`);
+                  }
+
+                  return str.join(", ");
+                }() || "None"
               }
             ]);
           } else if (item instanceof PassiveEffect) {

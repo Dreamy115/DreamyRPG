@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { ItemStatModule, ModuleType } from "./Modules";
 import { PassiveEffect } from "./PassiveEffects";
 import { CreaturePerk } from "./Perks";
 
@@ -42,6 +43,7 @@ export class CreatureSpecies {
     schematics?: Set<string>
     abilities?: Set<string>
     perks?: Set<(string | CreaturePerk)>
+    natural_modules?: Map<ModuleType, number>
   }
 
   constructor(data: CreatureSpecies["$"]) {

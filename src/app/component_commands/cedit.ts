@@ -8,7 +8,7 @@ import { damageLogEmbed, healLogEmbed } from "../../game/Damage";
 import { createItem, DEFAULT_ITEM_OPT_STEP, EquippableInventoryItem, InventoryItem, Item, ItemQualityColor, ItemQualityEmoji, SpecializedWearableData, WeaponItemData, WearableInventoryItem, WearableItemData } from "../../game/Items";
 import { LootTable } from "../../game/LootTables";
 import { replaceLore } from "../../game/LoreReplacer";
-import { ModuleType } from "../../game/Modules";
+import { ModuleType, ModuleTypeEmoji } from "../../game/Modules";
 import { TrackableStat } from "../../game/Stats";
 import { infoEmbed, tableDescriptor } from "../commands/char";
 import { modifierDescirptor, namedModifierDescriptor } from "../commands/handbook";
@@ -197,9 +197,6 @@ export default new ComponentCommandHandler(
               }
 
               creature.wipeItems();
-              creature.$.experience = {
-                level: 1
-              }
               creature.clearAttributes();
 
               creature.$.info.locked = true;
@@ -323,14 +320,7 @@ export default new ComponentCommandHandler(
                               emoji: ItemQualityEmoji[item.$.info.quality],
                               value: i,
                               description: limitString(removeMarkdown(
-                                `${removeVowels((item.$ as SpecializedWearableData).slot ?? item.$.type).toUpperCase()} ` + 
-                                (
-                                  (it as WearableInventoryItem).stat_module ? (
-                                    `${ModuleType[(it as WearableInventoryItem).stat_module.type]} ` +
-                                    `${(100 * (it as WearableInventoryItem).stat_module.value).toFixed(2)}% -> ` + 
-                                    `${(100 * Math.min(1, (it as WearableInventoryItem).stat_module.value + (item.$.optimize_step ?? DEFAULT_ITEM_OPT_STEP))).toFixed(2)}% `
-                                    ) : ""
-                                ) + (
+                                `${removeVowels((item.$ as SpecializedWearableData).slot ?? item.$.type).toUpperCase()} ` + (
                                   it.modifier_modules ? function() {
                                     const _mods: string[] = [];
                                     for (const mod of it.modifier_modules ?? []) {
@@ -441,12 +431,6 @@ export default new ComponentCommandHandler(
                       for (const _mat in item.$.optimize_cost) {
                         const mat = _mat as Material;
                         creature.$.items.crafting_materials[mat] -= item.$.optimize_cost[mat];
-                      }
-
-                      /* SCOPE */ {
-                        const itm = it as WearableInventoryItem;
-                        if (itm.stat_module)
-                          itm.stat_module.value = Math.min(1, itm.stat_module.value + (item.$.optimize_step ?? DEFAULT_ITEM_OPT_STEP));
                       }
 
                       for (const mod of it.modifier_modules ?? []) {
@@ -714,7 +698,7 @@ export default new ComponentCommandHandler(
                           var output = "";
                           if ((itm as WearableInventoryItem).stat_module) {
                             const _itm = itm as WearableInventoryItem;
-                            output += `${(100 * _itm.stat_module.value).toFixed(1)}% ${capitalize(ModuleType[_itm.stat_module.type])}`
+                            output += `${ModuleTypeEmoji[_itm.stat_module]}${capitalize(ModuleType[_itm.stat_module])}`
                           }
                           if (itm.modifier_modules) {
 
@@ -1074,8 +1058,7 @@ export default new ComponentCommandHandler(
                               function() {
                                 const itm = item as WearableInventoryItem;
                                 if (!itm.stat_module) return "";
-                                return `**${ModuleType[itm.stat_module.type]} ${(100 * itm.stat_module.value).toFixed(2)}%** -> ` +
-                                       `**${(100 * (itm.stat_module.value + (data.$.optimize_step ?? DEFAULT_ITEM_OPT_STEP))).toFixed(2)}%**`
+                                return `**${ModuleType[itm.stat_module]} ${ModuleTypeEmoji[itm.stat_module]}**\n`
                                }() + function() {
                                 if ((item.modifier_modules?.length ?? 0) === 0) return "";
 
@@ -1169,7 +1152,7 @@ export default new ComponentCommandHandler(
                               function() {
                                 const itm = item as WearableInventoryItem;
                                 if (!itm.stat_module) return "";
-                                return `**${ModuleType[itm.stat_module.type]} ${(100 * itm.stat_module.value).toFixed(2)}%**`
+                                return `**${ModuleType[itm.stat_module]}${ModuleTypeEmoji[itm.stat_module]}**\n`
                                }() + function() {
                                 if ((item.modifier_modules?.length ?? 0) === 0) return "";
 
@@ -1263,7 +1246,7 @@ export default new ComponentCommandHandler(
                 let ar = arg as Attributes; 
 
                 if (creature.$.attributes[ar] instanceof TrackableStat) {
-                  if (IS_GM || creature.totalAttributePointsUsed < creature.$.experience.level) {
+                  if (IS_GM || creature.totalAttributePointsUsed < Creature.ATTRIBUTE_POINTS) {
                     if (creature.$.attributes[ar].base >= Creature.ATTRIBUTE_MAX) {
                       interaction.followUp({
                         ephemeral: true,
@@ -1299,7 +1282,7 @@ export default new ComponentCommandHandler(
 
               interaction.followUp({
                 ephemeral: true,
-                content: `Expendable points: **${creature.totalAttributePointsUsed}**/${creature.$.experience.level}\nPoint assignment is final!`,
+                content: `Expendable points: **${creature.totalAttributePointsUsed}**/${Creature.ATTRIBUTE_POINTS}\nPoint assignment is final!`,
                 embeds: [(await infoEmbed(creature, Bot, db, "attributes")).embeds[0]],
                 components: attributeComponents(creature, "Add ", "cedit/$ID/edit/attr/$ATTR")
               })
@@ -1699,9 +1682,9 @@ export async function scrapMenu(interaction: ButtonInteraction | CommandInteract
         label: item.$.info.name,
         emoji: ItemQualityEmoji[item.$.info.quality],
         description:
-          `${
+          `${i}>${
             (it as WearableInventoryItem).stat_module
-            ? `${ModuleType[(it as WearableInventoryItem).stat_module.type]} ${(100 * (it as WearableInventoryItem).stat_module.value).toFixed(2)}%`
+            ? `${ModuleTypeEmoji[(it as WearableInventoryItem).stat_module]}`
             : ""
           } ${scrap.join(", ")} ${capitalize((item.$ as SpecializedWearableData).slot ?? item.$.type)}`,
         value: i

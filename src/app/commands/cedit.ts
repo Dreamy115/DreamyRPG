@@ -670,26 +670,6 @@ export default new ApplicationCommandHandler({
       ]
     },
     {
-      name: "level_set",
-      description: "Set the Creature's level",
-      type: "SUB_COMMAND",
-      options: [
-        {
-          name: "cid",
-          description: "Find by ID",
-          type: "STRING",
-          autocomplete: true,
-          required: true
-        },
-        {
-          name: "amount",
-          description: "The level amount",
-          type: "INTEGER",
-          required: true
-        }
-      ]
-    },
-    {
       name: "attributes",
       description: "Set the attributes",
       type: "SUB_COMMAND_GROUP",
@@ -1001,17 +981,6 @@ export default new ApplicationCommandHandler({
           creature.$.items.schematics.delete(interaction.options.getString("unlocked_schematic", true));
         } break;
       }
-    } break;
-    case "level_set": {
-      const amount = interaction.options.getInteger("amount", true);
-      if (amount < 1) {
-        interaction.followUp({
-          ephemeral: true,
-          content: "Must be 1 or greater!"
-        });
-        return;
-      }
-      creature.$.experience.level = amount;
     } break;
     case "attributes": {
       switch (interaction.options.getSubcommand(true)) {

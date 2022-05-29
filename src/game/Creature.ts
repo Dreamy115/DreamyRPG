@@ -78,9 +78,6 @@ export default class Creature {
         CHA: new TrackableStat(data.attributes?.CHA ?? 0),
         MND: new TrackableStat(data.attributes?.MND ?? 0)
       },
-      experience: {
-        level: Math.max(data.experience?.level ?? 1, 1)
-      },
       vitals: {
         health: (data.vitals?.health ?? 1),
         injuries: (data.vitals?.injuries ?? 0),
@@ -120,10 +117,14 @@ export default class Creature {
     }
 
     function fixModule(item: WearableInventoryItem | InventoryItem) {
-      const module: ItemStatModule | undefined = (item as WearableInventoryItem | undefined)?.stat_module;
+      const module: ModuleType | undefined = (item as WearableInventoryItem | undefined)?.stat_module;
 
-      if (module)
-      (item as WearableInventoryItem).stat_module = new ItemStatModule(module.type ?? -1, module.value ?? 0);
+      if (module) {
+        (item as WearableInventoryItem).stat_module = module % Object.values(ModuleType).filter(x => !isNaN(Number(x))).length;
+
+        if (isNaN(module))
+          (item as WearableInventoryItem).stat_module = ItemStatModule.generate();
+      }
     }
 
     for (const _i in data.items?.slotted) {
@@ -174,9 +175,9 @@ export default class Creature {
     this.$.stats.tech.base += (slottedItems.gloves?.$ as GlovesWearableItemData).base_tech ?? 0;
 
     // Modules
-    for (const [type, mods] of this.getModuleCumulativeModifiers()) {
-      for (const mod of mods)
-        this.applyNamedModifier(mod)
+    for (const [type, amt] of this.stat_modules) {
+      for (const mod of ItemStatModule.getModifiers(type, amt))
+        this.applyNamedModifier(mod);
     }
     for (const _slot in this.$.items.slotted) {
       const slot = _slot as ItemSlot;
@@ -207,8 +208,7 @@ export default class Creature {
       
       effectData.$.preload?.(this, effect);
     }
-    
-    this.applyModifiersToBaseStats(Creature.LEVEL_MODS, this.$.experience.level - 1);
+
     for (const _a in this.$.attributes) {
       const a = _a as Attributes; 
       this.applyModifiersToBaseStats(Creature.ATTRIBUTE_MODS[a], Math.round(this.$.attributes[a].value));
@@ -269,31 +269,38 @@ export default class Creature {
     return this.$.info.display.name;
   }
 
-  get stat_modules(): Map<ModuleType, ItemStatModule[]> {
-    const map = new Map<ModuleType, ItemStatModule[]>();
+  get natural_stat_modules(): Map<ModuleType, number> {
+    const map = new Map<ModuleType, number>();
+
+    for (const [k, v] of this.species?.$.natural_modules ?? []) {
+      map.set(k, (map.get(k) ?? 0) + v);
+    }
+
+    return map;
+  }
+  get item_only_stat_modules(): Map<ModuleType, number> {
+    const map = new Map<ModuleType, number>();
+
     for (const _item of this.inventoryItems) {
       const item = _item as WearableInventoryItem;
       if (item?.stat_module) {    
-        map.set(item.stat_module.type, [...(map.get(item.stat_module.type) ?? []), item.stat_module]);
+        map.set(item.stat_module, (map.get(item.stat_module) ?? 0) + 1);
       }
-    }
-    return map;
-  }
-  getModuleCumulativeModifiers(): Map<ModuleType, NamedModifier[]> {
-    const map = new Map<ModuleType, NamedModifier[]>();
-
-    for (const [type, modules] of this.stat_modules) {
-      let cumval = 0;
-      for (const module of modules) {
-        cumval += module.value;
-      }
-      const module = new ItemStatModule(type, cumval);
-      map.set(type, module.modifiers);
     }
 
     return map;
   }
 
+  get stat_modules(): Map<ModuleType, number> {
+    const map = this.natural_stat_modules;
+    
+    const items = this.item_only_stat_modules;
+    for (const [k, v] of items) {
+      map.set(k, (map.get(k) ?? 0) + v);
+    }
+
+    return map;
+  }
 
   get defaultAttackSet(): AttackSet {
     return {
@@ -1192,7 +1199,6 @@ export default class Creature {
         plating: this.$.vitals.plating / this.$.stats.plating.value
       },
       attributes: {} as Record<Attributes, undefined>,
-      experience: this.$.experience,
       items: {
         backpack: this.$.items.backpack,
         crafting_materials: this.$.items.crafting_materials as Record<Material, number>,
@@ -1289,50 +1295,9 @@ export default class Creature {
     DamageCause.Weak_Attack, DamageCause.Weak_Attack, DamageCause.Weak_Attack, DamageCause.Normal_Attack, DamageCause.Normal_Attack, DamageCause.Critical_Attack
   ]
 
-  static readonly LEVEL_MODS: NamedModifier[] = [
-    {
-      type: ModifierType.ADD_PERCENT,
-      value: 0.1,
-      stat: "damage"
-    },
-    {
-      type: ModifierType.ADD_PERCENT,
-      value: 0.0725,
-      stat: "health"
-    },
-    {
-      type: ModifierType.ADD_PERCENT,
-      value: 0.06,
-      stat: "shield_regen"
-    },
-    {
-      type: ModifierType.ADD_PERCENT,
-      value: 0.072,
-      stat: "shield"
-    },
-    {
-      type: ModifierType.ADD_PERCENT,
-      value: 0.125,
-      stat: "tech"
-    },
-    {
-      type: ModifierType.ADD,
-      value: 0.08,
-      stat: "ap_regen"
-    },
-    {
-      type: ModifierType.ADD,
-      value: 0.45,
-      stat: "action_points"
-    },
-    {
-      type: ModifierType.ADD,
-      value: 1,
-      stat: "stress_resistance"
-    }
-  ]
+  static readonly ATTRIBUTE_POINTS = 30;
   static readonly ATTRIBUTE_MODS: {[key: string]: NamedModifier[]} = {
-    STR: [
+  STR: [
       {
         type: ModifierType.ADD_PERCENT,
         value: 0.08,
@@ -1480,9 +1445,6 @@ export interface CreatureData {
   }
   stats: Record<Stats, TrackableStat>
   attributes: Record<Attributes, TrackableStat>
-  experience: {
-    level: number
-  }
   vitals: Record<Vitals, number>
   items: {
     primary_weapon: WeaponInventoryItem | null
@@ -1527,9 +1489,6 @@ export interface CreatureDump {
   }
   vitals?: Record<Vitals, undefined | number>
   attributes?: Record<Attributes, undefined | number>
-  experience?: {
-    level?: number
-  }
   items?: {
     primary_weapon?: WeaponInventoryItem | null
     backpack?: InventoryItem[]

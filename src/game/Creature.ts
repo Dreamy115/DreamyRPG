@@ -1281,7 +1281,7 @@ export default class Creature {
 
   static readonly INTENSITY_CAPACITY = 100;
   
-  static readonly PROFICIENCY_ACCURACY_SCALE = 0.5
+  static readonly PROFICIENCY_ACCURACY_SCALE = 0.35
   static readonly PROFICIENCY_DAMAGE_SCALE = 1;
 
   static readonly ATTACK_MAX_STACKS = 12;
@@ -1300,41 +1300,41 @@ export default class Creature {
   STR: [
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.08,
+        value: 0.07,
         stat: "melee"
       },
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.12,
+        value: 0.1,
         stat: "tenacity"
       },
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.1,
+        value: 0.08,
         stat: "parry"
       }
     ],
     FOR: [
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.07,
+        value: 0.05,
         stat: "armor"
       },
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.06,
+        value: 0.05,
         stat: "dissipate"
       },
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.1,
+        value: 0.08,
         stat: "health"
       }
     ],
     REJ: [
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.15,
+        value: 0.1,
         stat: "ap_regen"
       },
       {
@@ -1346,7 +1346,7 @@ export default class Creature {
     PER: [
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.04,
+        value: 0.03,
         stat: "accuracy"
       },
       {
@@ -1368,7 +1368,7 @@ export default class Creature {
       },
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.185,
+        value: 0.18,
         stat: "tech"
       },
       {
@@ -1378,24 +1378,24 @@ export default class Creature {
       },
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.035,
+        value: 0.03,
         stat: "shield"
       }
     ],
     DEX: [
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.18,
+        value: 0.15,
         stat: "deflect"
       },
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.06,
+        value: 0.05,
         stat: "parry"
       },
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.08,
+        value: 0.07,
         stat: "ranged"
       }
     ],

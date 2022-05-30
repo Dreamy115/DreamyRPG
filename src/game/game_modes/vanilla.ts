@@ -114,7 +114,7 @@ export default [
             }, db, true);
           } else if (intensity_percent <= 15) {
             await creature.applyActiveEffect({
-              id: "intensity-bored",
+              id: "intensity-calm",
               severity: intensity_percent,
               ticks: -1
             }, db, true);

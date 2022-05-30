@@ -172,7 +172,7 @@ export default [
         value: -lerp(lerped, 3, 1)
       });
       creature.$.attributes.PER.modifiers.push({
-        type: ModifierType.MULTIPLY,
+        type: ModifierType.ADD,
         value: -lerp(lerped, 4, 1)
       });
       creature.$.attributes.CHA.modifiers.push({

@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionChoice, Client, EmbedFieldData, MessageActionRow, MessageAttachment, MessageButton, MessageEmbed, MessageSelectMenu } from "discord.js";
+import { ApplicationCommandOptionChoiceData, Client, EmbedFieldData, MessageActionRow, MessageAttachment, MessageButton, MessageEmbed, MessageSelectMenu } from "discord.js";
 import Mongoose from "mongoose";
 import { replaceEffectLore } from "../../game/ActiveEffects.js";
 import { Material, Schematic } from "../../game/Crafting.js";
@@ -50,7 +50,7 @@ export default new ApplicationCommandHandler(
             type: "STRING",
             required: true,
             choices: function () {
-              const array: ApplicationCommandOptionChoice[] = [];
+              const array: ApplicationCommandOptionChoiceData[] = [];
 
               for (const attr in new Creature({_id: ""}).$.attributes) {
                 array.push({
@@ -748,7 +748,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
 
   embed
     .setTitle(creature.displayName)
-    .setAuthor(creature.$.info.npc ? "NPC" : (owner?.tag ?? "Unknown"))
+    .setAuthor({ name: `${creature.$.info.npc ? "NPC" : (owner?.tag ?? "Unknown")}` })
     .setColor(color)
     .setThumbnail(creature.$.info.display.avatar ?? "")
 

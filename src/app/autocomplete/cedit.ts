@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionChoice } from "discord.js";
+import { ApplicationCommandOptionChoiceData } from "discord.js";
 import { EffectManager, ItemManager, SchematicsManager, SkillManager } from "../..";
 import { DisplaySeverity, romanNumeral } from "../../game/ActiveEffects";
 import Creature from "../../game/Creature";
@@ -11,7 +11,7 @@ export default new AutocompleteHandler(
   async function (interaction, Bot, db) {
     const focused = interaction.options.getFocused(true);
     const search = RegExp(String(focused.value), "ig");
-    const autocomplete: ApplicationCommandOptionChoice[] = []; 
+    const autocomplete: ApplicationCommandOptionChoiceData[] = []; 
 
     function fetchChar() {
       return new Promise<Creature|null>((resolve, reject) => {
@@ -37,7 +37,7 @@ export default new AutocompleteHandler(
       case "skill_id": {
         const char = await fetchChar();
         if (char) {
-          const array: ApplicationCommandOptionChoice[] = [];
+          const array: ApplicationCommandOptionChoiceData[] = [];
           for (const skill of SkillManager.map.values()) {
             if (search.test(skill.$.id) || search.test(skill.$.info.name))
               if (
@@ -55,7 +55,7 @@ export default new AutocompleteHandler(
       case "effect": {
         const char = await fetchChar();
         if (char) {
-          const array: ApplicationCommandOptionChoice[] = [];
+          const array: ApplicationCommandOptionChoiceData[] = [];
           for (const e of char.$.active_effects) {
             const effect = EffectManager.map.get(e.id);
             if (search.test(e.id) || search.test(effect?.$.info.name ?? "") || search.test(String(e.severity)) || search.test(String(e.ticks)))
@@ -78,7 +78,7 @@ export default new AutocompleteHandler(
       case "backpack_item": {
         const char = await fetchChar();
         if (char) {
-          const array: ApplicationCommandOptionChoice[] = [];
+          const array: ApplicationCommandOptionChoiceData[] = [];
           for (const i of char.$.items.backpack) {
             const item = ItemManager.map.get(i.id);
             if (search.test(i.id) || search.test(item?.$.info.name ?? ""))
@@ -94,7 +94,7 @@ export default new AutocompleteHandler(
       case "unlocked_skill": {
         const char = await fetchChar();
         if (char) {
-          const array: ApplicationCommandOptionChoice[] = [];
+          const array: ApplicationCommandOptionChoiceData[] = [];
           for (const i of char.$.items.skills) {
             const item = SkillManager.map.get(i);
             if (search.test(i) || search.test(item?.$.info.name ?? ""))
@@ -110,7 +110,7 @@ export default new AutocompleteHandler(
       case "unlocked_schematic": {
         const char = await fetchChar();
         if (char) {
-          const array: ApplicationCommandOptionChoice[] = [];
+          const array: ApplicationCommandOptionChoiceData[] = [];
           for (const i of char.$.items.schematics) {
             const item = SchematicsManager.map.get(i);
             if (search.test(i) || search.test(item?.$.info.name ?? ""))

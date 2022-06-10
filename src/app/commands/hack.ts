@@ -108,7 +108,7 @@ export default new ApplicationCommandHandler({
 
   const embed = new MessageEmbed()
     .setTitle("Hacking!")
-    .setAuthor(creature.displayName, creature.$.info.display.avatar ?? undefined)
+    .setAuthor({ name: creature.displayName, iconURL: creature.$.info.display.avatar ?? undefined})
     .setDescription(
       "To start playing, type in **4** numbers in chat. There will be feedback provided on your guess:\n" +
       "🟦 - If that number exists in the sequence, and is in the correct position\n" +

@@ -1,5 +1,5 @@
-import { Client, EmbedFieldData, InteractionReplyOptions, MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu, MessageSelectOptionData, SnowflakeUtil, User } from "discord.js";
-import Mongoose from "mongoose";
+import { Client, EmbedFieldData, InteractionReplyOptions, MessageActionRow, MessageButton, MessageEditOptions, MessageEmbed, MessageOptions, MessageSelectMenu, MessageSelectOptionData, SnowflakeUtil, User } from "discord.js";
+import Mongoose, { ObjectId } from "mongoose";
 import NodeCache from "node-cache";
 import { AbilitiesManager, CONFIG, EffectManager, ItemManager, limitString, removeMarkdown } from "..";
 import { make_bar } from "../app/Bars";
@@ -22,13 +22,13 @@ export class Fight {
   }
   
   constructor(data: {
-    _id?: string,
+    _id?: ObjectId | string,
     queue?: string[]
     parties?: string[][]
     round?: number
   }) {
     this.$ = {
-      _id: data._id ?? SnowflakeUtil.generate(),
+      _id: String(data._id) ?? SnowflakeUtil.generate(),
       parties: data.parties ?? [],
       queue: data.queue ?? [],
       round: data.round ?? 1
@@ -164,7 +164,7 @@ export class Fight {
     }
   }
 
-  async announceTurn(db: typeof Mongoose, Bot: Client): Promise<InteractionReplyOptions> {
+  async announceTurn(db: typeof Mongoose, Bot: Client) {
     const embeds = [new MessageEmbed()];
 
     const creature = await Creature.fetch(this.$.queue[0], db).catch(() => null);
@@ -242,10 +242,10 @@ export class Fight {
     }        
 
     embeds[0]
-      .setAuthor(`${!creature.$.info.npc ? owner?.username ?? "Unknown" : "NPC"}`)
+      .setAuthor({ name: `${!creature.$.info.npc ? owner?.username ?? "Unknown" : "NPC"}` })
       .setTitle(`${creature.displayName}'s turn! (Round ${this.$.round})`)
       .setColor("AQUA")
-      .setFooter(`Fight ID: ${this.$._id} | Creature ID: ${creature.$._id}`)
+      .setFooter({ text: `Fight ID: ${this.$._id} | Creature ID: ${creature.$._id}` })
     
     var j = 0;
     while (fields.length > 0) {
@@ -457,6 +457,7 @@ export class Fight {
 
     const data = await db.connection.collection(Fight.COLLECTION_NAME).findOne({_id: id});
     if (!data) throw new Error("Not found");
+    // @ts-ignore
     return new Fight(data);
   }
   async put(db: typeof Mongoose) {

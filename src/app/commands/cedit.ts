@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionChoice, MessageEmbed } from "discord.js";
+import { ApplicationCommandOptionChoiceData, MessageEmbed } from "discord.js";
 import { capitalize, CONFIG, ItemManager, LootTables } from "../..";
 import { CraftingMaterials, Material } from "../../game/Crafting";
 import Creature, { Attributes } from "../../game/Creature";
@@ -115,7 +115,7 @@ export default new ApplicationCommandHandler({
           type: "INTEGER",
           required: true,
           choices: function () {
-            const options: ApplicationCommandOptionChoice[] = [];
+            const options: ApplicationCommandOptionChoiceData[] = [];
 
             for (const type of Object.values(DamageType).filter(x => !isNaN(Number(x)))) {
               options.push({
@@ -133,7 +133,7 @@ export default new ApplicationCommandHandler({
           type: "INTEGER",
           required: true,
           choices: function () {
-            const options: ApplicationCommandOptionChoice[] = [];
+            const options: ApplicationCommandOptionChoiceData[] = [];
 
             for (const type of Object.values(DamageMethod).filter(x => !isNaN(Number(x)))) {
               options.push({
@@ -182,7 +182,7 @@ export default new ApplicationCommandHandler({
           description: "How the shield reacts",
           type: "INTEGER",
           choices: function () {
-            const options: ApplicationCommandOptionChoice[] = [];
+            const options: ApplicationCommandOptionChoiceData[] = [];
 
             for (const type of Object.values(ShieldReaction).filter(x => !isNaN(Number(x)))) {
               options.push({
@@ -199,7 +199,7 @@ export default new ApplicationCommandHandler({
           description: "How the plating reacts",
           type: "INTEGER",
           choices: function () {
-            const options: ApplicationCommandOptionChoice[] = [];
+            const options: ApplicationCommandOptionChoiceData[] = [];
 
             for (const type of Object.values(PlatingReaction).filter(x => !isNaN(Number(x)))) {
               options.push({
@@ -231,7 +231,7 @@ export default new ApplicationCommandHandler({
           type: "INTEGER",
           required: true,
           choices: function () {
-            const options: ApplicationCommandOptionChoice[] = [];
+            const options: ApplicationCommandOptionChoiceData[] = [];
 
             for (const type of Object.values(HealType).filter(x => !isNaN(Number(x)))) {
               options.push({
@@ -562,7 +562,7 @@ export default new ApplicationCommandHandler({
               type: "STRING",
               required: true,
               choices: function () {
-                const array: ApplicationCommandOptionChoice[] = [];
+                const array: ApplicationCommandOptionChoiceData[] = [];
 
                 for (const mat in new CraftingMaterials({})) {
                   array.push({
@@ -600,7 +600,7 @@ export default new ApplicationCommandHandler({
               type: "STRING",
               required: true,
               choices: function () {
-                const array: ApplicationCommandOptionChoice[] = [];
+                const array: ApplicationCommandOptionChoiceData[] = [];
 
                 for (const mat in new CraftingMaterials({})) {
                   array.push({
@@ -706,7 +706,7 @@ export default new ApplicationCommandHandler({
               type: "STRING",
               required: true,
               choices: function () {
-                const array: ApplicationCommandOptionChoice[] = [];
+                const array: ApplicationCommandOptionChoiceData[] = [];
     
                 for (const a in new Creature({_id: ""}).$.attributes) {
                   array.push({
@@ -808,8 +808,8 @@ export default new ApplicationCommandHandler({
       const embed = new MessageEmbed()
         .setColor("AQUA")
         .setTitle("Booty Granted!")
-        .setAuthor(creature.displayName, creature.$.info.display.avatar ?? undefined)
-        .setFooter(`Creature ID: ${creature.$._id}`)
+        .setAuthor({ name: `${creature.displayName, creature.$.info.display.avatar ?? undefined}`})
+        .setFooter({ text: `Creature ID: ${creature.$._id}` })
         .setDescription(`**${creature.displayName}**, enjoy your sweet loot!`)
 
       for (const i of items) {

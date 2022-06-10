@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionChoice } from "discord.js";
+import { ApplicationCommandOptionChoiceData } from "discord.js";
 import Mongoose from "mongoose";
 import { ItemManager, SchematicsManager } from "../..";
 import { CraftingCheckError } from "../../game/Crafting";
@@ -19,7 +19,7 @@ export default new AutocompleteHandler(
       case "backpack_item": {
         const char = await Creature.fetch(interaction.user.id, db, true);
         if (char) {
-          const array: ApplicationCommandOptionChoice[] = [];
+          const array: ApplicationCommandOptionChoiceData[] = [];
           for (const i of char.$.items.backpack) {
             const item = ItemManager.map.get(i.id);
             if (search.test(i.id) || search.test(item?.$.info.name ?? ""))
@@ -36,7 +36,7 @@ export default new AutocompleteHandler(
         const creature = await Creature.fetch(interaction.user.id, db, true);
 
         interaction.respond(function () {
-          const array: ApplicationCommandOptionChoice[] = [];
+          const array: ApplicationCommandOptionChoiceData[] = [];
 
           for (const schem of creature.schematics) {
             const recipe = SchematicsManager.map.get(schem);
@@ -74,8 +74,8 @@ export default new AutocompleteHandler(
   }
 )
 
-export async function autocompleteCreatures(search: RegExp, db: typeof Mongoose, limit = 10): Promise<ApplicationCommandOptionChoice[]> {
-  const array: ApplicationCommandOptionChoice[] = [];
+export async function autocompleteCreatures(search: RegExp, db: typeof Mongoose, limit = 10): Promise<ApplicationCommandOptionChoiceData[]> {
+  const array: ApplicationCommandOptionChoiceData[] = [];
 
   for await (const creature of db.connection.collection(Creature.COLLECTION_NAME).find(
     { $or: [
@@ -84,7 +84,7 @@ export async function autocompleteCreatures(search: RegExp, db: typeof Mongoose,
     ]
   }, {limit})) {
     array.push({
-      value: creature._id,
+      value: String(creature._id),
       name: `${creature._id} - ${creature?.info?.display?.name ?? "Unknown"}${creature?.info?.npc ? " (NPC) " : ""}`
     })
   }

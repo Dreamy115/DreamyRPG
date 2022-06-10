@@ -12,8 +12,8 @@ export default [
     },
     type: "wearable",
     slot: "shield",
-    base_shield: 16,
-    base_regen: 4
+    base_shield: 20,
+    base_regen: 5
   }),
   new Item({
     id: "example_mask",

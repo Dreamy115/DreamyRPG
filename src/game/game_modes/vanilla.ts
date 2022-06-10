@@ -19,15 +19,16 @@ export default [
         },
         hide: () => true,
         preload: (creature) => {
-          creature.$.stats.attack_cost.base += 8;
+          creature.$.stats.attack_cost.base += 7;
           creature.$.stats.accuracy.base -= 10;
           creature.$.stats.plating_effectiveness.base -= 15;
           creature.$.stats.action_points.base += 30;
-          creature.$.stats.ap_regen.base += 10;
-          creature.$.stats.parry.base += 10;
-          creature.$.stats.deflect.base += 5;
+          creature.$.stats.ap_regen.base += 15;
+          creature.$.stats.action_points.base += 8;
+          creature.$.stats.parry.base += 12;
+          creature.$.stats.deflect.base += 8;
           creature.$.stats.tenacity.base += 32;
-          creature.$.stats.stress_resistance.base += 25;
+          creature.$.stats.stress_resistance.base += 20;
 
           if (creature.active_effects.findIndex((v) => v.id === "death") !== -1) creature.$.status.alive = false;
 
@@ -127,9 +128,9 @@ export default [
           }
       
           if (creature.deltaHeat >= 0) {
-            creature.$.vitals.heat += Math.round(Math.log2(creature.deltaHeat + 1));
+            creature.$.vitals.heat += Math.round(Math.log2(creature.deltaHeat + 1)) * 1.8;
           } else {
-            creature.$.vitals.heat += Math.round(-Math.log2(-creature.deltaHeat + 1));
+            creature.$.vitals.heat += Math.round(-Math.log2(-creature.deltaHeat + 1)) * 1.8;
           }
       
           creature.vitalsIntegrity();

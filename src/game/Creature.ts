@@ -48,7 +48,7 @@ export default class Creature {
         melee: new TrackableStat(100),
         ranged: new TrackableStat(100),
         damage: new TrackableStat(0),
-        health: new TrackableStat(100),
+        health: new TrackableStat(360),
         plating: new TrackableStat(0),
         plating_effectiveness: new TrackableStat(50),
         action_points: new TrackableStat(0),
@@ -63,7 +63,7 @@ export default class Creature {
         siphon: new TrackableStat(0),
         initiative: new TrackableStat(10),
         min_comfortable_temperature: new TrackableStat(0),
-        heat_capacity: new TrackableStat(100),
+        heat_capacity: new TrackableStat(180),
         filtering: new TrackableStat(0),
         stress_resistance: new TrackableStat(0),
         mental_strength: new TrackableStat(Creature.INTENSITY_CAPACITY)
@@ -1299,8 +1299,8 @@ export default class Creature {
   static readonly ATTRIBUTE_MODS: {[key: string]: NamedModifier[]} = {
   STR: [
       {
-        type: ModifierType.ADD_PERCENT,
-        value: 0.07,
+        type: ModifierType.ADD,
+        value: 4,
         stat: "melee"
       },
       {
@@ -1333,8 +1333,8 @@ export default class Creature {
     ],
     REJ: [
       {
-        type: ModifierType.ADD_PERCENT,
-        value: 0.1,
+        type: ModifierType.ADD,
+        value: 1,
         stat: "ap_regen"
       },
       {
@@ -1385,17 +1385,17 @@ export default class Creature {
     DEX: [
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.15,
+        value: 0.12,
         stat: "deflect"
       },
       {
         type: ModifierType.ADD_PERCENT,
-        value: 0.05,
+        value: 0.04,
         stat: "parry"
       },
       {
-        type: ModifierType.ADD_PERCENT,
-        value: 0.07,
+        type: ModifierType.ADD,
+        value: 4,
         stat: "ranged"
       }
     ],

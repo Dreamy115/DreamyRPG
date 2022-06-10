@@ -1091,6 +1091,7 @@ export default class Creature {
   }
   async getFightID(db: typeof mongoose): Promise<string | null> {
     for await (const document of db.connection.collection(Fight.COLLECTION_NAME).find()) {
+      // @ts-ignore
       const fight = new Fight(document);
 
       if (fight.creatures.has(this.$._id))
@@ -1236,7 +1237,7 @@ export default class Creature {
       }
     }
 
-    const data = await db.connection.collection(Creature.COLLECTION_NAME).findOne({_id: id}) as CreatureDump;
+    const data = await db.connection.collection(Creature.COLLECTION_NAME).findOne({_id: id}) as unknown as CreatureDump;
     if (!data) throw new Error("Not found");
 
     const char = new Creature(data);

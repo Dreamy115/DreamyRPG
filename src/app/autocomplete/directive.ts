@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionChoice } from "discord.js";
+import { ApplicationCommandOptionChoiceData } from "discord.js";
 import { GameDirective } from "../../game/GameDirectives";
 import { AutocompleteHandler } from "../autocomplete";
 import { getAutocompleteListOfItems } from "./handbook";
@@ -8,7 +8,7 @@ export default new AutocompleteHandler(
   async function (interaction, Bot, db) {
     const focused = interaction.options.getFocused(true);
     const search = RegExp(String(focused.value), "ig");
-    const autocomplete: ApplicationCommandOptionChoice[] = []; 
+    const autocomplete: ApplicationCommandOptionChoiceData[] = []; 
 
     switch (focused.name) {
       case "directive": {

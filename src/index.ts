@@ -1,4 +1,4 @@
-import { ApplicationCommandData, AutocompleteInteraction, Client, CommandInteraction, Intents, Snowflake, SnowflakeUtil, TextBasedChannels } from "discord.js";
+import { ApplicationCommandData, AutocompleteInteraction, Client, CommandInteraction, Intents, Snowflake, SnowflakeUtil, TextBasedChannel } from "discord.js";
 import Mongoose from "mongoose";
 import YAML from "yaml";
 
@@ -228,7 +228,7 @@ Bot.on("ready", async () => {
 
 Bot.login(CONFIG.client.token);
 
-export async function messageInput(channel: TextBasedChannels, userid: Snowflake, time = 30000) {
+export async function messageInput(channel: TextBasedChannel, userid: Snowflake, time = 30000) {
   const input = await channel.awaitMessages({
     errors: ["time"],
     max: 1,

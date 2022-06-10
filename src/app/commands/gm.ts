@@ -252,7 +252,7 @@ export default new ApplicationCommandHandler(
 
             var pre_date = new Date();
             for await (let document of cursor) {
-              const data = document as CreatureDump;
+              const data = document as unknown as CreatureDump;
               const creature: Creature = Creature.cache.get(data._id) ?? new Creature(data);
 
               creature.$.info.location = location.$.id;
@@ -360,7 +360,7 @@ export default new ApplicationCommandHandler(
 
               var pre_date = new Date();
               for await (let document of cursor) {
-                const data = document as CreatureDump;
+                const data = document as unknown as CreatureDump;
                 const creature: Creature = Creature.cache.get(data._id) ?? new Creature(data);
 
                 for (var i = 0; i < amount; i++) {
@@ -385,7 +385,7 @@ export default new ApplicationCommandHandler(
 
               var pre_date = new Date();
               for await (let document of cursor) {
-                const data = document as CreatureDump;
+                const data = document as unknown as CreatureDump;
                 const creature: Creature = Creature.cache.get(data._id) ?? new Creature(data);
 
                 await creature.heal({

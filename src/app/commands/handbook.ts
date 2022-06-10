@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionChoice, ApplicationCommandOptionData, ColorResolvable, MessageActionRow, MessageButton, MessageEmbed } from "discord.js";
+import { ApplicationCommandOptionChoiceData, ApplicationCommandOptionData, ColorResolvable, MessageActionRow, MessageButton, MessageEmbed } from "discord.js";
 import { AbilitiesManager, capitalize, CONFIG, Directives, EffectManager, ItemManager, LocationManager, LootTables, PassivesManager, PerkManager, SchematicsManager, SkillManager, SpeciesManager } from "../..";
 import { ActiveEffect } from "../../game/ActiveEffects";
 import { Material, Schematic } from "../../game/Crafting";
@@ -133,7 +133,7 @@ export default new ApplicationCommandHandler(
             type: "STRING",
             required: true,
             choices: function () {
-              const arr: ApplicationCommandOptionChoice[] = [];
+              const arr: ApplicationCommandOptionChoiceData[] = [];
 
               for (const k in DOCUMENTATION) {
                 arr.push({

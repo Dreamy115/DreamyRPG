@@ -69,7 +69,7 @@ export default [
 
                 var pre_date = new Date();
                 for await (let data of cursor) {
-                  const document = data as CreatureDump;
+                  const document = data as unknown as CreatureDump;
                   const creature: Creature = Creature.cache.get(document._id) ?? new Creature(document);
 
                   for (var i = 0; i < input; i++) {
@@ -95,7 +95,7 @@ export default [
 
                 var pre_date = new Date();
                 for await (let data of cursor) {
-                  const document = data as CreatureDump;
+                  const document = data as unknown as CreatureDump;
                   const creature: Creature = Creature.cache.get(document._id) ?? new Creature(document);
 
                   await creature.heal({

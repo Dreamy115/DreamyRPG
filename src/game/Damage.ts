@@ -98,7 +98,7 @@ export async function damageLogEmbed(log: DamageLog, db: typeof Mongoose) {
   const embed = new MessageEmbed();
   embed
     .setTitle("Damage Log")
-    .setAuthor(`${from?.displayName ?? log.final.from ?? "Unknown"} >>> ${(to?.displayName ?? log.final.to ?? "Unknown")}`)
+    .setAuthor({ name: `${from?.displayName ?? log.final.from ?? "Unknown"} >>> ${(to?.displayName ?? log.final.to ?? "Unknown")}`})
     .setColor("RED")
     .addField(
       "Before",
@@ -187,7 +187,7 @@ export async function healLogEmbed(log: HealLog, db: typeof Mongoose) {
   const embed = new MessageEmbed();
   embed
     .setTitle("Damage Log")
-    .setAuthor(`${from?.displayName ?? log.final.from ?? "Unknown"} >>> ${(to?.displayName ?? log.final.to ?? "Unknown")}`)
+    .setAuthor({ name: `${from?.displayName ?? log.final.from ?? "Unknown"} >>> ${(to?.displayName ?? log.final.to ?? "Unknown")}` })
     .setColor("GREEN")
     .addField(
       "Before",

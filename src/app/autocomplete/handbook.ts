@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionChoice } from "discord.js";
+import { ApplicationCommandOptionChoiceData } from "discord.js";
 import { AbilitiesManager, Directives, EffectManager, ItemManager, LocationManager, LootTables, PassivesManager, PerkManager, SchematicsManager, SkillManager, SpeciesManager } from "../..";
 import { Schematic } from "../../game/Crafting";
 import { LootTable } from "../../game/LootTables";
@@ -12,7 +12,7 @@ export default new AutocompleteHandler(
   }
 )
 
-export async function getAutocompleteListOfItems(value: string, type: string): Promise<ApplicationCommandOptionChoice[]> {
+export async function getAutocompleteListOfItems(value: string, type: string): Promise<ApplicationCommandOptionChoiceData[]> {
   var list;
   switch (type) {
     default: return [];
@@ -56,7 +56,7 @@ export async function getAutocompleteListOfItems(value: string, type: string): P
   const values: (ManagedItems[]) = Array.from(list.values() as Iterable<ManagedItems>);
   const input_regex = RegExp(value, "i");
 
-  let choices: ApplicationCommandOptionChoice[] = []; 
+  let choices: ApplicationCommandOptionChoiceData[] = []; 
   if (values[0] instanceof LootTable) {
     for (var i = 0; choices.length < MAX_RESULTS && i < keys.length; i++) {
       const item = values[i] as LootTable;

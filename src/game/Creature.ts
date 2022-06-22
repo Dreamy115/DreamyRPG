@@ -1373,8 +1373,8 @@ export default class Creature {
         stat: "tech"
       },
       {
-        type: ModifierType.ADD_PERCENT,
-        value: 0.1,
+        type: ModifierType.ADD,
+        value: 2,
         stat: "action_points"
       },
       {

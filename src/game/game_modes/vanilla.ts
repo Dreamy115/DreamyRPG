@@ -22,9 +22,8 @@ export default [
           creature.$.stats.attack_cost.base += 7;
           creature.$.stats.accuracy.base -= 10;
           creature.$.stats.plating_effectiveness.base -= 15;
-          creature.$.stats.action_points.base += 30;
-          creature.$.stats.ap_regen.base += 15;
-          creature.$.stats.action_points.base += 8;
+          creature.$.stats.action_points.base += 20;
+          creature.$.stats.ap_regen.base += 12;
           creature.$.stats.parry.base += 12;
           creature.$.stats.deflect.base += 8;
           creature.$.stats.tenacity.base += 32;
@@ -159,8 +158,6 @@ export default [
 
           await creature.heal({
             sources: [{
-              type: HealType.Plating, value: creature.$.stats.plating.value
-            },{
               type: HealType.Shield, value: creature.$.stats.shield.value
             }],
             from: "Fight-Enter Regen"

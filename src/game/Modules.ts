@@ -76,8 +76,8 @@ export abstract class ItemStatModule {
         },
         {
           stat: "ap_regen",
-          type: ModifierType.ADD_PERCENT,
-          value: 0.05
+          type: ModifierType.ADD,
+          value: 1
         },
       ]
     ],

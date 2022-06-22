@@ -1425,17 +1425,17 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
 
   const ind = page === "vitalsHistory" ? 5 : PER_INDEX_PAGE;
 
-  embeds[embeds.length - 1].setFooter(
+  embeds[embeds.length - 1].setFooter({text:
     `ID: ${creature.$._id}${(creature.$.info.locked || creature.$.info.npc) ? "" : " | NOT LOCKED"}` +
     (scrollable
     ? ` | ${(index * ind) + 1}-${(index + 1) * ind}/${total}`
     : "")
-  )
+    })
 
   return {gm_embeds, embeds, scrollable, attachments};
 }
 
-const BAR_LENGTH = 36;
+const BAR_LENGTH = 10;
 
 export function tableDescriptor(table: LootTable, perks?: Set<string>) {
   const pools = table.getHighestFromPerks(perks ?? new Set());

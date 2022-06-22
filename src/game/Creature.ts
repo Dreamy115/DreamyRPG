@@ -48,7 +48,7 @@ export default class Creature {
         melee: new TrackableStat(100),
         ranged: new TrackableStat(100),
         damage: new TrackableStat(0),
-        health: new TrackableStat(360),
+        health: new TrackableStat(120),
         plating: new TrackableStat(0),
         plating_effectiveness: new TrackableStat(0),
         action_points: new TrackableStat(0),
@@ -61,9 +61,9 @@ export default class Creature {
         tech: new TrackableStat(0),
         vamp: new TrackableStat(0),
         siphon: new TrackableStat(0),
-        initiative: new TrackableStat(10),
+        initiative: new TrackableStat(6),
         min_comfortable_temperature: new TrackableStat(0),
-        heat_capacity: new TrackableStat(180),
+        heat_capacity: new TrackableStat(100),
         filtering: new TrackableStat(0),
         stress_resistance: new TrackableStat(0),
         mental_strength: new TrackableStat(Creature.INTENSITY_CAPACITY)
@@ -654,11 +654,9 @@ export default class Creature {
         } else {
           switch (source.type) {
             case DamageType.Physical: {
-              log.total_damage_mitigated += Math.round(source.value * (1 - reductionMultiplier(this.$.stats.armor.value - (group.penetration?.lethality ?? 0))));
               source.value *= reductionMultiplier(this.$.stats.armor.value - (group.penetration?.lethality ?? 0));
             } break;
             case DamageType.Energy: {
-              log.total_damage_mitigated += Math.round(source.value * (1 - reductionMultiplier(this.$.stats.dissipate.value - (group.penetration?.passthrough ?? 0))));
               source.value *= reductionMultiplier(this.$.stats.dissipate.value - (group.penetration?.passthrough ?? 0));
             } break;
           }
@@ -686,8 +684,6 @@ export default class Creature {
                   log.total_plating_damage -= Math.ceil(Math.max(-this.$.vitals.plating, Math.min(0, this.$.vitals.shield) * eff));
                   this.$.vitals.plating += Math.ceil(Math.min(0, this.$.vitals.shield) * eff);
 
-                  log.total_damage_mitigated -= Math.floor(-Math.min(0, this.$.vitals.shield) + Math.min(0, this.$.vitals.plating) * (1-eff));
-
                   this.$.vitals.health += Math.min(0, Math.floor(this.$.vitals.plating / eff));
                   log.total_health_damage -= Math.min(0, Math.floor(this.$.vitals.plating / eff));
                   injuries = -(Math.min(0, Math.floor(this.$.vitals.plating / eff)));
@@ -696,7 +692,6 @@ export default class Creature {
                 } break;
                 case PlatingReaction.Only: {
                   log.total_plating_damage -= Math.max(-this.$.vitals.plating, Math.min(0, this.$.vitals.shield));
-                  log.total_damage_mitigated -= Math.min(0, this.$.vitals.plating + Math.min(0, this.$.vitals.shield));
                   this.$.vitals.plating += Math.min(0, this.$.vitals.shield);
 
                   this.$.vitals.plating = Math.max(0, this.$.vitals.plating);
@@ -720,8 +715,6 @@ export default class Creature {
               this.$.vitals.shield -= source.value;
 
               log.total_shield_damage += Math.min(0, this.$.vitals.shield);
-
-              log.total_damage_mitigated -= Math.min(0, this.$.vitals.shield);
               switch (source.type) {
                 case DamageType.True:
                 default: {
@@ -746,8 +739,6 @@ export default class Creature {
                   log.total_plating_damage -= Math.ceil(Math.max(-this.$.vitals.plating, -source.value * eff));
                   this.$.vitals.plating += Math.ceil(-source.value * eff);
   
-                  log.total_damage_mitigated -= Math.floor(source.value + Math.min(0, this.$.vitals.plating) * (1-eff));
-  
                   this.$.vitals.health += Math.min(0, Math.floor(this.$.vitals.plating / eff));
                   log.total_health_damage -= Math.min(0, Math.floor(this.$.vitals.plating / eff));
                   let injuries = -(Math.min(0, Math.floor(this.$.vitals.plating / eff)));
@@ -763,7 +754,6 @@ export default class Creature {
                 } break;
                 case PlatingReaction.Only: {
                   log.total_plating_damage -= Math.max(-this.$.vitals.plating, Math.min(0, this.$.vitals.shield));
-                  log.total_damage_mitigated -= Math.min(0, this.$.vitals.plating + Math.min(0, this.$.vitals.shield));
                   this.$.vitals.plating += Math.min(0, this.$.vitals.shield);
 
                   this.$.vitals.plating = Math.max(0, this.$.vitals.health);
@@ -774,6 +764,7 @@ export default class Creature {
               log.total_injuries -= Math.min(0, this.$.vitals.health);
 
               this.$.vitals.health = Math.max(0, this.$.vitals.health);
+
             } break;
           }
           
@@ -792,6 +783,13 @@ export default class Creature {
       }
 
       log.total_damage_taken = log.total_health_damage + log.total_plating_damage + log.total_shield_damage;
+
+      log.total_damage_mitigated = log.total_damage_taken;
+      for (const source of original.sources) {
+        if (source.type !== DamageType.Stress)
+          log.total_damage_mitigated -= source.value;
+      }
+      log.total_damage_mitigated *= -1;
 
       for (const passive of this.passives) {
         await passive.$.afterDamageTaken?.(this, db, log);

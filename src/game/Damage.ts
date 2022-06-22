@@ -122,7 +122,7 @@ export async function damageLogEmbed(log: DamageLog, db: typeof Mongoose) {
 
   embed.addField(
     "Total",
-    `**${log.total_damage_taken}** Damage Taken\n**${log.total_damage_mitigated}** Damage Mitigated\n\n` +
+    `**${log.total_damage_taken}** Damage Taken\n**${log.total_damage_mitigated >= 0 ? `${log.total_damage_mitigated}** Damage Mitigated` : `${-log.total_damage_mitigated}** Damage Added`}\n\n` +
     `**${log.total_shield_damage}** Shield Damage\n**${log.total_plating_damage}** Plating Damage\n**${log.total_health_damage}** Health Damage\n**${log.total_injuries}** Injuries\n\n` +
     `**${log.total_physical_damage}**/**${log.total_energy_damage}**/**${log.total_true_damage}** Physical/Energy/True\n` +
     `Stress **${log.total_stress_applied}** Applied | **${log.total_stress_mitigated}** Mitigated`

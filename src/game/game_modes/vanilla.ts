@@ -63,7 +63,7 @@ export default [
               from: "Low-Health Stress",
               sources: [{
                 type: DamageType.Stress,
-                value: Math.round(clamp(stress * lerp(mult_of_health, 0.2, 1.5), 1, 60) * 10) / 10
+                value: Math.round(clamp(stress * lerp(mult_of_health, 0.2, 1.5), 1, 60))
               }]
             }, db);
           }
@@ -127,9 +127,9 @@ export default [
           }
       
           if (creature.deltaHeat >= 0) {
-            creature.$.vitals.heat += Math.round(Math.log2(creature.deltaHeat + 1)) * 1.8;
+            creature.$.vitals.heat += Math.round(Math.log2(creature.deltaHeat + 1));
           } else {
-            creature.$.vitals.heat += Math.round(-Math.log2(-creature.deltaHeat + 1)) * 1.8;
+            creature.$.vitals.heat += Math.round(-Math.log2(-creature.deltaHeat + 1));
           }
       
           creature.vitalsIntegrity();

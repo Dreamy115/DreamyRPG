@@ -486,4 +486,4 @@ export interface Combatant {
   down: boolean
 }
 
-const BAR_LENGTH = 36 * 2;
+const BAR_LENGTH = 10 * 2;

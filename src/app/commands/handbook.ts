@@ -1,6 +1,6 @@
 import { ApplicationCommandOptionChoiceData, ApplicationCommandOptionData, ColorResolvable, MessageActionRow, MessageButton, MessageEmbed } from "discord.js";
 import { AbilitiesManager, capitalize, CONFIG, Directives, EffectManager, ItemManager, LocationManager, LootTables, PassivesManager, PerkManager, SchematicsManager, SkillManager, SpeciesManager } from "../..";
-import { ActiveEffect } from "../../game/ActiveEffects";
+import { ActiveEffect, EffectType } from "../../game/ActiveEffects";
 import { Material, Schematic } from "../../game/Crafting";
 import Creature from "../../game/Creature";
 import { AbilityType, CreatureAbility } from "../../game/CreatureAbilities";
@@ -259,7 +259,7 @@ export default new ApplicationCommandHandler(
         
         embed
         .setTitle(title)
-        .setFooter(`Page ${page}/${Math.floor(array.length / ITEMS_PER_PAGE) + 1}`)
+        .setFooter({ text: `Page ${page}/${Math.floor(array.length / ITEMS_PER_PAGE) + 1}` })
         .setDescription("");
 
         for (const _item of array) {
@@ -268,7 +268,15 @@ export default new ApplicationCommandHandler(
           // @ts-ignore
           if (!_item.$.hide?.() || IS_GM)
             // @ts-ignore
-            embed.description += `${_item.$.hide?.() ? "🔒 " : ""}\`${item.$.id}\` ${item.$?.info.quality !== undefined ? `${ItemQualityEmoji[item.$?.info.quality]} `: ""}**${item.$?.info.name}**${item.$?.type ? ` (${capitalize(item.$?.type)})` : "" }\n`
+            embed.description += `${_item.$.hide?.() ? "🔒 " : ""}\`${item.$.id}\` ${item.$?.info.quality !== undefined ? `${ItemQualityEmoji[item.$?.info.quality]} `: ""}**${item.$?.info.name}**${item.$?.type ? ` (${
+              _item instanceof CreatureAbility
+              ? capitalize(AbilityType[_item.$.type])
+              : (
+                _item instanceof ActiveEffect
+                ? capitalize(EffectType[_item.$.type])
+                : capitalize(String(item.$?.type))
+              )
+            })` : "" }\n`
         }
       } break;
       case "item": {

@@ -1534,7 +1534,7 @@ export function describeItem(invitem?: InventoryItem, creature?: Creature) {
   }
   str += `\n`;
 
-  if ((invitem as WearableInventoryItem)?.stat_module) {
+  if (typeof (invitem as WearableInventoryItem)?.stat_module === "number") {
     let stat_module: ModuleType = (invitem as WearableInventoryItem).stat_module;
 
     str += `Stat Module: ${ModuleTypeEmoji[stat_module]}${ModuleType[stat_module]}; ${modifiersDescriptor(ItemStatModule.getModifiers(stat_module), ", ")}\n\n`;

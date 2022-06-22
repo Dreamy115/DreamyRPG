@@ -2,66 +2,66 @@ import { LootPool, LootTable } from "../LootTables";
 
 export default [
   new LootTable({
-    id: "example_items",
+    id: "vanilla:example_items",
     note: "Use to grant starter items at once",
     pools: new Map<string, LootPool[]>().set("", [
       {
         min_rolls: 1,
         max_rolls: 1,
-        entries: [{ weight: 1, items: ["example_shield"]}]
+        entries: [{ weight: 1, items: ["vanilla:example_shield"]}]
       },
       {
         min_rolls: 1,
         max_rolls: 1,
-        entries: [{ weight: 1, items: ["example_mask"]}]
+        entries: [{ weight: 1, items: ["vanilla:example_mask"]}]
       },
       {
         min_rolls: 1,
         max_rolls: 1,
-        entries: [{ weight: 1, items: ["example_backpack"]}]
+        entries: [{ weight: 1, items: ["vanilla:example_backpack"]}]
       },
       {
         min_rolls: 1,
         max_rolls: 1,
-        entries: [{ weight: 1, items: ["example_vest"]}]
+        entries: [{ weight: 1, items: ["vanilla:example_vest"]}]
       },
       {
         min_rolls: 1,
         max_rolls: 1,
-        entries: [{ weight: 1, items: ["example_jacket"]}]
+        entries: [{ weight: 1, items: ["vanilla:example_jacket"]}]
       },
       {
         min_rolls: 1,
         max_rolls: 1,
-        entries: [{ weight: 1, items: ["example_gloves"]}]
+        entries: [{ weight: 1, items: ["vanilla:example_gloves"]}]
       },
       {
         min_rolls: 1,
         max_rolls: 1,
-        entries: [{ weight: 1, items: ["example_knife"]}]
+        entries: [{ weight: 1, items: ["vanilla:example_knife"]}]
       },
       {
         min_rolls: 1,
         max_rolls: 1,
-        entries: [{ weight: 1, items: ["example_pistol"]}]
+        entries: [{ weight: 1, items: ["vanilla:example_pistol"]}]
       }
     ])
   }),
   new LootTable({
-    id: "rough_bandage",
+    id: "vanilla:rough_bandage",
     note: "Sample bandage drop",
     pools: new Map() 
-    .set("medic", [
+    .set("ws:medic", [
       {
         min_rolls: 1,
         max_rolls: 1,
         entries: [
           {
-            items: ["rough_bandage"],
+            items: ["vanilla:rough_bandage"],
             weight: 5
           },
           {
-            items: ["mediocre_bandage"],
+            items: ["vanilla:mediocre_bandage"],
             weight: 3
           }
         ]
@@ -73,11 +73,11 @@ export default [
         max_rolls: 1,
         entries: [
           {
-            items: ["rough_bandage"],
+            items: ["vanilla:rough_bandage"],
             weight: 6
           },
           {
-            items: ["mediocre_bandage"],
+            items: ["vanilla:mediocre_bandage"],
             weight: 2
           }
         ]

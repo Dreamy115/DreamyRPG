@@ -3,7 +3,7 @@ import { ItemQuality } from "../Items";
 
 export default [
   new Schematic({
-    id: "rough_bandage",
+    id: "vanilla:rough_bandage",
     info: {
       name: "Makeshift Bandage",
       lore: "A schematic for you to craft a basic bandage",
@@ -19,6 +19,6 @@ export default [
         plastic: 0
       }
     },
-    table: "rough_bandage"
+    table: "vanilla:rough_bandage"
   })
 ]

@@ -4,7 +4,7 @@ import { Item, ItemQuality, WeaponCategory } from "../Items";
 
 export default [
   new Item({
-    id: "example_shield",
+    id: "vanilla:example_shield",
     info: {
       name: "Basic Shield",
       lore: "A basic, used shield primer. Will stop a ping-pong ball thrown in your face but don't expect too much.",
@@ -16,7 +16,7 @@ export default [
     base_regen: 5
   }),
   new Item({
-    id: "example_mask",
+    id: "vanilla:example_mask",
     info: {
       name: "Basic Mask",
       lore: "It's capable of filtering out bigger particles. That's what the point of the mask is.",
@@ -27,7 +27,7 @@ export default [
     base_filtering: 1
   }),
   new Item({
-    id: "example_jacket",
+    id: "vanilla:example_jacket",
     info: {
       name: "Rag Jacket",
       lore: "Something to put over yourself to stop the wind.",
@@ -39,7 +39,7 @@ export default [
     base_insulation: 15
   }),
   new Item({
-    id: "example_vest",
+    id: "vanilla:example_vest",
     info: {
       name: "Scrap Vest",
       lore: "A bunch of scrap taped together for protection.. Eeeeh good enough?",
@@ -52,7 +52,7 @@ export default [
     base_plating: 5,
   }),
   new Item({
-    id: "example_backpack",
+    id: "vanilla:example_backpack",
     info: {
       name: "Rag-Pack",
       lore: "Introducing the Rag-Pack, it holds things! -uh... That's everything? Where's the rest of the script? Is this thing still on?",
@@ -64,7 +64,7 @@ export default [
     base_parry: 1
   }),
   new Item({
-    id: "example_gloves",
+    id: "vanilla:example_gloves",
     info: {
       name: "Used Bike Gloves",
       lore: "Something to put your pawsies into, not much.",
@@ -77,7 +77,7 @@ export default [
     base_tech: 1,
   }),
   new Item({
-    id: "example_knife",
+    id: "vanilla:example_knife",
     type: "weapon",
     info: {
       name: "Kitchen Knife",
@@ -140,7 +140,7 @@ export default [
     }
   }),
   new Item({
-    id: "example_pistol",
+    id: "vanilla:example_pistol",
     type: "weapon",
     info: {
       name: "P258",
@@ -203,7 +203,7 @@ export default [
     }
   }),
   new Item({
-    id: "rough_bandage",
+    id: "vanilla:rough_bandage",
     type: "consumable",
     info: {
       name: "Makeshift Bandage",
@@ -218,7 +218,7 @@ export default [
       ]
     },
     onUse: async (creature, db) => {
-      await creature.clearActiveEffect("bleeding", "delete", db);
+      await creature.clearActiveEffect("vanilla:bleeding", "delete", db);
 
       const amount = 10 + (creature.$.stats.tech.value * 0.05);
 
@@ -246,7 +246,7 @@ export default [
     }
   }),
   new Item({
-    id: "mediocre_bandage",
+    id: "vanilla:mediocre_bandage",
     type: "consumable",
     info: {
       name: "Makeshift Bandage",
@@ -261,7 +261,7 @@ export default [
       ]
     },
     onUse: async (creature, db) => {
-      await creature.clearActiveEffect("bleeding", "delete", db);
+      await creature.clearActiveEffect("vanilla:bleeding", "delete", db);
 
       const amount = 15 + (creature.$.stats.tech.value * 0.075);
 

@@ -45,7 +45,7 @@ export default [
           plastic: 0
         },
         type: "item",
-        id: "rough_bandage"
+        id: "vanilla:rough_bandage"
       },
       {
         cost: {
@@ -56,7 +56,7 @@ export default [
           plastic: 0
         },
         type: "schematic",
-        id: "rough_bandage"
+        id: "vanilla:rough_bandage"
       }
     ]
   })

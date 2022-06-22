@@ -5,7 +5,7 @@ import { ModifierType } from "../Stats";
 
 export default [
   new ActiveEffect({
-    id: "bleeding",
+    id: "vanilla:bleeding",
     consecutive_limit: 5,
     display_severity: DisplaySeverity.ROMAN,
     info: {
@@ -34,7 +34,7 @@ export default [
     }
   }),
   new ActiveEffect({
-    id: "emp",
+    id: "vanilla:emp",
     consecutive_limit: 1,
     display_severity: DisplaySeverity.NONE,
     info: {
@@ -51,7 +51,7 @@ export default [
     type: EffectType.Debuff
   }),
   new ActiveEffect({
-    id: "suppressed",
+    id: "vanilla:suppressed",
     consecutive_limit: 1,
     display_severity: DisplaySeverity.NONE,
     info: {
@@ -65,7 +65,7 @@ export default [
     type: EffectType.Debuff
   }),
   new ActiveEffect({
-    id: "dazed",
+    id: "vanilla:dazed",
     consecutive_limit: 1,
     display_severity: DisplaySeverity.NONE,
     info: {
@@ -79,7 +79,7 @@ export default [
     type: EffectType.Debuff
   }),
   new ActiveEffect({
-    id: "death",
+    id: "vanilla:death",
     consecutive_limit: 1,
     display_severity: DisplaySeverity.NONE,
     info: {
@@ -93,7 +93,7 @@ export default [
     type: EffectType.Other
   }),
   new ActiveEffect({
-    id: "hypothermia",
+    id: "vanilla:hypothermia",
     consecutive_limit: 1,
     display_severity: DisplaySeverity.NONE,
     info: {
@@ -128,7 +128,7 @@ export default [
     type: EffectType.Wound
   }),
   new ActiveEffect({
-    id: "filter_fail",
+    id: "vanilla:filter_fail",
     consecutive_limit: 1,
     display_severity: DisplaySeverity.ROMAN,
     info: {
@@ -155,7 +155,7 @@ export default [
     type: EffectType.Wound
   }),
   new ActiveEffect({
-    id: "intensity-stressed",
+    id: "vanilla:intensity-stressed",
     consecutive_limit: 1,
     display_severity: DisplaySeverity.ARABIC,
     info: {
@@ -163,7 +163,7 @@ export default [
       lore: "This Creature is stressed and isn't at their peak performance. Decreased **INT**, **PER**, and **CHA**",
       
     },
-    conflicts_with: new Set(["intensity-optimal", "intensity-bored", "intensity-nothing"]),
+    conflicts_with: new Set(["vanilla:intensity-optimal", "intensity-bored", "vanilla:intensity-nothing"]),
     preload: (creature, {severity}) => {
       let lerped = invLerp(severity, 75, 100);
 
@@ -183,7 +183,7 @@ export default [
     type: EffectType.Debuff
   }),
   new ActiveEffect({
-    id: "intensity-optimal",
+    id: "vanilla:intensity-optimal",
     consecutive_limit: 1,
     display_severity: DisplaySeverity.ARABIC,
     info: {
@@ -191,7 +191,7 @@ export default [
       lore: "This Creature is experiencing optimal intensity. Increased **DEX**, **PER**, and **Initiative**",
       
     },
-    conflicts_with: new Set(["intensity-bored", "intensity-stressed", "intensity-nothing"]),
+    conflicts_with: new Set(["intensity-bored", "vanilla:intensity-stressed", "vanilla:intensity-nothing"]),
     preload: (creature, {severity}) => {
       creature.$.attributes.DEX.modifiers.push({
         type: ModifierType.ADD,
@@ -209,7 +209,7 @@ export default [
     type: EffectType.Buff
   }),
   new ActiveEffect({
-    id: "intensity-calm",
+    id: "vanilla:intensity-calm",
     consecutive_limit: 1,
     display_severity: DisplaySeverity.ARABIC,
     info: {
@@ -217,7 +217,7 @@ export default [
       lore: "This Creature is calm. Reduced **Dodge**, and **Initiative**. **+1 MND**",
       
     },
-    conflicts_with: new Set(["intensity-optimal", "intensity-stressed", "intensity-nothing"]),
+    conflicts_with: new Set(["vanilla:intensity-optimal", "vanilla:intensity-stressed", "vanilla:intensity-nothing"]),
     preload: (creature, {severity}) => {
       let lerped = invLerp(severity, 0, 15);
 
@@ -241,7 +241,7 @@ export default [
     type: EffectType.Debuff
   }),
   new ActiveEffect({
-    id: "intensity-nothing",
+    id: "vanilla:intensity-nothing",
     consecutive_limit: 1,
     display_severity: DisplaySeverity.ARABIC,
     info: {
@@ -249,7 +249,7 @@ export default [
       lore: "The intensity isn't currently affecting anything.",
       
     },
-    conflicts_with: new Set(["intensity-bored", "intensity-stressed", "intensity-optimal"]),
+    conflicts_with: new Set(["intensity-bored", "vanilla:intensity-stressed", "vanilla:intensity-optimal"]),
     type: EffectType.Other
   })
 ]

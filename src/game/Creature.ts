@@ -681,13 +681,16 @@ export default class Creature {
                 } break;
                 default: 
                 case PlatingReaction.Normal: {
-                  log.total_plating_damage -= Math.ceil(Math.max(-this.$.vitals.plating, Math.min(0, this.$.vitals.shield) * clamp((this.$.stats.plating_effectiveness.value - (group.penetration?.piercing ?? 0)) / 100, 0, 1)));
-                  this.$.vitals.plating += Math.ceil(Math.min(0, this.$.vitals.shield) * clamp((this.$.stats.plating_effectiveness.value - (group.penetration?.piercing ?? 0)) / 100, 0, 1));
-                  this.$.vitals.health += Math.floor(Math.min(0, this.$.vitals.shield) * (1 - clamp((this.$.stats.plating_effectiveness.value - (group.penetration?.piercing ?? 0)) / 100, 0, 1)));
+                  let eff = reductionMultiplier(this.$.stats.plating_effectiveness.value - (group.penetration?.piercing ?? 0));
 
-                  this.$.vitals.health += Math.min(0, this.$.vitals.plating);
-                  log.total_health_damage -= Math.min(0, this.$.vitals.plating) + Math.floor(Math.min(0, this.$.vitals.shield) * (1 - clamp((this.$.stats.plating_effectiveness.value - (group.penetration?.piercing ?? 0)) / 100, 0, 1)));
-                  injuries = -(Math.min(0, this.$.vitals.plating) + Math.floor(Math.min(0, this.$.vitals.shield) * (1 - clamp((this.$.stats.plating_effectiveness.value - (group.penetration?.piercing ?? 0)) / 100, 0, 1))));
+                  log.total_plating_damage -= Math.ceil(Math.max(-this.$.vitals.plating, Math.min(0, this.$.vitals.shield) * eff));
+                  this.$.vitals.plating += Math.ceil(Math.min(0, this.$.vitals.shield) * eff);
+
+                  log.total_damage_mitigated -= Math.floor(-Math.min(0, this.$.vitals.shield) + Math.min(0, this.$.vitals.plating) * (1-eff));
+
+                  this.$.vitals.health += Math.min(0, Math.floor(this.$.vitals.plating / eff));
+                  log.total_health_damage -= Math.min(0, Math.floor(this.$.vitals.plating / eff));
+                  injuries = -(Math.min(0, Math.floor(this.$.vitals.plating / eff)));
 
                   this.$.vitals.plating = Math.max(0, this.$.vitals.plating);
                 } break;
@@ -738,17 +741,17 @@ export default class Creature {
               switch (source.platingReaction) {
                 default:
                 case PlatingReaction.Normal: {
-                  log.total_plating_damage += Math.ceil(Math.min(this.$.vitals.plating, source.value * clamp((this.$.stats.plating_effectiveness.value - (group.penetration?.piercing ?? 0)) / 100, 0, 1)));
-                  this.$.vitals.plating -= Math.ceil(source.value * clamp((this.$.stats.plating_effectiveness.value - (group.penetration?.piercing ?? 0)) / 100, 0, 1));
-
-                  const injuries = -(Math.min(0, this.$.vitals.plating) + Math.floor(-source.value * (1 - clamp((this.$.stats.plating_effectiveness.value - (group.penetration?.piercing ?? 0)) / 100, 0, 1))));
-
-                  this.$.vitals.health -= Math.round(injuries);
-                  log.total_health_damage += Math.round(injuries);
-
-                  log.total_injuries += Math.round(injuries * DAMAGE_TO_INJURY_RATIO * reductionMultiplier(this.$.stats.tenacity.value - (group.penetration?.cutting ?? 0)));
-                  this.$.vitals.injuries += Math.round(injuries * DAMAGE_TO_INJURY_RATIO * reductionMultiplier(this.$.stats.tenacity.value - (group.penetration?.cutting ?? 0)));
-                  
+                  let eff = reductionMultiplier(this.$.stats.plating_effectiveness.value - (group.penetration?.piercing ?? 0));
+  
+                  log.total_plating_damage -= Math.ceil(Math.max(-this.$.vitals.plating, -source.value * eff));
+                  this.$.vitals.plating += Math.ceil(-source.value * eff);
+  
+                  log.total_damage_mitigated -= Math.floor(source.value + Math.min(0, this.$.vitals.plating) * (1-eff));
+  
+                  this.$.vitals.health += Math.min(0, Math.floor(this.$.vitals.plating / eff));
+                  log.total_health_damage -= Math.min(0, Math.floor(this.$.vitals.plating / eff));
+                  let injuries = -(Math.min(0, Math.floor(this.$.vitals.plating / eff)));
+  
                   this.$.vitals.plating = Math.max(0, this.$.vitals.plating);
                 } break;
                 case PlatingReaction.Ignore: {
@@ -899,6 +902,12 @@ export default class Creature {
           this.$.vitals.intensity = clamp(this.$.vitals.intensity, 0, this.$.stats.mental_strength.value);
           log.stress_restored += Math.min(_intensity - this.$.vitals.intensity, this.$.stats.mental_strength.value);
         } break;
+        case HealType.Plating: {
+          const _plating = this.$.vitals.plating;
+
+          this.$.vitals.plating += src.value;
+          log.plating_restored += Math.min(this.$.vitals.plating, this.$.stats.plating.value) - _plating;
+        }
       }
       this.vitalsIntegrity();
     }

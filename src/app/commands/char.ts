@@ -798,7 +798,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
             creature.$.stats.plating.value > 0
             ? `**Plating** ${textStat(creature.$.vitals.plating, creature.$.stats.plating.value)}` 
             : "No Plating"
-          ) +` _[**${creature.$.stats.plating_effectiveness.value}** Effect]_`,
+          ),
           value: (
             creature.$.stats.plating.value > 0
             ? make_bar(100 * creature.$.vitals.plating / creature.$.stats.plating.value, Creature.BAR_STYLES.Plating, Math.max(1, Math.floor(creature.$.stats.plating.value / BAR_LENGTH))).str
@@ -855,6 +855,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
           value:
           `**${creature.$.stats.armor.value}** Armor *(**${(100 * (1 - reductionMultiplier(creature.$.stats.armor.value))).toFixed(1)}%** Reduced Physical Damage)*\n` +
           `**${creature.$.stats.dissipate.value}** Dissipate *(**${(100 * (1 - reductionMultiplier(creature.$.stats.dissipate.value))).toFixed(1)}%** Reduced Energy Damage)*\n` +
+          `**${creature.$.stats.plating_effectiveness.value}** Plating Effectiveness *(**${(100 * (1 - reductionMultiplier(creature.$.stats.plating_effectiveness.value))).toFixed(1)}%** Reduced Plating Damage)*\n\n` +
           `Parry **${creature.$.stats.parry.value}%** | **${creature.$.stats.deflect.value}%** Deflect *(Reduces hit chance from **Melee** | **Ranged**)*\n` +
           "\n" +
           `**${creature.$.stats.tenacity.value}** Tenacity *(Taking **${(100 * reductionMultiplier(creature.$.stats.tenacity.value) * DAMAGE_TO_INJURY_RATIO).toFixed(1)}%** health damage as **Injuries**)*` +
@@ -1529,7 +1530,7 @@ export function describeItem(invitem?: InventoryItem, creature?: Creature) {
 
   str += `*${lore}*\n`;
   if (item.$.type === "weapon") {
-    str += `Base Damage: **${item.$.base_damage}**\n`;
+    str += `Base Damage: **${item.$.base_damage}**\nBase Tech: **${item.$.base_tech}**`;
   }
   str += `\n`;
 
@@ -1570,7 +1571,7 @@ export function describeItem(invitem?: InventoryItem, creature?: Creature) {
           str += `Heat Capacity: **${item.$.base_heat_capacity}**\nInsulation: **${-item.$.base_insulation}**\n`
         } break;
         case "vest": {
-          str += `Armor **${item.$.base_armor}** | **${item.$.base_dissipate}** Dissipate\n`;
+          str += `Armor **${item.$.base_armor}** | **${item.$.base_dissipate}** Dissipate\nPlating **${item.$.base_plating}**\n`;
         } break;
         case "gloves": {
           str += `Action Points: **${item.$.base_ap}** **${item.$.base_ap_regen}**/t\nTech: **${item.$.base_tech}**\n`;

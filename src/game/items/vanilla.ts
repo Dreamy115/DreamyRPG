@@ -72,8 +72,8 @@ export default [
     },
     type: "wearable",
     slot: "gloves",
-    base_mana: 0,
-    base_mana_regen: 0,
+    base_ap: 0,
+    base_ap_regen: 0,
     base_tech: 1,
   }),
   new Item({
@@ -86,6 +86,7 @@ export default [
     },
     category: WeaponCategory.knife,
     base_damage: 2,
+    base_tech: 0,
     attack: {
       type: DamageMethod.Melee,
       weak: [
@@ -148,6 +149,7 @@ export default [
     },
     category: WeaponCategory.pistol,
     base_damage: 2,
+    base_tech: 0,
     attack: {
       type: DamageMethod.Ranged,
       weak: [

@@ -112,8 +112,8 @@ export interface VestWearableItemData extends WearableItemData {
 export interface GlovesWearableItemData extends WearableItemData {
   slot: "gloves"
   base_tech: number
-  base_mana: number
-  base_mana_regen: number
+  base_ap: number
+  base_ap_regen: number
 }
 export interface BackpackWearableItemData extends WearableItemData {
   slot: "backpack"
@@ -124,6 +124,7 @@ export interface BackpackWearableItemData extends WearableItemData {
 export interface WeaponItemData extends PassiveItemData {
   type: "weapon"
   base_damage: number
+  base_tech: number
   attack: AttackSet
   category: WeaponCategory
 }

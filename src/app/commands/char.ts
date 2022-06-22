@@ -1573,7 +1573,7 @@ export function describeItem(invitem?: InventoryItem, creature?: Creature) {
           str += `Armor **${item.$.base_armor}** | **${item.$.base_dissipate}** Dissipate\n`;
         } break;
         case "gloves": {
-          str += `Action Points: **${item.$.base_mana}** **${item.$.base_mana_regen}**/t\nTech: **${item.$.base_tech}**\n`;
+          str += `Action Points: **${item.$.base_ap}** **${item.$.base_ap_regen}**/t\nTech: **${item.$.base_tech}**\n`;
         } break;
         case "backpack": {
           str += `Parry **${item.$.base_parry}** | **${item.$.base_deflect}** Deflect\n`;

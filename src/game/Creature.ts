@@ -154,7 +154,8 @@ export default class Creature {
     this.$.stats.ult_stack_target.base = this.ultimate?.$.cost ?? 0;
     
     this.$.stats.damage.base += (ItemManager.map.get(this.$.items.primary_weapon?.id ?? "")?.$ as WeaponItemData).base_damage ?? 0;
-    
+    this.$.stats.tech.base += (ItemManager.map.get(this.$.items.primary_weapon?.id ?? "")?.$ as WeaponItemData).base_tech ?? 0;
+
     this.$.stats.filtering.base += (slottedItems.mask?.$ as MaskWearableItemData).base_filtering ?? 0;
 
     this.$.stats.shield.base += (slottedItems.shield?.$ as ShieldWearableItemData).base_shield ?? 0;
@@ -170,8 +171,8 @@ export default class Creature {
     this.$.stats.parry.base += (slottedItems.backpack?.$ as BackpackWearableItemData).base_parry ?? 0;
     this.$.stats.deflect.base += (slottedItems.backpack?.$ as BackpackWearableItemData).base_deflect ?? 0;
     
-    this.$.stats.action_points.base += (slottedItems.gloves?.$ as GlovesWearableItemData).base_mana ?? 0;
-    this.$.stats.ap_regen.base += (slottedItems.gloves?.$ as GlovesWearableItemData).base_mana_regen ?? 0;
+    this.$.stats.action_points.base += (slottedItems.gloves?.$ as GlovesWearableItemData).base_ap ?? 0;
+    this.$.stats.ap_regen.base += (slottedItems.gloves?.$ as GlovesWearableItemData).base_ap_regen ?? 0;
     this.$.stats.tech.base += (slottedItems.gloves?.$ as GlovesWearableItemData).base_tech ?? 0;
 
     // Modules

@@ -50,7 +50,7 @@ export default class Creature {
         damage: new TrackableStat(0),
         health: new TrackableStat(360),
         plating: new TrackableStat(0),
-        plating_effectiveness: new TrackableStat(50),
+        plating_effectiveness: new TrackableStat(0),
         action_points: new TrackableStat(0),
         ap_regen: new TrackableStat(0),
         shield: new TrackableStat(0),

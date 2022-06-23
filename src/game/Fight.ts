@@ -182,7 +182,7 @@ export class Fight {
         const char = await Creature.fetch(c, db).catch(() => null);
         if (!char) continue;
 
-        const injury_ratio = creature.$.vitals.injuries / creature.$.stats.health.value;
+        const injury_ratio = char.$.vitals.injuries / char.$.stats.health.value;
 
         const weapon = ItemManager.map.get(char.$.items.primary_weapon?.id ?? "");
 
@@ -194,22 +194,22 @@ export class Fight {
             ` **Shield** ${textStat(char.$.vitals.shield, char.$.stats.shield.value)} `
             : "No **Shield** "
           ) + `**${char.$.stats.shield_regen.value}**/t\n` +
-          (make_bar(100 * char.$.vitals.health / (char.$.stats.health.value - char.$.vitals.injuries), Creature.BAR_STYLES.Health, Math.max(1, (1 - injury_ratio) * Math.floor(creature.$.stats.health.value / BAR_LENGTH))).str || "") +
+          (make_bar(100 * char.$.vitals.health / (char.$.stats.health.value - char.$.vitals.injuries), Creature.BAR_STYLES.Health, Math.max(1, (1 - injury_ratio) * Math.floor(char.$.stats.health.value / BAR_LENGTH))).str || "") +
           (
             char.$.vitals.injuries > 0
-            ? make_bar(100, Creature.BAR_STYLES.Injuries, Math.max(1, injury_ratio * Math.floor(creature.$.stats.health.value / BAR_LENGTH))).str
+            ? make_bar(100, Creature.BAR_STYLES.Injuries, Math.max(1, injury_ratio * Math.floor(char.$.stats.health.value / BAR_LENGTH))).str
             : ""
           ) +
           ` **Health** **${char.$.vitals.health}**/**${char.$.stats.health.value - char.$.vitals.injuries}**\n` + 
           `(**${Math.round(100 * char.$.vitals.health / char.$.stats.health.value)}%**)\n` +
-          make_bar(100 *char.$.vitals.action_points / char.$.stats.action_points.value, Creature.BAR_STYLES.ActionPoints, creature.$.stats.action_points.value / creature.$.stats.attack_cost.value).str +
+          make_bar(100 *char.$.vitals.action_points / char.$.stats.action_points.value, Creature.BAR_STYLES.ActionPoints, char.$.stats.action_points.value / char.$.stats.attack_cost.value).str +
           ` **Action Points** ${textStat(char.$.vitals.action_points, char.$.stats.action_points.value)} `+
           `**${char.$.stats.ap_regen.value}**/t\n` +
           (
             weapon
             ? `${weapon.displayName} -> **${char.getFinalDamage((weapon.$ as WeaponItemData).attack.type).toFixed(1)}**`
             : `Unarmed -> **${char.getFinalDamage(DamageMethod.Melee).toFixed(1)}**`
-          ) + ` [**${creature.$.stats.ammo.value}** Attacks]` + "\n" +
+          ) + ` [**${char.$.stats.ammo.value}** Attacks]` + "\n" +
           (function() {
             const arr: string[] = [];
             for (const active of char.active_effects) {

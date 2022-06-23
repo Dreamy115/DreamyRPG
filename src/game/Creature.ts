@@ -477,6 +477,9 @@ export default class Creature {
       globalOrLocalPusherArray(abilities, Array.from(item.$.abilities?.values() ?? []), AbilitiesManager);
     }
 
+    for (const skill of this.skills)
+      globalOrLocalPusherArray(abilities, Array.from(skill.$.abilities?.values() ?? []), AbilitiesManager);
+
     const uniques: string[] = [];
     for (var i = 0; i < abilities.length; i++) {
       const passive = abilities[i];

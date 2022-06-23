@@ -5,7 +5,7 @@ import { AbilitiesManager, clamp, CONFIG, EffectManager, ItemManager, LocationMa
 import { AppliedActiveEffect, EffectStacking } from "./ActiveEffects.js";
 import { CraftingMaterials, Material } from "./Crafting.js";
 import { CreatureAbility } from "./CreatureAbilities.js";
-import { DamageCause, DamageGroup, DamageLog, DamageMethod, DamageType, DAMAGE_TO_INJURY_RATIO, HealGroup, HealLog, HealType, PlatingReaction, reductionMultiplier, ShieldReaction, VitalsLog } from "./Damage.js";
+import { DamageCause, DamageGroup, DamageLog, DamageMethod, DamageType, DAMAGE_TO_INJURY_RATIO, HealGroup, HealLog, HealType, reductionMultiplier, ShieldReaction, VitalsLog } from "./Damage.js";
 import { Fight } from "./Fight.js";
 import { GameDirective } from "./GameDirectives.js";
 import { AttackSet, BackpackWearableItemData, ConsumableItemData, GenericItemData, GlovesWearableItemData, InventoryItem, Item, ItemSlot, JacketWearableItemData, MaskWearableItemData, ShieldWearableItemData, SlotDescriptions, VestWearableItemData, WeaponInventoryItem, WeaponItemData, WearableInventoryItem } from "./Items.js";
@@ -36,6 +36,7 @@ export default class Creature {
         npc: data.info?.npc ?? false,
       },
       stats: {
+        ammo: new TrackableStat(1),
         ult_stack_target: new TrackableStat(0),
         attack_cost: new TrackableStat(0),
         accuracy: new TrackableStat(100),
@@ -43,14 +44,11 @@ export default class Creature {
         lethality: new TrackableStat(0),
         passthrough: new TrackableStat(0),
         cutting: new TrackableStat(0),
-        piercing: new TrackableStat(0),
         dissipate: new TrackableStat(0),
         melee: new TrackableStat(100),
         ranged: new TrackableStat(100),
         damage: new TrackableStat(0),
         health: new TrackableStat(120),
-        plating: new TrackableStat(0),
-        plating_effectiveness: new TrackableStat(0),
         action_points: new TrackableStat(0),
         ap_regen: new TrackableStat(0),
         shield: new TrackableStat(0),
@@ -81,7 +79,6 @@ export default class Creature {
       vitals: {
         health: (data.vitals?.health ?? 1),
         injuries: (data.vitals?.injuries ?? 0),
-        plating: (data.vitals?.plating ?? 1),
         action_points: (data.vitals?.action_points ?? 0),
         shield: (data.vitals?.shield ?? 0),
         heat: (data.vitals?.heat ?? 1),
@@ -99,6 +96,7 @@ export default class Creature {
         }()
       },
       abilities: {
+        ammo: data.abilities?.ammo ?? 0,
         ult_stacks: data.abilities?.ult_stacks ?? 0,
         deck: data.abilities?.deck ?? [],
         hand: data.abilities?.hand ?? [],
@@ -163,7 +161,6 @@ export default class Creature {
 
     this.$.stats.armor.base += (slottedItems.vest?.$ as VestWearableItemData).base_armor ?? 0;
     this.$.stats.dissipate.base += (slottedItems.vest?.$ as VestWearableItemData).base_dissipate ?? 0;
-    this.$.stats.plating.base += (slottedItems.vest?.$ as VestWearableItemData).base_plating ?? 0;
 
     this.$.stats.min_comfortable_temperature.base -= (slottedItems.jacket?.$ as JacketWearableItemData).base_insulation ?? 0;
     this.$.stats.heat_capacity.base += (slottedItems.jacket?.$ as JacketWearableItemData).base_heat_capacity ?? 0;
@@ -216,15 +213,7 @@ export default class Creature {
     }
 
 
-    // CAPPING
-    this.$.stats.plating_effectiveness.modifiers.push({
-      type: ModifierType.CAP_MAX,
-      value: 100
-    });
-    //
-
     this.$.vitals.health *= this.$.stats.health.value;
-    this.$.vitals.plating *= this.$.stats.plating.value;
     this.$.vitals.injuries *= this.$.stats.health.value;
     this.$.vitals.shield *= this.$.stats.shield.value;
     this.$.vitals.action_points *= this.$.stats.action_points.value;
@@ -368,15 +357,11 @@ export default class Creature {
     this.$.vitals.health = Math.round(clamp(this.$.vitals.health, 0, this.$.stats.health.value - this.$.vitals.injuries));
     this.$.vitals.action_points = Math.round(clamp(this.$.vitals.action_points, 0, this.$.stats.action_points.value));
     this.$.vitals.shield = Math.round(clamp(this.$.vitals.shield, 0, this.$.stats.shield.value));
-    this.$.vitals.plating = Math.round(clamp(this.$.vitals.plating, 0, this.$.stats.plating.value));
     this.$.vitals.heat = Math.round(clamp(this.$.vitals.heat, 0, this.$.stats.heat_capacity.value));
     this.$.vitals.intensity = Math.round(clamp(this.$.vitals.intensity, 0, this.$.stats.mental_strength.value));
 
     if (isNaN(this.$.vitals.shield) || !isFinite(this.$.vitals.shield))
       this.$.vitals.shield = 0;
-
-    if (isNaN(this.$.vitals.plating) || !isFinite(this.$.vitals.plating))
-      this.$.vitals.plating = 0;
 
     if (isNaN(this.$.vitals.health) || !isFinite(this.$.vitals.health))
       this.$.vitals.health = 1;
@@ -671,32 +656,10 @@ export default class Creature {
               log.total_shield_damage += Math.min(0, this.$.vitals.shield);
 
               let injuries = 0;
-              switch (source.platingReaction) {
-                case PlatingReaction.Ignore: {
-                  this.$.vitals.health += Math.min(0, this.$.vitals.shield);
-                  log.total_health_damage -= Math.min(0, this.$.vitals.shield);
-                  injuries = -Math.min(0, this.$.vitals.shield);
-                } break;
-                default: 
-                case PlatingReaction.Normal: {
-                  let eff = reductionMultiplier(this.$.stats.plating_effectiveness.value - (group.penetration?.piercing ?? 0));
 
-                  log.total_plating_damage -= Math.ceil(Math.max(-this.$.vitals.plating, Math.min(0, this.$.vitals.shield) * eff));
-                  this.$.vitals.plating += Math.ceil(Math.min(0, this.$.vitals.shield) * eff);
-
-                  this.$.vitals.health += Math.min(0, Math.floor(this.$.vitals.plating / eff));
-                  log.total_health_damage -= Math.min(0, Math.floor(this.$.vitals.plating / eff));
-                  injuries = -(Math.min(0, Math.floor(this.$.vitals.plating / eff)));
-
-                  this.$.vitals.plating = Math.max(0, this.$.vitals.plating);
-                } break;
-                case PlatingReaction.Only: {
-                  log.total_plating_damage -= Math.max(-this.$.vitals.plating, Math.min(0, this.$.vitals.shield));
-                  this.$.vitals.plating += Math.min(0, this.$.vitals.shield);
-
-                  this.$.vitals.plating = Math.max(0, this.$.vitals.plating);
-                } break;
-              }
+              this.$.vitals.health += Math.min(0, this.$.vitals.shield);
+              log.total_health_damage -= Math.min(0, this.$.vitals.shield);
+              injuries = -Math.min(0, this.$.vitals.shield);
 
               injuries *= reductionMultiplier(this.$.stats.tenacity.value - (group.penetration?.cutting ?? 0)) * DAMAGE_TO_INJURY_RATIO;
               injuries = Math.round(injuries);
@@ -731,34 +694,11 @@ export default class Creature {
               this.$.vitals.shield = Math.max(this.$.vitals.shield, 0);
             } break;
             case ShieldReaction.Ignore: {
-              switch (source.platingReaction) {
-                default:
-                case PlatingReaction.Normal: {
-                  let eff = reductionMultiplier(this.$.stats.plating_effectiveness.value - (group.penetration?.piercing ?? 0));
-  
-                  log.total_plating_damage -= Math.ceil(Math.max(-this.$.vitals.plating, -source.value * eff));
-                  this.$.vitals.plating += Math.ceil(-source.value * eff);
-  
-                  this.$.vitals.health += Math.min(0, Math.floor(this.$.vitals.plating / eff));
-                  log.total_health_damage -= Math.min(0, Math.floor(this.$.vitals.plating / eff));
-                  let injuries = -(Math.min(0, Math.floor(this.$.vitals.plating / eff)));
-  
-                  this.$.vitals.plating = Math.max(0, this.$.vitals.plating);
-                } break;
-                case PlatingReaction.Ignore: {
-                  log.total_health_damage += source.value;
-                  this.$.vitals.health -= source.value;
+              log.total_health_damage += source.value;
+              this.$.vitals.health -= source.value;
 
-                  log.total_injuries += Math.round(source.value * DAMAGE_TO_INJURY_RATIO * reductionMultiplier(this.$.stats.tenacity.value - (group.penetration?.cutting ?? 0)));
-                  this.$.vitals.injuries += Math.round(source.value * DAMAGE_TO_INJURY_RATIO * reductionMultiplier(this.$.stats.tenacity.value - (group.penetration?.cutting ?? 0)));
-                } break;
-                case PlatingReaction.Only: {
-                  log.total_plating_damage -= Math.max(-this.$.vitals.plating, Math.min(0, this.$.vitals.shield));
-                  this.$.vitals.plating += Math.min(0, this.$.vitals.shield);
-
-                  this.$.vitals.plating = Math.max(0, this.$.vitals.health);
-                } break;
-              }
+              log.total_injuries += Math.round(source.value * DAMAGE_TO_INJURY_RATIO * reductionMultiplier(this.$.stats.tenacity.value - (group.penetration?.cutting ?? 0)));
+              this.$.vitals.injuries += Math.round(source.value * DAMAGE_TO_INJURY_RATIO * reductionMultiplier(this.$.stats.tenacity.value - (group.penetration?.cutting ?? 0)));
 
               this.$.vitals.injuries -= Math.min(0, this.$.vitals.health);
               log.total_injuries -= Math.min(0, this.$.vitals.health);
@@ -835,8 +775,7 @@ export default class Creature {
       injuries_restored: 0,
       mana_restored: 0,
       shields_restored: 0,
-      stress_restored: 0,
-      plating_restored: 0
+      stress_restored: 0
     }
     
     log.final.to = `creature:${this.id}`;
@@ -869,15 +808,12 @@ export default class Creature {
         } break;
         case HealType.Overheal: {
           const _health = this.$.vitals.health;
-          const _plating = this.$.vitals.plating;
           const _shield = this.$.vitals.shield;
 
           this.$.vitals.health += src.value;
-          this.$.vitals.plating += Math.max(this.$.vitals.health - (this.$.stats.health.value - this.$.vitals.injuries), 0);
-          this.$.vitals.shield += Math.max(this.$.vitals.plating - this.$.stats.plating.value, 0);
+          this.$.vitals.shield += Math.max(this.$.vitals.health - this.$.stats.health.value, 0);
           
           log.health_restored += Math.min(this.$.vitals.health, (this.$.stats.health.value - this.$.vitals.injuries)) - _health;
-          log.plating_restored += Math.min(this.$.vitals.plating, this.$.stats.plating.value) - _plating;
           log.shields_restored += Math.min(this.$.vitals.shield, this.$.stats.shield.value) - _shield;
         } break;
         case HealType.ActionPoints: {
@@ -900,12 +836,6 @@ export default class Creature {
           this.$.vitals.intensity = clamp(this.$.vitals.intensity, 0, this.$.stats.mental_strength.value);
           log.stress_restored += Math.min(_intensity - this.$.vitals.intensity, this.$.stats.mental_strength.value);
         } break;
-        case HealType.Plating: {
-          const _plating = this.$.vitals.plating;
-
-          this.$.vitals.plating += src.value;
-          log.plating_restored += Math.min(this.$.vitals.plating, this.$.stats.plating.value) - _plating;
-        }
       }
       this.vitalsIntegrity();
     }
@@ -1204,8 +1134,7 @@ export default class Creature {
         action_points: this.$.vitals.action_points / this.$.stats.action_points.value,
         shield: this.$.vitals.shield / this.$.stats.shield.value,
         heat: this.$.vitals.heat / this.$.stats.heat_capacity.value,
-        intensity: this.$.vitals.intensity / this.$.stats.mental_strength.value,
-        plating: this.$.vitals.plating / this.$.stats.plating.value
+        intensity: this.$.vitals.intensity / this.$.stats.mental_strength.value
       },
       attributes: {} as Record<Attributes, undefined>,
       items: {
@@ -1274,8 +1203,7 @@ export default class Creature {
     Injuries: ["<:inj:961328087289708604>"],
     Shield: ["<:s_0:961328715869061121>", "<:s_25:961328716078800936>", "<:s_50:961328716133318746>", "<:s_75:962026630971265094>", "<:s_100:961328716116549632>"],
     ActionPoints: ["<:m_0:962028272688971826>", "<:m_25:962028272672182303>", "<:m_50:962028272705753158>", "<:m_75:962028272793833492>", "<:m_100:962028272722526218>"],
-    Heat: bar_styles[3],
-    Plating: ["<:p_0:962073474858360872>", "<:p_25:962073475009351780>", "<:p_50:962073474979991582>", "<:p_75:962073475101642822>", "<:p_100:962073475185532928>"]
+    Heat: bar_styles[3]
   }
 
   static readonly ABILITY_DISCARD_COST = 2;
@@ -1466,6 +1394,7 @@ export interface CreatureData {
   }
   abilities: {
     ult_stacks: number
+    ammo: number
     deck: string[]
     hand: string[]
     stacks: number
@@ -1508,6 +1437,7 @@ export interface CreatureDump {
     crafting_materials?: {[key: string]: number}
   }
   abilities?: {
+    ammo?: number
     ult_stacks?: number
     deck?: string[]
     hand?: string[]
@@ -1548,10 +1478,10 @@ export function diceRoll(size = 6): number {
 
 export type Attributes = "STR" | "FOR" | "REJ" | "PER" | "INT" | "DEX" | "CHA" | "MND";
 
-export type Vitals = "health" | "plating" | "action_points" | "shield" | "injuries" | "heat" | "intensity";
+export type Vitals = "health" | "action_points" | "shield" | "injuries" | "heat" | "intensity";
 
 export type Stats = 
-  "accuracy" | "armor" | "dissipate" | "lethality" | "piercing" | "passthrough" | "cutting" | "melee" | "damage" | "ranged" |
-  "health" | "plating" | "plating_effectiveness" | "action_points" | "ap_regen" | "shield" | "shield_regen" | "parry" | "deflect" | "tenacity" | "filtering" |
+  "accuracy" | "armor" | "dissipate" | "lethality" | "passthrough" | "cutting" | "melee" | "damage" | "ranged" |
+  "health" | "action_points" | "ap_regen" | "shield" | "shield_regen" | "parry" | "deflect" | "tenacity" | "filtering" |
   "tech" | "vamp" | "siphon" | "initiative" | "min_comfortable_temperature" | "heat_capacity" | "attack_cost" |
-  "ult_stack_target" | "stress_resistance" | "mental_strength";
+  "ult_stack_target" | "stress_resistance" | "mental_strength" | "ammo";

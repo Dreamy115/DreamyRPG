@@ -1,10 +1,10 @@
-import { Message, MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu, MessageSelectOptionData } from "discord.js";
+import { ColorResolvable, Message, MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu, MessageSelectOptionData } from "discord.js";
 import { AbilitiesManager, CONFIG, ItemManager, limitString, rotateLine, sleep } from "../..";
 import Creature, { diceRoll } from "../../game/Creature";
 import { AbilityType } from "../../game/CreatureAbilities";
 import { DamageCause, DamageLog, damageLogEmbed, DamageMethod, DamageSource, healLogEmbed, ShieldReaction } from "../../game/Damage";
 import { Combatant, CombatPosition, Fight } from "../../game/Fight";
-import { Item, ItemQualityEmoji } from "../../game/Items";
+import { Item, ItemQualityColor, ItemQualityEmoji } from "../../game/Items";
 import { replaceLore } from "../../game/LoreReplacer";
 import { ComponentCommandHandler } from "../component_commands";
 
@@ -167,6 +167,12 @@ export default new ComponentCommandHandler(
           })
           return;
         }
+        if (creature.$.abilities.ammo <= 0) {
+          interaction.editReply({
+            content: "No attacks left."
+          })
+          return;
+        }
 
         if (interaction.isButton()) {
           if (creature.$.abilities.stacks === 0) {
@@ -250,6 +256,12 @@ export default new ComponentCommandHandler(
         if (!creature.canUseAttacks) {
           interaction.editReply({
             content: "You cannot Attack right now."
+          })
+          return;
+        }
+        if (creature.$.abilities.ammo <= 0) {
+          interaction.editReply({
+            content: "No attacks left."
           })
           return;
         }
@@ -349,6 +361,7 @@ export default new ComponentCommandHandler(
           }
 
           creature.$.abilities.stacks = 0;
+          creature.$.abilities.ammo--;
 
           await Promise.all([
             creature.put(db),
@@ -515,6 +528,7 @@ export default new ComponentCommandHandler(
               embeds: [
                 new MessageEmbed()
                   .setTitle(ability.$.info.name)
+                  .setColor(ItemQualityColor[ability.$.info.quality] as ColorResolvable)
                   .setDescription(
                     replaceLore(ability.$.info.lore, ability.$.info.replacers ?? [], creature) +
                     `\n\n` +
@@ -707,6 +721,7 @@ export default new ComponentCommandHandler(
               embeds: [
                 new MessageEmbed()
                   .setTitle(ability.$.info.name)
+                  .setColor(ItemQualityColor[ability.$.info.quality] as ColorResolvable)
                   .setDescription(
                     replaceLore(ability.$.info.lore, ability.$.info.replacers ?? [], creature) +
                     `\n\n` +

@@ -26,7 +26,6 @@ export interface DamageGroup {
     lethality?: number
     passthrough?: number
     cutting?: number
-    piercing?: number
   }
   chance: number
   useDodge: boolean
@@ -75,14 +74,6 @@ export function shieldReactionInfo(type: ShieldReaction): string {
     case ShieldReaction.Normal: return "";
     case ShieldReaction.Only: return "Only Shield";
     case ShieldReaction.Ignore: return "Ignore Shield"
-  }
-}
-export function platingReactionInfo(type: PlatingReaction): string {
-  switch (type) {
-    default: return "Undefined";
-    case PlatingReaction.Normal: return "";
-    case PlatingReaction.Only: return "Only Plating";
-    case PlatingReaction.Ignore: return "Ignore Plating"
   }
 }
 
@@ -134,14 +125,13 @@ export async function damageLogEmbed(log: DamageLog, db: typeof Mongoose) {
 function damageGroupString(group: DamageGroup) {
   return `**${group.chance.toFixed(2)}%** Chance\n**${DamageMethod[group.method]} ${DamageCause[group.cause]}**\n` +
   `*${!group.useDodge ? "Not " : ""}Dodgeable*\n` +
-  `Lethality **${group.penetration?.lethality ?? 0}** | **${group.penetration?.passthrough ?? 0}** Passthrough\nPiercing **${group.penetration?.piercing ?? 0}** | **${group.penetration?.cutting ?? 0}** Cutting\n\n` +
+  `Lethality **${group.penetration?.lethality ?? 0}** | **${group.penetration?.passthrough ?? 0}** Passthrough\n**${group.penetration?.cutting ?? 0}** Cutting\n\n` +
   `**Sources**\n` +
   `${function() {
     var str = "";
     for (const source of group.sources) {
       var s_reaction = source.type !== DamageType.Stress ? shieldReactionInfo(source.shieldReaction ?? ShieldReaction.Normal) : null;
-      var p_reaction = source.type !== DamageType.Stress ? platingReactionInfo(source.platingReaction ?? PlatingReaction.Normal) : null;
-      str += `[**${source.value} ${DamageType[source.type]}**${s_reaction ? ` **${s_reaction}**` : ""}${p_reaction ? ` **${p_reaction}**` : ""}]\n`
+      str += `[**${source.value} ${DamageType[source.type]}**${s_reaction ? ` **${s_reaction}**` : ""}]\n`
     }
 
     return str.trim();;
@@ -162,7 +152,7 @@ export interface HealGroup {
 }
 
 export enum HealType {
-  "Health", "Shield", "Overheal", "ActionPoints", "Injuries", "Stress", "Plating"
+  "Health", "Shield", "Overheal", "ActionPoints", "Injuries", "Stress"
 }
 
 
@@ -174,7 +164,6 @@ export interface HealLog {
 
   health_restored: number
   shields_restored: number
-  plating_restored: number
   stress_restored: number
   mana_restored: number
   injuries_restored: number
@@ -202,7 +191,7 @@ export async function healLogEmbed(log: HealLog, db: typeof Mongoose) {
   ).addField(
     "Total",
     `**${log.health_restored}**/**${log.injuries_restored}** Health/Injuries\n` +
-    `**${log.shields_restored}**/**${log.plating_restored}** Shields/Plating\n` +
+    `**${log.shields_restored}** Shields\n` +
     `**${log.mana_restored}** Action Points\n` +
     `**${log.stress_restored}** Intensity\n` 
   )

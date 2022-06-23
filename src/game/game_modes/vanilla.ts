@@ -21,7 +21,6 @@ export default [
         preload: (creature) => {
           creature.$.stats.attack_cost.base += 7;
           creature.$.stats.accuracy.base -= 10;
-          creature.$.stats.plating_effectiveness.base += 30;
           creature.$.stats.action_points.base += 20;
           creature.$.stats.ap_regen.base += 12;
           creature.$.stats.parry.base += 12;
@@ -124,6 +123,7 @@ export default [
           if (creature.alive) {
             creature.$.vitals.shield += creature.$.stats.shield_regen.value;
             creature.$.vitals.action_points += creature.$.stats.ap_regen.value;
+            creature.$.abilities.ammo = creature.$.stats.ammo.value;
           }
       
           if (creature.deltaHeat >= 0) {

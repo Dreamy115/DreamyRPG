@@ -3,6 +3,7 @@ import Mongoose from "mongoose";
 import path from "path";
 import Creature from "./Creature";
 import { VitalsLog } from "./Damage";
+import { ItemQuality } from "./Items";
 import { LoreReplacer } from "./LoreReplacer";
 
 export default class CreatureAbilitiesManager {
@@ -39,6 +40,7 @@ export class CreatureAbility {
       name: string
       lore: string
       replacers?: LoreReplacer[]
+      quality: ItemQuality
     }
     type: AbilityType
     min_targets: number // If this is 0, only caster is provided and targets is empty

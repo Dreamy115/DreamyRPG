@@ -5,7 +5,7 @@ import { AbilitiesManager, CONFIG, EffectManager, ItemManager, limitString, remo
 import { make_bar } from "../app/Bars";
 import Creature from "./Creature";
 import { DamageMethod } from "./Damage";
-import { WeaponItemData } from "./Items";
+import { ItemQualityEmoji, WeaponItemData } from "./Items";
 import { replaceLore } from "./LoreReplacer";
 import { textStat } from "./Stats";
 
@@ -28,7 +28,7 @@ export class Fight {
     round?: number
   }) {
     this.$ = {
-      _id: String(data._id) ?? SnowflakeUtil.generate(),
+      _id: data._id as string || SnowflakeUtil.generate(),
       parties: data.parties ?? [],
       queue: data.queue ?? [],
       round: data.round ?? 1
@@ -200,17 +200,7 @@ export class Fight {
             ? make_bar(100, Creature.BAR_STYLES.Injuries, Math.max(1, injury_ratio * Math.floor(creature.$.stats.health.value / BAR_LENGTH))).str
             : ""
           ) +
-          (
-            creature.$.stats.plating.value > 0
-            ? make_bar(100 * creature.$.vitals.plating / creature.$.stats.plating.value, Creature.BAR_STYLES.Plating, Math.max(1, Math.floor(creature.$.stats.plating.value / BAR_LENGTH))).str
-            : ""
-          ) +
           ` **Health** **${char.$.vitals.health}**/**${char.$.stats.health.value - char.$.vitals.injuries}**\n` + 
-          (
-            creature.$.stats.plating.value > 0
-            ? `**Plating** ${textStat(creature.$.vitals.plating, creature.$.stats.plating.value)} _[**${creature.$.stats.plating_effectiveness.value}**]_`
-            : "No Plating"
-          ) + "\n" +
           `(**${Math.round(100 * char.$.vitals.health / char.$.stats.health.value)}%**)\n` +
           make_bar(100 *char.$.vitals.action_points / char.$.stats.action_points.value, Creature.BAR_STYLES.ActionPoints, creature.$.stats.action_points.value / creature.$.stats.attack_cost.value).str +
           ` **Action Points** ${textStat(char.$.vitals.action_points, char.$.stats.action_points.value)} `+
@@ -219,7 +209,7 @@ export class Fight {
             weapon
             ? `${weapon.displayName} -> **${char.getFinalDamage((weapon.$ as WeaponItemData).attack.type).toFixed(1)}**`
             : `Unarmed -> **${char.getFinalDamage(DamageMethod.Melee).toFixed(1)}**`
-          ) + "\n" +
+          ) + ` [**${creature.$.stats.ammo.value}** Attacks]` + "\n" +
           (function() {
             const arr: string[] = [];
             for (const active of char.active_effects) {
@@ -295,12 +285,12 @@ export class Fight {
       new MessageActionRow().setComponents([
         new MessageButton()
           .setCustomId(`fight/${this.$._id}/attack`)
-          .setLabel(`Attack (${creature?.$.stats.attack_cost.value} MP)`)
+          .setLabel(`Attack (${creature?.$.stats.attack_cost.value} AP)[${creature?.$.abilities.ammo}]`)
           .setStyle("PRIMARY")
-          .setDisabled(!creature?.canUseAttacks),
+          .setDisabled(!(creature?.canUseAttacks && creature?.$.abilities.ammo >= 1)),
         new MessageButton()
           .setCustomId(`fight/${this.$._id}/weapon_switch`)
-          .setLabel(`Switch Weapons (${creature?.combat_switch_cost} MP)`)
+          .setLabel(`Switch Weapons (${creature?.combat_switch_cost} AP)`)
           .setStyle("SECONDARY"),
         new MessageButton()
           .setCustomId(`fight/${this.$._id}/endturn`)
@@ -323,8 +313,8 @@ export class Fight {
               if (index === -1) {
                 const test: void | Error = await ability.$.test(creature).catch(e => typeof e === "string" ? new Error(e) : e);
                 array.push({
-                  label: `${ability.$.info.name} (${ability.$.cost} MP) []`,
-                  emoji: (test instanceof Error ? "⚠️" : undefined),
+                  label: `${ability.$.info.name} (${ability.$.cost} AP) []`,
+                  emoji: (test instanceof Error ? "⚠️" : ItemQualityEmoji[ability.$.info.quality]),
                   value: ability.$.id,
                   description: limitString(
                     test instanceof Error
@@ -350,7 +340,7 @@ export class Fight {
       new MessageActionRow().setComponents([
         new MessageSelectMenu()
           .setCustomId(`fight/${this.$._id}/ability_discard`)
-          .setPlaceholder(`Discard Ability [2 MP] (${creature?.$.abilities.hand.length ?? 0}/${Creature.MAX_HAND_AMOUNT})`)
+          .setPlaceholder(`Discard Ability [2 AP] (${creature?.$.abilities.hand.length ?? 0}/${Creature.MAX_HAND_AMOUNT})`)
           .setOptions(await async function () {
             const array: MessageSelectOptionData[] = [];
 
@@ -362,8 +352,8 @@ export class Fight {
               if (index === -1) {
                 const test: void | Error = await ability.$.test(creature).catch(e => typeof e === "string" ? new Error(e) : e);
                 array.push({
-                  label: `${ability.$.info.name} (${ability.$.cost} MP) []`,
-                  emoji: (test instanceof Error ? "⚠️" : undefined),
+                  label: `${ability.$.info.name} (${ability.$.cost} AP) []`,
+                  emoji: (test instanceof Error ? "⚠️" : ItemQualityEmoji[ability.$.info.quality]),
                   value: ability.$.id,
                   description: limitString(
                     test instanceof Error

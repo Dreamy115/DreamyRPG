@@ -48,8 +48,7 @@ export default [
     type: "wearable",
     slot: "vest",
     base_armor: 2,
-    base_dissipate: 1,
-    base_plating: 5,
+    base_dissipate: 1
   }),
   new Item({
     id: "vanilla:example_backpack",
@@ -87,6 +86,7 @@ export default [
     category: WeaponCategory.knife,
     base_damage: 2,
     base_tech: 0,
+    ammo: 1,
     attack: {
       type: DamageMethod.Melee,
       weak: [
@@ -150,6 +150,7 @@ export default [
     category: WeaponCategory.pistol,
     base_damage: 2,
     base_tech: 0,
+    ammo: 1,
     attack: {
       type: DamageMethod.Ranged,
       weak: [

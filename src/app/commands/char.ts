@@ -794,19 +794,6 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
           inline: true
         },
         {
-          name: (
-            creature.$.stats.plating.value > 0
-            ? `**Plating** ${textStat(creature.$.vitals.plating, creature.$.stats.plating.value)}` 
-            : "No Plating"
-          ),
-          value: (
-            creature.$.stats.plating.value > 0
-            ? make_bar(100 * creature.$.vitals.plating / creature.$.stats.plating.value, Creature.BAR_STYLES.Plating, Math.max(1, Math.floor(creature.$.stats.plating.value / BAR_LENGTH))).str
-            : "---"
-          ),
-          inline: true
-        },
-        {
           name: `Shield ${creature.$.stats.shield.value > 0 ? textStat(creature.$.vitals.shield, creature.$.stats.shield.value) : "---"} **${creature.$.stats.shield_regen.value}**/t`,
           value: (
             creature.$.stats.shield.value > 0
@@ -840,11 +827,11 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
             `**${creature.$.stats.accuracy.value}%** Accuracy *(Hit Chance)*\n` +
             `Melee **${creature.$.stats.melee.value}%** | **${creature.$.stats.ranged.value}%** Ranged *(Weapon Proficiency)*\n` +
             `**${creature.$.stats.damage.value}** Damage Rating *(Melee **${creature.getFinalDamage(DamageMethod.Melee).toFixed(1)}** | **${creature.getFinalDamage(DamageMethod.Ranged).toFixed(1)}** Ranged)*\n` +
-            `[**${(creature.getFinalDamage(creature.attackSet.type) * creature.$.stats.ap_regen.value / creature.$.stats.attack_cost.value).toFixed(1)}** DPS *(DMG\\*AP\\_REG/COST)*]\n` +
+            `**${creature.$.stats.ammo.value}** Attacks\n` +
             `**${creature.$.stats.tech.value}** Tech *(Ability Power)*\n` +
             "\n" +
-            `Lethality **${creature.$.stats.lethality.value}** | **${creature.$.stats.passthrough.value}** Passthrough\nPiercing **${creature.$.stats.piercing.value}** | **${creature.$.stats.cutting.value}** Cutting\n` +
-            `_(Reduces enemy **Armor**|**Dissipate** and **Plating**|**Tenacity**.)_` +
+            `Lethality **${creature.$.stats.lethality.value}** | **${creature.$.stats.passthrough.value}** Passthrough\n**${creature.$.stats.cutting.value}** Cutting\n` +
+            `_(Reduces enemy **Armor**|**Dissipate** and **Tenacity**.)_` +
             "\n" +
             `Vamp **${creature.$.stats.vamp.value}%** | **${creature.$.stats.siphon.value}%** Siphon *(Regenerates **health** | **shields** by **%** of **Physical** | **Energy** Damage dealt.)*\n` +
             "\n" +
@@ -855,7 +842,6 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
           value:
           `**${creature.$.stats.armor.value}** Armor *(**${(100 * (1 - reductionMultiplier(creature.$.stats.armor.value))).toFixed(1)}%** Reduced Physical Damage)*\n` +
           `**${creature.$.stats.dissipate.value}** Dissipate *(**${(100 * (1 - reductionMultiplier(creature.$.stats.dissipate.value))).toFixed(1)}%** Reduced Energy Damage)*\n` +
-          `**${creature.$.stats.plating_effectiveness.value}** Plating Effectiveness *(**${(100 * (1 - reductionMultiplier(creature.$.stats.plating_effectiveness.value))).toFixed(1)}%** Reduced Plating Damage)*\n\n` +
           `Parry **${creature.$.stats.parry.value}%** | **${creature.$.stats.deflect.value}%** Deflect *(Reduces hit chance from **Melee** | **Ranged**)*\n` +
           "\n" +
           `**${creature.$.stats.tenacity.value}** Tenacity *(Taking **${(100 * reductionMultiplier(creature.$.stats.tenacity.value) * DAMAGE_TO_INJURY_RATIO).toFixed(1)}%** health damage as **Injuries**)*` +
@@ -1026,8 +1012,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
           **${((attackdata.modifiers?.accuracy ?? 0) + (creature.$.stats.accuracy.value * rotateLine((type === DamageMethod.Melee ? creature.$.stats.melee.value : creature.$.stats.ranged.value) / 100, Creature.PROFICIENCY_ACCURACY_SCALE, 1))).toFixed(1)} *(${(creature.$.stats.accuracy.value * rotateLine((type === DamageMethod.Melee ? creature.$.stats.melee.value : creature.$.stats.ranged.value) / 100, Creature.PROFICIENCY_ACCURACY_SCALE, 1)).toFixed(1)} ${(attackdata.modifiers?.accuracy ?? 0) >= 0 ? "+" : "-"}${Math.abs(attackdata.modifiers?.accuracy ?? 0)})*** Accuracy
           **${creature.$.stats.lethality.value + (attackdata.modifiers?.lethality ?? 0)}** Lethality _(${creature.$.stats.lethality.value} **${(attackdata.modifiers?.lethality ?? 0) >= 0 ? "+" : "-"}${Math.abs((attackdata.modifiers?.lethality ?? 0))}**)_
           **${creature.$.stats.passthrough.value + (attackdata.modifiers?.passthrough ?? 0)}** Passthrough _(${creature.$.stats.passthrough.value} **${(attackdata.modifiers?.passthrough ?? 0) >= 0 ? "+" : "-"}${Math.abs((attackdata.modifiers?.passthrough ?? 0))}**)_
-          **${creature.$.stats.cutting.value + (attackdata.modifiers?.cutting ?? 0)}** Cutting _(${creature.$.stats.cutting.value} **${(attackdata.modifiers?.cutting ?? 0) >= 0 ? "+" : "-"}${Math.abs((attackdata.modifiers?.cutting ?? 0))}**)_
-          **${creature.$.stats.piercing.value + (attackdata.modifiers?.piercing ?? 0)}** Piercing _(${creature.$.stats.piercing.value} **${(attackdata.modifiers?.piercing ?? 0) >= 0 ? "+" : "-"}${Math.abs((attackdata.modifiers?.piercing ?? 0))}**)_`
+          **${creature.$.stats.cutting.value + (attackdata.modifiers?.cutting ?? 0)}** Cutting _(${creature.$.stats.cutting.value} **${(attackdata.modifiers?.cutting ?? 0) >= 0 ? "+" : "-"}${Math.abs((attackdata.modifiers?.cutting ?? 0))}**)_`
           + "\n\n";
         }
 
@@ -1571,7 +1556,7 @@ export function describeItem(invitem?: InventoryItem, creature?: Creature) {
           str += `Heat Capacity: **${item.$.base_heat_capacity}**\nInsulation: **${-item.$.base_insulation}**\n`
         } break;
         case "vest": {
-          str += `Armor **${item.$.base_armor}** | **${item.$.base_dissipate}** Dissipate\nPlating **${item.$.base_plating}**\n`;
+          str += `Armor **${item.$.base_armor}** | **${item.$.base_dissipate}** Dissipate\n`;
         } break;
         case "gloves": {
           str += `Action Points: **${item.$.base_ap}** **${item.$.base_ap_regen}**/t\nTech: **${item.$.base_tech}**\n`;

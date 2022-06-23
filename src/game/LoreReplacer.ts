@@ -7,6 +7,7 @@ export interface LoreReplacer {
   stat: Stats | Attributes | "offensive_module" | "defensive_module" | "technical_module" | "accelerating_module";
   bonus?: number;
   multiplier: number;
+  precision?: number
 }
 
 export function replaceLore(input: string, replacers: LoreReplacer[], creature?: Creature): string {
@@ -25,9 +26,9 @@ export function replaceLore(input: string, replacers: LoreReplacer[], creature?:
               (creature.$.stats[replacer.stat as Stats] ?? creature.$.attributes[replacer.stat as Attributes])?.value ?? 
               (creature.stat_modules.get(
                 capitalize(replacer.stat.substring(0, replacer.stat.length - "_module".length)) as unknown as ModuleType) ?? 0
-              ) * replacer.multiplier
-            )
-            ) + (replacer.bonus ?? 0)).toFixed(1)}**`
+              ) 
+            ) * replacer.multiplier
+            ) + (replacer.bonus ?? 0)).toFixed(replacer.precision ?? 1)}**)`
           : ""
       )
     );

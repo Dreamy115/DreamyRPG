@@ -1555,7 +1555,7 @@ export function describeItem(invitem?: InventoryItem, creature?: Creature) {
           str += `Air Filter: **${item.$.base_filtering}**\n`;
         } break;
         case "jacket": {
-          str += `Heat Capacity: **${item.$.base_heat_capacity}**\nInsulation: **${-item.$.base_insulation}**\n`
+          str += `Heat Capacity: **${item.$.base_heat_capacity}**\nInsulation: **${item.$.base_insulation}**\n`
         } break;
         case "vest": {
           str += `Armor **${item.$.base_armor}** | **${item.$.base_dissipate}** Dissipate\n`;

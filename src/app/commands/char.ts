@@ -934,11 +934,11 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
       scrollable = true;
 
       const _items = creature.$.items.backpack;
-      const items: Item[] = [];
+      const items: (Item|undefined)[] = [];
       for (const i of _items) {
         const item = ItemManager.map.get(i.id);
-        if (item)
-          items.push(item);
+
+        items.push(item);
       }
 
       if (items.length > total) {
@@ -947,6 +947,8 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
 
       for (var i = index * PER_INDEX_PAGE; i < items.length && i < PER_INDEX_PAGE * (index + 1); i++) {
         const item = items[i];
+
+        if (!item) continue;
 
         embed.addField(
           `<**${i+1}**> **${item.displayName}** \`${item.$.id}\`\n**${capitalize(item.$.type)}**${

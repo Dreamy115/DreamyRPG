@@ -2,7 +2,7 @@ import { ApplicationCommandOptionChoiceData, MessageEmbed } from "discord.js";
 import { capitalize, CONFIG, ItemManager, LootTables } from "../..";
 import { CraftingMaterials, Material } from "../../game/Crafting";
 import Creature, { Attributes } from "../../game/Creature";
-import { DamageCause, DamageGroup, damageLogEmbed, DamageMethod, DamageType, healLogEmbed, HealType, PlatingReaction, ShieldReaction } from "../../game/Damage";
+import { DamageCause, DamageGroup, damageLogEmbed, DamageMethod, DamageType, healLogEmbed, HealType, ShieldReaction } from "../../game/Damage";
 import { ConsumableItemData, createItem, InventoryItem, SpecializedWearableData, UltimateWearableItemData } from "../../game/Items";
 import { LootTable } from "../../game/LootTables";
 import { replaceLore } from "../../game/LoreReplacer";
@@ -187,23 +187,6 @@ export default new ApplicationCommandHandler({
             for (const type of Object.values(ShieldReaction).filter(x => !isNaN(Number(x)))) {
               options.push({
                 name: ShieldReaction[Number(type)],
-                value: type
-              })
-            }
-
-            return options;
-          }()
-        },
-        {
-          name: "plating_reaction",
-          description: "How the plating reacts",
-          type: "INTEGER",
-          choices: function () {
-            const options: ApplicationCommandOptionChoiceData[] = [];
-
-            for (const type of Object.values(PlatingReaction).filter(x => !isNaN(Number(x)))) {
-              options.push({
-                name: PlatingReaction[Number(type)],
                 value: type
               })
             }
@@ -864,8 +847,7 @@ export default new ApplicationCommandHandler({
         sources: [{
           type: interaction.options.getInteger("type", true),
           value: interaction.options.getNumber("amount", true),
-          shieldReaction: interaction.options.getInteger("shield_reaction", false) ?? ShieldReaction.Normal,
-          platingReaction: interaction.options.getInteger("plating_reaction", false) ?? PlatingReaction.Normal
+          shieldReaction: interaction.options.getInteger("shield_reaction", false) ?? ShieldReaction.Normal
         }],
         from: interaction.options.getString("attacker", false) ?? undefined
       }

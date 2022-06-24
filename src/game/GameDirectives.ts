@@ -50,6 +50,7 @@ export class GameDirective {
     }
     passives?: Set<(PassiveEffect | string)> 
     perks?: Set<string>
+    abilities?: Set<string>
     effects?: LocationEffect[]
   }
 

@@ -704,7 +704,7 @@ export function abilitiesDescriptor(abilities: string[]) {
       const ability = AbilitiesManager.map.get(ab);
       if (!ability) continue;
 
-      str += `${ability.$.info.name} \`${ability.$.id}\``;
+      str += `${ability.displayName} \`${ability.$.id}\``;
     }
     str += "\n"
   }

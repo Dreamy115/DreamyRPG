@@ -466,6 +466,11 @@ export default class Creature {
       globalOrLocalPusherArray(abilities, Array.from(species.$.abilities?.values() ?? []), AbilitiesManager);
     }
 
+    // GLOBAL from Directives
+    for (const directive of GameDirective.enabled) {
+      globalOrLocalPusherArray(abilities, Array.from(directive.$.abilities?.values() ?? []), AbilitiesManager);
+    }
+
     for (const item of this.itemsData) {
       globalOrLocalPusherArray(abilities, Array.from((item.$ as Exclude<typeof item.$, GenericItemData | ConsumableItemData>).abilities?.values() ?? []), AbilitiesManager);
     }

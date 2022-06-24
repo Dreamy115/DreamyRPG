@@ -409,7 +409,7 @@ export default new ComponentCommandHandler(
               return;
             }
 
-            const test: void | Error = await ability.$.test(creature).catch(e => typeof e === "string" ? new Error(e) : e);
+            const test: void | Error = await ability.$.test?.(creature).catch(e => typeof e === "string" ? new Error(e) : e);
             if (test instanceof Error) {
               interaction.followUp({
                 ephemeral: true,
@@ -447,7 +447,7 @@ export default new ComponentCommandHandler(
             }
 
             try {
-              await ability.$.test(creature);
+              await ability.$.test?.(creature);
               const uselog = await ability.$.use(creature, db, targets, accuracy_mods);
               creature.$.vitals.action_points -= ability.$.cost;
               creature.$.abilities.hand.splice(creature.$.abilities.hand.findIndex((v) => v === ability.$.id), 1);
@@ -505,7 +505,7 @@ export default new ComponentCommandHandler(
               return;
             }
 
-            const test: void | Error = await ability.$.test(creature).catch(e => typeof e === "string" ? new Error(e) : e);
+            const test: void | Error = await ability.$.test?.(creature).catch(e => typeof e === "string" ? new Error(e) : e);
             if (test instanceof Error) {
               interaction.followUp({
                 ephemeral: true,
@@ -630,7 +630,7 @@ export default new ComponentCommandHandler(
             }
 
             try {
-              await ability.$.test(creature);
+              await ability.$.test?.(creature);
               const uselog = await ability.$.use(creature, db, targets, accuracy_mods);
               creature.$.vitals.action_points -= ability.$.cost;
               creature.$.abilities.hand.splice(creature.$.abilities.hand.findIndex((v) => v === ability.$.id), 1);
@@ -698,7 +698,7 @@ export default new ComponentCommandHandler(
               return;
             }
 
-            const test: void | Error = await ability.$.test(creature).catch(e => typeof e === "string" ? new Error(e) : e);
+            const test: void | Error = await ability.$.test?.(creature).catch(e => typeof e === "string" ? new Error(e) : e);
             if (test instanceof Error) {
               interaction.followUp({
                 ephemeral: true,
@@ -795,7 +795,7 @@ export default new ComponentCommandHandler(
           });
           await interaction.followUp({
             ephemeral: false,
-            content: `**${ability.$.info.name}** discarded${new_ability ? ` and replaced by **${new_ability.$.info.name}**` : ""}.`
+            content: `**${ability.displayName}** discarded${new_ability ? ` and replaced by **${new_ability.displayName}**` : ""}.`
           });
           interaction.followUp(await fight.announceTurn(db, Bot));
         }

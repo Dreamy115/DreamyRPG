@@ -76,7 +76,8 @@ export async function getAutocompleteListOfItems(value: string, type: string): P
 
       if (input_regex.test(item.$.id ?? "") || input_regex.test(item.$.info.name)) 
         choices.push({
-          name: `${item.$.info.name} (${item.$.id})`,
+          // @ts-ignore-error
+          name: `${item.displayName ?? item.$.info.name} (${item.$.id})`,
           value: item.$.id ?? "null"
         })
     }

@@ -311,7 +311,7 @@ export class Fight {
 
               const index = array.findIndex((v) => v.value === ability.$.id)
               if (index === -1) {
-                const test: void | Error = await ability.$.test(creature).catch(e => typeof e === "string" ? new Error(e) : e);
+                const test: void | Error = await ability.$.test?.(creature).catch(e => typeof e === "string" ? new Error(e) : e);
                 array.push({
                   label: `${ability.$.info.name} (${ability.$.cost} AP) []`,
                   emoji: (test instanceof Error ? "⚠️" : ItemQualityEmoji[ability.$.info.quality]),
@@ -350,7 +350,7 @@ export class Fight {
 
               const index = array.findIndex((v) => v.value === ability.$.id)
               if (index === -1) {
-                const test: void | Error = await ability.$.test(creature).catch(e => typeof e === "string" ? new Error(e) : e);
+                const test: void | Error = await ability.$.test?.(creature).catch(e => typeof e === "string" ? new Error(e) : e);
                 array.push({
                   label: `${ability.$.info.name} (${ability.$.cost} AP) []`,
                   emoji: (test instanceof Error ? "⚠️" : ItemQualityEmoji[ability.$.info.quality]),

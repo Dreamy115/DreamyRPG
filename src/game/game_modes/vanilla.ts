@@ -167,7 +167,7 @@ export default [
     ])
   }),
   new GameDirective({
-    id: "decisive",
+    id: "vanilla:decisive",
     info: {
       name: "Decisive",
       lore: "The Decisive directive requires more quick thinking, with a higher emphasis on Abilities and tactics, and a little bit of luck."

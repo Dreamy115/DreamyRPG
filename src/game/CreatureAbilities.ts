@@ -3,7 +3,7 @@ import Mongoose from "mongoose";
 import path from "path";
 import Creature from "./Creature";
 import { VitalsLog } from "./Damage";
-import { ItemQuality } from "./Items";
+import { ItemQuality, ItemQualityEmoji } from "./Items";
 import { LoreReplacer } from "./LoreReplacer";
 
 export default class CreatureAbilitiesManager {
@@ -49,9 +49,12 @@ export class CreatureAbility {
     haste?: number
     cost: number
     use: (caster: Creature, db: typeof Mongoose, targets: Creature[], accuracy_mods: number[]) => Promise<AbilityUseLog>
-    test: (caster: Creature) => Promise<void> // Resolve if can use, Reject if cannot use currently
+    test?: (caster: Creature) => Promise<void> // Resolve if can use, Reject if cannot use currently
   }
 
+  get displayName() {
+    return `${ItemQualityEmoji[this.$.info.quality]}${this.$.info.name}`;
+  }
   constructor(data: CreatureAbility["$"]) {
     this.$ = data;
   }

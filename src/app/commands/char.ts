@@ -963,7 +963,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
       const ability = creature.ultimate;
       if (ability)
         embed.addField(
-          `Ultimate \`${ability.$.id}\` ${ability.$.info.name}`,
+          `Ultimate \`${ability.$.id}\` ${ability.displayName}`,
           `${replaceLore(ability.$.info.lore, ability.$.info.replacers ?? [], creature)}\n\n` +
           `**${ability.$.min_targets}**${ability.$.max_targets ? `to **${ability.$.max_targets}**` : ""} Targets\n` +
           `**${ability.$.cost}** Ult Stacks\n` +
@@ -1299,17 +1299,17 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
         }
         if (skill.$.abilities) {
           const abilities: string[] = [];
-          for (const p of skill.$.abilities) {
-            let perk: CreatureAbility | undefined;
-            if (typeof p === "string") {
-              perk = AbilitiesManager.map.get(p)
+          for (const a of skill.$.abilities) {
+            let ability: CreatureAbility | undefined;
+            if (typeof a === "string") {
+              ability = AbilitiesManager.map.get(a)
             } else {
-              perk = p;
+              ability = a;
             }
     
-            if (!perk) continue;
+            if (!ability) continue;
             
-            abilities.push(perk.$.info.name);
+            abilities.push(ability.displayName);
           }
     
           str += `**Abilities**: **${abilities.join("**, **")}**\n`;
@@ -1617,7 +1617,7 @@ export function describeItem(invitem?: InventoryItem, creature?: Creature) {
 
         if (!ab) continue;
         
-        abilities.push(ab.$.info.name);
+        abilities.push(ab.displayName);
       }
 
       str += `**Abilities**: **${abilities.join("**, **")}**\n`;

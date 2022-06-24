@@ -604,8 +604,7 @@ export default class Creature {
       total_shield_damage: 0,
       total_true_damage: 0,
       total_stress_applied: 0,
-      total_stress_mitigated: 0,
-      total_plating_damage: 0
+      total_stress_mitigated: 0
     }
 
     group.to = original.to;
@@ -730,7 +729,7 @@ export default class Creature {
         }
       }
 
-      log.total_damage_taken = log.total_health_damage + log.total_plating_damage + log.total_shield_damage;
+      log.total_damage_taken = log.total_health_damage + log.total_shield_damage;
 
       log.total_damage_mitigated = log.total_damage_taken;
       for (const source of original.sources) {

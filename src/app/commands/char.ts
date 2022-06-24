@@ -1641,9 +1641,9 @@ export function describeItem(invitem?: InventoryItem, creature?: Creature) {
       case "weapon": {
         str += 
           `\nWeapon Type: **${DamageMethod[item.$.attack.type]}** | **${capitalize(WeaponCategory[item.$.category].replaceAll(/_/g, " "))}**\n` +
-          `- **Crit** Attack\n${attackDescriptor(item.$.attack.crit)}\n` +
-          `- **Normal** Attack\n${attackDescriptor(item.$.attack.normal)}\n` +
-          `- **Weak** Attack\n${attackDescriptor(item.$.attack.weak)}\n`
+          `- **🟥Crit** Attack\n${attackDescriptor(item.$.attack.crit)}\n` +
+          `- **🟩Normal** Attack\n${attackDescriptor(item.$.attack.normal)}\n` +
+          `- **🟨Weak** Attack\n${attackDescriptor(item.$.attack.weak)}\n`
       } break;
     }
   }

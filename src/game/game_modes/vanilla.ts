@@ -162,6 +162,14 @@ export default [
             }],
             from: "Fight-Enter Regen"
           }, db);
+        },
+        onFightExit: async (creature, db) => {
+          await creature.heal({
+            from: "Fight-Exit Calm Down",
+            sources: [{
+              type: HealType.Stress, value: creature.$.vitals.intensity / 2
+            }]
+          }, db);
         }
       })
     ])

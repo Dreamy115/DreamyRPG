@@ -1,10 +1,11 @@
+import { ColorResolvable, MessageEmbed } from "discord.js";
 import fs from "fs";
 import Mongoose from "mongoose";
 import path from "path";
 import Creature from "./Creature";
 import { VitalsLog } from "./Damage";
-import { ItemQuality, ItemQualityEmoji } from "./Items";
-import { LoreReplacer } from "./LoreReplacer";
+import { ItemQuality, ItemQualityColor, ItemQualityEmoji } from "./Items";
+import { LoreReplacer, replaceLore } from "./LoreReplacer";
 
 export default class CreatureAbilitiesManager {
   map = new Map<string, CreatureAbility>();
@@ -41,6 +42,7 @@ export class CreatureAbility {
       lore: string
       replacers?: LoreReplacer[]
       quality: ItemQuality
+      role: AbilityRole
     }
     type: AbilityType
     min_targets: number // If this is 0, only caster is provided and targets is empty
@@ -58,6 +60,18 @@ export class CreatureAbility {
   constructor(data: CreatureAbility["$"]) {
     this.$ = data;
   }
+  describeEmbed(creature?: Creature) {
+    return new MessageEmbed()
+    .setTitle(this.$.info.name)
+    .setColor(ItemQualityColor[this.$.info.quality] as ColorResolvable)
+    .setDescription(
+      replaceLore(this.$.info.lore, this.$.info.replacers ?? [], creature) +
+      `\n\n` +
+      `Cost **${this.$.cost}**\n` +
+      `Haste **${this.$.haste ?? 1}**\n` +
+      `Type **${AbilityType[this.$.type]}** / **${AbilityRole[this.$.info.role]}**`
+    )
+  }
 }
 
 export enum AbilityType {
@@ -69,4 +83,9 @@ export interface AbilityUseLog {
   vitalsLogs?: VitalsLog[]
   text: string
   returns?: string[]
+}
+
+
+export enum AbilityRole {
+  "Duelist", "Motivator", "Controller", "Tank"
 }

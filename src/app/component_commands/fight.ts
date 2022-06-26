@@ -477,7 +477,11 @@ export default new ComponentCommandHandler(
                 ephemeral: false,
                 content: uselog.text,
                 embeds: vlog_embeds.length > 0 ? vlog_embeds : undefined
-              })
+              });
+              await interaction.followUp({
+                content: "*This card was used*",
+                embeds: [ability.describeEmbed(creature)]
+              });
 
               interaction.followUp(await fight.announceTurn(db, Bot));
             } catch (e: any) {
@@ -525,18 +529,7 @@ export default new ComponentCommandHandler(
             interaction.followUp({
               ephemeral: true,
               content: "Pick your targets",
-              embeds: [
-                new MessageEmbed()
-                  .setTitle(ability.$.info.name)
-                  .setColor(ItemQualityColor[ability.$.info.quality] as ColorResolvable)
-                  .setDescription(
-                    replaceLore(ability.$.info.lore, ability.$.info.replacers ?? [], creature) +
-                    `\n\n` +
-                    `Cost **${ability.$.cost}**\n` +
-                    `Haste **${ability.$.haste ?? 1}**\n` +
-                    `Type **${AbilityType[ability.$.type]}**`
-                  )
-              ],
+              embeds: [ability.describeEmbed(creature)],
               components: [new MessageActionRow().setComponents([new MessageSelectMenu()
                 .setCustomId(`fight/${fight.$._id}/ult/${ability.$.id}`)
                 .setMinValues(ability.$.min_targets)
@@ -660,7 +653,11 @@ export default new ComponentCommandHandler(
                 ephemeral: false,
                 content: uselog.text,
                 embeds: vlog_embeds.length > 0 ? vlog_embeds : undefined
-              })
+              });
+              await interaction.followUp({
+                content: "*This card was used*",
+                embeds: [ability.describeEmbed(creature)]
+              });
 
               interaction.followUp(await fight.announceTurn(db, Bot));
             } catch (e: any) {
@@ -718,18 +715,7 @@ export default new ComponentCommandHandler(
             interaction.followUp({
               ephemeral: true,
               content: "Pick your targets",
-              embeds: [
-                new MessageEmbed()
-                  .setTitle(ability.$.info.name)
-                  .setColor(ItemQualityColor[ability.$.info.quality] as ColorResolvable)
-                  .setDescription(
-                    replaceLore(ability.$.info.lore, ability.$.info.replacers ?? [], creature) +
-                    `\n\n` +
-                    `Cost **${ability.$.cost}**\n` +
-                    `Haste **${ability.$.haste ?? 1}**\n` +
-                    `Type **${AbilityType[ability.$.type]}**`
-                  )
-              ],
+              embeds: [ability.describeEmbed(creature)],
               components: [new MessageActionRow().setComponents([new MessageSelectMenu()
                 .setCustomId(`fight/${fight.$._id}/ability/${ability.$.id}`)
                 .setMinValues(ability.$.min_targets)

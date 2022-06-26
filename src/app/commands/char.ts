@@ -3,7 +3,7 @@ import Mongoose from "mongoose";
 import { replaceEffectLore } from "../../game/ActiveEffects.js";
 import { Material, Schematic } from "../../game/Crafting.js";
 import Creature, { Attributes, diceRoll, Stats } from "../../game/Creature.js";
-import { AbilityType, CreatureAbility } from "../../game/CreatureAbilities.js";
+import { AbilityRole, AbilityType, CreatureAbility } from "../../game/CreatureAbilities.js";
 import { damageLogEmbed, DamageMethod, DamageType, DAMAGE_TO_INJURY_RATIO, healLogEmbed, reductionMultiplier } from "../../game/Damage.js";
 import { CombatPosition } from "../../game/Fight.js";
 import { AttackData, ConsumableItemData, EquippableInventoryItem, InventoryItem, Item, ItemQualityEmoji, ItemSlot, SlotDescriptions, SpecializedWearableData, WeaponCategory, WeaponItemData, WearableInventoryItem, WearableItemData } from "../../game/Items.js";
@@ -513,7 +513,7 @@ export default new ApplicationCommandHandler(
           }
         }
 
-        embed.setFooter(`${location.shop.$.id} | ${start_index + 1}-${i}/${location.shop.$.content?.length ?? 0}`)
+        embed.setFooter({ text: `${location.shop.$.id} | ${start_index + 1}-${i}/${location.shop.$.content?.length ?? 0}`})
 
         select
           ?.setMaxValues(select.options.length)
@@ -538,7 +538,7 @@ export default new ApplicationCommandHandler(
           embeds: [
             new MessageEmbed()
               .setTitle(`${ItemQualityEmoji[schem.$.info.quality]} **${schem.$.info.name}**`)
-              .setFooter(schem.$.id)
+              .setFooter({text: schem.$.id })
               .setDescription(schematicDescriptor(schem, creature?.perkIDs))
           ],
           components: [
@@ -969,7 +969,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
           `${replaceLore(ability.$.info.lore, ability.$.info.replacers ?? [], creature)}\n\n` +
           `**${ability.$.min_targets}**${ability.$.max_targets ? `to **${ability.$.max_targets}**` : ""} Targets\n` +
           `**${ability.$.cost}** Ult Stacks\n` +
-          `Type **${AbilityType[ability.$.type]}**`
+          `Type **${AbilityType[ability.$.type]}** / Role **${AbilityRole[ability.$.info.role]}**`
         )
     } break;
     case "abilities": {
@@ -989,7 +989,7 @@ export async function infoEmbed(creature: Creature, Bot: Client, db: typeof Mong
             `**${ability.$.haste ?? 1}** Haste\n` +
             `**${ability.$.min_targets}**${ability.$.max_targets ? `to **${ability.$.max_targets}**` : ""} Targets\n` +
             `**${ability.$.cost}** Action Points\n` +
-            `Type **${AbilityType[ability.$.type]}**`
+            `Type **${AbilityType[ability.$.type]}** / Role **${AbilityRole[ability.$.info.role]}**`
           })
         }
 

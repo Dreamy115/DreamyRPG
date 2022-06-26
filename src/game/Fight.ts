@@ -158,7 +158,7 @@ export class Fight {
       embeds: [
         new MessageEmbed()
           .setColor("AQUA")
-          .setFooter(this.$._id)
+          .setFooter({ text: this.$._id})
           .setTitle("Fight has ended")
       ]
     }
@@ -200,7 +200,7 @@ export class Fight {
             ? make_bar(100, Creature.BAR_STYLES.Injuries, Math.max(1, injury_ratio * Math.floor(char.$.stats.health.value / BAR_LENGTH))).str
             : ""
           ) +
-          ` **Health** **${char.$.vitals.health}**/**${char.$.stats.health.value - char.$.vitals.injuries}**\n` + 
+          ` **Health** **${char.$.vitals.health}**/**${char.$.stats.health.value - char.$.vitals.injuries}** ` + 
           `(**${Math.round(100 * char.$.vitals.health / char.$.stats.health.value)}%**)\n` +
           make_bar(100 *char.$.vitals.action_points / char.$.stats.action_points.value, Creature.BAR_STYLES.ActionPoints, char.$.stats.action_points.value / char.$.stats.attack_cost.value).str +
           ` **Action Points** ${textStat(char.$.vitals.action_points, char.$.stats.action_points.value)} `+
@@ -232,7 +232,7 @@ export class Fight {
     }        
 
     embeds[0]
-      .setAuthor({ name: `${!creature.$.info.npc ? owner?.username ?? "Unknown" : "NPC"}` })
+      .setAuthor({ name: `${!creature.$.info.npc ? owner?.username ?? "Unknown" : "NPC"}`, iconURL: creature.$.info.npc ? undefined : owner?.displayAvatarURL({dynamic: true, size: 32}) })
       .setTitle(`${creature.displayName}'s turn! (Round ${this.$.round})`)
       .setColor("AQUA")
       .setFooter({ text: `Fight ID: ${this.$._id} | Creature ID: ${creature.$._id}` })
@@ -391,6 +391,29 @@ export class Fight {
           .setCustomId(`fight/${this.$._id}/refresh`)
           .setLabel("Refresh")
           .setStyle("SECONDARY")
+      ]),
+      new MessageActionRow().setComponents([
+        new MessageSelectMenu()
+          .setCustomId(`checkstats`)
+          .setPlaceholder("/char info stats")
+          .setOptions(await async function (fight: Fight) {
+            const arr: MessageSelectOptionData[] = [];
+            for (const p in fight.$.parties) {
+              const party = fight.$.parties[p];
+              for (const cid of party) {
+                const char = await Creature.fetch(cid, db).catch(() => null);
+                if (!char) continue;
+        
+                arr.push({
+                  label: `${char.displayName} - Party ${p}`,
+                  value: char.$._id,
+                  description: `(${char.$._id === creature?.$._id ? "You" : (char.$.info.npc ? "NPC" : "Player")})`
+                });
+              }
+            }
+
+            return arr;
+          }(this))
       ])
     ];
 

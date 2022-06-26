@@ -3,7 +3,7 @@ import { AbilitiesManager, capitalize, CONFIG, Directives, EffectManager, ItemMa
 import { ActiveEffect, EffectType } from "../../game/ActiveEffects";
 import { Material, Schematic } from "../../game/Crafting";
 import Creature from "../../game/Creature";
-import { AbilityType, CreatureAbility } from "../../game/CreatureAbilities";
+import { AbilityRole, AbilityType, CreatureAbility } from "../../game/CreatureAbilities";
 import { DamageMethod, DamageType, ShieldReaction, shieldReactionInfo } from "../../game/Damage";
 import { GameDirective } from "../../game/GameDirectives";
 import { AttackData, Item, ItemQualityColor, ItemQualityEmoji, WeaponCategory } from "../../game/Items";
@@ -504,7 +504,7 @@ export default new ApplicationCommandHandler(
               `\n\n` +
               `Cost **${item.$.cost}**\n` +
               `Haste **${item.$.haste ?? 1}**\n` +
-              `Type **${AbilityType[item.$.type]}**`
+              `Type **${AbilityType[item.$.type]}** / Role **${AbilityRole[item.$.info.role]}**`
           } else if (item instanceof ActiveEffect) {
             embed.setDescription(function () {
               var str = item.$.info.lore;

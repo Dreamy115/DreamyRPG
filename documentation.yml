@@ -27,3 +27,30 @@ item_rarities: >
   Prototype shouldn't have modifier modules and instead have more interesting passives.
 
   Remember, after all, the GM has all the creative freedom and these are only suggestions.
+ability_roles: |
+  **Duelist**
+  Duelists excel in 1v1, but needs buffs and heals to be useful in a party battle. Typically high-damage low-health.
+
+  **Motivator**
+  Motivators help their teammates with buffs and heals without focusing too much on their own damage output.
+  
+  **Controller**
+  Controllers hand out debuffs to the enemy team and excel in crowd control.
+
+  **Tank**
+  Tanks force enemies to target them first by protecting allies with abilities while leaving themselves exposed. 
+protection_/_dodge: >
+  **Armor|Dissipate** combine into **Protection**.
+  Both work similarly, blocking **Physical** and **Energy** damage respectively. **True** damage can only be reduced with status effects.
+
+  Final protection amount is calculated by the *victim*'s **Armor|Dissipate** decreased by *attacker*'s **Lethality|Passthrough** as a flat decrease.
+  It cannot go lower than 0. If it does, round up to 0.
+
+  Formula for damage multiplier is `DMG*(100/(100+PROT))`;
+  where DMG is incoming damage and PROT is the final protection amount.
+
+
+  **Parry|Deflect** combine into **Dodge**.
+  It is the amount that decreases the *attacker*'s **Accuracy** depending if it's **Melee** or **Ranged** damage respectively. 
+
+  The final amount is the percentage probability of the strike connecting.
